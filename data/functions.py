@@ -4,7 +4,7 @@ import numpy as np
 
 
 def check_2d(x: np.ndarray):
-    if len(x.shape) != 2 or x.shape[1] == 2:
+    if len(x.shape) != 2 or x.shape[1] != 2:
         raise ValueError("fail to understand input data")
 
 
