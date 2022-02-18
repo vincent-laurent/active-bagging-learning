@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from sklearn import preprocessing
+
 from sampling.latin_square import iterative_sampler
 
 
@@ -20,7 +21,8 @@ class ActiveSRLearner:
         if scale_input:
             self.scale()
         else:
-            self.scaling_method = preprocessing.StandardScaler(with_std=False, with_mean=False)
+            self.scaling_method = preprocessing.StandardScaler(with_std=False,
+                                                               with_mean=False)
             self.scaling_method.fit(X_train)
 
     def scale(self, method=preprocessing.MinMaxScaler):
@@ -28,8 +30,13 @@ class ActiveSRLearner:
         self.x_input = self.scaling_method.fit_transform(self.x_input)
 
     def run(self, size=10):
-        self.surface_, self.coverage_ = self.estimator(self.x_input, self.y_input, return_coverage=True)
-        self.x_new = self.query_strategy(self.x_input, self.y_input, self.coverage_, size)
+        self.surface_, self.coverage_ = self.estimator(
+            self.x_input,
+            self.y_input,
+            return_coverage=True)
+        self.x_new = self.query_strategy(
+            self.x_input, self.y_input,
+            self.coverage_, size)
 
         return self.scaling_method.inverse_transform(x_new)
 
@@ -56,7 +63,7 @@ def get_pointwise_variance(estimator_list):
 
 
 if __name__ == '__main__':
-    from data.functions import himmelblau, branin
+    from data.functions import himmelblau
     import matplotlib.pyplot as plot
 
     xx = np.linspace(-5, 5, num=100)
@@ -66,6 +73,7 @@ if __name__ == '__main__':
     z = -himmelblau(x.values)
 
     plot.pcolormesh(xx, yy, z.reshape(len(xx), len(yy)), cmap="rainbow")
+
 
     def gaussian_est(X, y, return_coverage=True):
         from sklearn.gaussian_process import GaussianProcessRegressor
@@ -89,7 +97,8 @@ if __name__ == '__main__':
 
 
     X = x.sample(n=5)
-    active_learner = ActiveSRLearner(gaussian_est, reject_on_bounds, X, -himmelblau(X))
+    active_learner = ActiveSRLearner(gaussian_est, reject_on_bounds, X,
+                                     -himmelblau(X))
     x_new = active_learner.run(10)
 
     prediction = active_learner.surface_
@@ -103,17 +112,21 @@ if __name__ == '__main__':
     plot.figure()
     plot.pcolormesh(xx, yy, std.reshape(len(xx), len(yy)), cmap="rainbow")
 
-    x_new, cov = reject_on_bounds(x.iloc[select], z[select], coverage_function=coverage_function, size=100,
+    x_new, cov = reject_on_bounds(x.iloc[select], z[select],
+                                  coverage_function=coverage_function, size=100,
                                   batch_size=100)
 
     plot.figure()
     plot.pcolormesh(xx, yy, std.reshape(len(xx), len(yy)), cmap="rainbow")
-    plot.scatter(scaler.inverse_transform(x_new)[:, 0], scaler.inverse_transform(x_new)[:, 1], c="k")
+    plot.scatter(scaler.inverse_transform(x_new)[:, 0],
+                 scaler.inverse_transform(x_new)[:, 1], c="k")
     plot.scatter(x["x0"].iloc[select], x["x1"].iloc[select], c="b")
 
-    x_new, cov = reject_on_bounds(x.iloc[select], z[select], coverage_function=coverage_function, size=20,
+    x_new, cov = reject_on_bounds(x.iloc[select], z[select],
+                                  coverage_function=coverage_function, size=20,
                                   batch_size=50)
     plot.figure()
     plot.pcolormesh(xx, yy, std.reshape(len(xx), len(yy)), cmap="rainbow")
-    plot.scatter(scaler.inverse_transform(x_new)[:, 0], scaler.inverse_transform(x_new)[:, 1], c="k")
+    plot.scatter(scaler.inverse_transform(x_new)[:, 0],
+                 scaler.inverse_transform(x_new)[:, 1], c="k")
     plot.scatter(x["x0"].iloc[select], x["x1"].iloc[select], c="b")
