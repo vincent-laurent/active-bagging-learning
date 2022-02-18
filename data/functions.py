@@ -63,3 +63,6 @@ def golden_price(x):
                    18 - 32 * xx + 12 * xx ** 2 + 48 * yy - 36 * xx * yy + 27 * yy ** 2))
 
 
+bounds = {
+    annie_sauer_2021: [0, 1]
+}
