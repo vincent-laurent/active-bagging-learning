@@ -46,6 +46,9 @@ class ActiveSRLearner:
     def coverage(self, x):
         return self.coverage_(self.scaling_method.transform(x))
 
+    def estimate_error(self, bounds):
+        pass
+
 
 def get_pointwise_variance(estimator_list):
     keys = range(len(estimator_list))
@@ -62,6 +65,27 @@ def get_pointwise_variance(estimator_list):
     return meta_estimator
 
 
+def gaussian_est(X, y, return_coverage=True):
+    from sklearn.gaussian_process import GaussianProcessRegressor
+    model = GaussianProcessRegressor().fit(X, y)
+    if return_coverage:
+        def coverage_function(x):
+            return model.predict(x, return_std=True)[1]
+
+        return model.predict, coverage_function
+    else:
+        return model.predict
+
+
+def reject_on_bounds(X, y, coverage_function, size=10, batch_size=50):
+    from scipy.stats import rankdata
+    x_new = iterative_sampler(X, size=batch_size)
+    cov = coverage_function(x_new)
+    order = rankdata(-cov, method="ordinal")
+    selector = order < size
+    return x_new[selector], cov[selector]
+
+
 if __name__ == '__main__':
     from data.functions import himmelblau
     import matplotlib.pyplot as plot
@@ -73,28 +97,6 @@ if __name__ == '__main__':
     z = -himmelblau(x.values)
 
     plot.pcolormesh(xx, yy, z.reshape(len(xx), len(yy)), cmap="rainbow")
-
-
-    def gaussian_est(X, y, return_coverage=True):
-        from sklearn.gaussian_process import GaussianProcessRegressor
-        model = GaussianProcessRegressor().fit(X, y)
-        if return_coverage:
-            def coverage_function(x):
-                return model.predict(x, return_std=True)[1]
-
-            return model.predict, coverage_function
-        else:
-            return model.predict
-
-
-    def reject_on_bounds(X, y, coverage_function, size=10, batch_size=50):
-        from scipy.stats import rankdata
-        x_new = iterative_sampler(X, size=batch_size)
-        cov = coverage_function(x_new)
-        order = rankdata(-cov, method="ordinal")
-        selector = order < size
-        return x_new[selector], cov[selector]
-
 
     X = x.sample(n=5)
     active_learner = ActiveSRLearner(gaussian_est, reject_on_bounds, X,
@@ -112,21 +114,7 @@ if __name__ == '__main__':
     plot.figure()
     plot.pcolormesh(xx, yy, std.reshape(len(xx), len(yy)), cmap="rainbow")
 
-    x_new, cov = reject_on_bounds(x.iloc[select], z[select],
-                                  coverage_function=coverage_function, size=100,
-                                  batch_size=100)
-
     plot.figure()
     plot.pcolormesh(xx, yy, std.reshape(len(xx), len(yy)), cmap="rainbow")
-    plot.scatter(scaler.inverse_transform(x_new)[:, 0],
-                 scaler.inverse_transform(x_new)[:, 1], c="k")
-    plot.scatter(x["x0"].iloc[select], x["x1"].iloc[select], c="b")
-
-    x_new, cov = reject_on_bounds(x.iloc[select], z[select],
-                                  coverage_function=coverage_function, size=20,
-                                  batch_size=50)
-    plot.figure()
-    plot.pcolormesh(xx, yy, std.reshape(len(xx), len(yy)), cmap="rainbow")
-    plot.scatter(scaler.inverse_transform(x_new)[:, 0],
-                 scaler.inverse_transform(x_new)[:, 1], c="k")
-    plot.scatter(x["x0"].iloc[select], x["x1"].iloc[select], c="b")
+    plot.scatter(x_new[:, 0], x_new[:, 1], c="k")
+    plot.scatter(X["x0"], x["x1"], c="b")

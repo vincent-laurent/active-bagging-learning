@@ -64,5 +64,8 @@ def golden_price(x):
 
 
 bounds = {
-    annie_sauer_2021: [0, 1]
+    annie_sauer_2021: [0, 1],
+    golden_price: [[0, 1], [0, 1]],
+    branin: [[0, 1], [0, 1]],
+    himmelblau: [[-5, 5], [-5, 5]],
 }

@@ -41,7 +41,7 @@ if __name__ == '__main__':
 
     c = plot.get_cmap("magma")
     plot.figure(figsize=(6, 6), dpi=200)
-    x0 = iterative_sampler(dim=200)
+    x0 = iterative_sampler(dim=2)
     n_steps = 20
     x = x0
     plot.scatter(x0[:, 0], x0[:, 1], color=c(0), label=f"Iter n°{0}")
