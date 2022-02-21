@@ -14,7 +14,7 @@ def evaluate(true_function, learned_surface, bounds, num_mc=int(1E6)):
     def error(x):
         return (true_function(x) - learned_surface(x)) ** 2
 
-    return integrate(error, bounds, num_mc)
+    return np.sqrt(integrate(error, bounds, num_mc))
 
 
 if __name__ == '__main__':

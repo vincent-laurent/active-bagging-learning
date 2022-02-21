@@ -4,7 +4,14 @@ from sklearn.neighbors import BallTree
 from smt.sampling_methods import LHS
 
 
-def iterative_sampler(x_input: np.ndarray = None, size: int = 100, x_limits=None,
+def one_d_iterative_sampler(x_input: np.ndarray = None, size: int = 100,
+                            x_limits: np.ndarray = None,
+                            criterion="corr", batch_size=10):
+    pass
+
+
+def iterative_sampler(x_input: np.ndarray = None, size: int = 100,
+                      x_limits: np.ndarray = None,
                       dim: int = None,
                       criterion="corr", batch_size=10):
     if x_limits is None and x_input is None and dim is None:
@@ -32,7 +39,8 @@ def iterative_sampler(x_input: np.ndarray = None, size: int = 100, x_limits=None
 
         if sum(select) < size:
             return np.concatenate(
-                (iterative_sampler(np.concatenate((x_input, x_new)), size - batch_size), x_new))
+                (iterative_sampler(np.concatenate((x_input, x_new)),
+                                   size - batch_size), x_new))
         return x_new
 
 
