@@ -32,7 +32,8 @@ def grammacy_lee_2009(x: typing.Iterable[typing.Iterable]):
     check_2d(x)
 
     x_square = x_ ** 2
-    return 10 * x_[:, 0] * np.exp(-x_square[:, 0] - x_square[:, 1])
+    return 10 * x_[:, 0] * np.exp(-x_square[:, 0] - x_square[:, 1]) + np.random.random(
+        size=len(x_[:, 0]))
 
 
 def himmelblau(x: typing.Iterable[typing.Iterable]):

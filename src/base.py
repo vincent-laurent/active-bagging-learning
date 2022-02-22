@@ -2,11 +2,10 @@ import numpy as np
 import pandas as pd
 from sklearn import clone
 from sklearn import preprocessing
+from sklearn.base import BaseEstimator
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import ExpSineSquared
+from sklearn.model_selection import BaseCrossValidator
 from sklearn.model_selection import ShuffleSplit
-from sklearn.svm import SVR
 
 from sampling.latin_square import iterative_sampler
 
@@ -20,6 +19,8 @@ class ActiveSRLearner:
             y_train: pd.DataFrame,
             scale_input=True,
             bounds=None,
+            estimator_parameters: dict = None,
+            query_parameters: dict = None
     ):
         self.estimator = estimator
         self.query_strategy = query_strategy
@@ -32,6 +33,15 @@ class ActiveSRLearner:
         self.budget = len(X_train)
         self.x_input.index = 0 * np.ones(len(self.x_input))
         self.scale()
+        if estimator_parameters is None:
+            self.estimator_parameters = {}
+        else:
+            self.estimator_parameters = estimator_parameters
+
+        if query_parameters is None:
+            self.query_parameters = {}
+        else:
+            self.query_parameters = query_parameters
 
     def scale(self, method=preprocessing.MinMaxScaler):
         if self.__scale_input:
@@ -56,11 +66,12 @@ class ActiveSRLearner:
         self.surface_, self.coverage_ = self.estimator(
             self.x_input_scaled__,
             self.y_input,
-            return_coverage=True)
+            **self.estimator_parameters)
         self.x_new, self.scores_ = self.query_strategy(
             self.x_input_scaled__, self.y_input,
             self.coverage_, size,
-            bounds=self.scaling_method.transform(self.bounds.T).T)
+            bounds=self.scaling_method.transform(self.bounds.T).T,
+            **self.query_parameters)
         self.x_new = pd.DataFrame(self.x_new, columns=self.x_input.columns)
         self.save()
         return self.unscale_x(self.x_new)
@@ -112,51 +123,27 @@ def get_pointwise_variance(estimator_list):
     return meta_estimator
 
 
-def gaussian_est_jacknife(X, y, return_coverage=True,
-                          base_estimator=GaussianProcessRegressor(
-                          )):
-    m = []
+def estimate_variance(X, y,
+                      base_estimator: BaseEstimator = RandomForestRegressor(),
+                      splitter: BaseCrossValidator = ShuffleSplit(n_splits=5)):
+    list_models = []
     X, y = np.array(X), np.array(y).ravel()
-    for train, test in ShuffleSplit(n_splits=40).split(X, y):
+    for train, test in splitter.split(X, y):
         model = clone(base_estimator)
-        m.append(model.fit(X[train, :], y[train]))
+        list_models.append(model.fit(X[train, :], y[train]))
 
     def mean_predictor(x):
         res = 0
-        for model_ in m:
+        for model_ in list_models:
             res += model_.predict(x)
-        return res / len(m)
+        return res / len(list_models)
 
-    if return_coverage:
-        return mean_predictor, get_pointwise_variance(m)
-    else:
-        return mean_predictor
-
-
-def rf_est_jacknife(X, y, return_coverage=True,
-                    base_estimator=RandomForestRegressor(min_samples_leaf=3)):
-    m = []
-    X, y = np.array(X), np.array(y).ravel()
-    for train, test in ShuffleSplit(n_splits=20).split(X, y):
-        model = clone(base_estimator)
-        m.append(model.fit(X[train, :], y[train]))
-
-    def mean_predictor(x):
-        res = 0
-        for model_ in m:
-            res += model_.predict(x)
-        return res / len(m)
-
-    if return_coverage:
-        return mean_predictor, get_pointwise_variance(m)
-    else:
-        return mean_predictor
+    return mean_predictor, get_pointwise_variance(list_models)
 
 
 def dt_est_jacknife(X, y, return_coverage=True,
                     base_estimator=RandomForestRegressor(
                         min_samples_leaf=3, n_estimators=300)):
-    m = []
     X, y = np.array(X), np.array(y).ravel()
     model = clone(base_estimator)
     model.fit(X, y)
@@ -166,27 +153,6 @@ def dt_est_jacknife(X, y, return_coverage=True,
             model.estimators_)
     else:
         return model.predict
-
-
-def svr_est_jacknife(X, y, return_coverage=True,
-                     base_estimator=SVR(kernel="rbf", C=100, gamma=0.1,
-                                        epsilon=0.1)):
-    m = []
-    X, y = np.array(X), np.array(y).ravel()
-    for train, test in ShuffleSplit(n_splits=10).split(X, y):
-        model = clone(base_estimator)
-        m.append(model.fit(X[train, :], y[train]))
-
-    def mean_predictor(x):
-        res = 0
-        for model_ in m:
-            res += model_.predict(x)
-        return res / len(m)
-
-    if return_coverage:
-        return mean_predictor, get_pointwise_variance(m)
-    else:
-        return mean_predictor
 
 
 def gaussian_est(X, y, return_coverage=True):
