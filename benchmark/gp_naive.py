@@ -22,7 +22,7 @@ def run(fun, n0=10, budget=100, n_step=5):
     xall = latin_square.iterative_sampler(x_limits=np.array(bounds),
                                           size=budget)
     active_learner = base.ActiveSRLearner(
-        base.gaussian_est_jacknife,
+        base.rf_est_jacknife,
         base.reject_on_bounds,
         pd.DataFrame(x0), pd.DataFrame(fun(x0)), bounds=np.array(bounds)
     )

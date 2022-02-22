@@ -114,7 +114,7 @@ def get_pointwise_variance(estimator_list):
 
 def gaussian_est_jacknife(X, y, return_coverage=True,
                           base_estimator=GaussianProcessRegressor(
-                              kernel=ExpSineSquared(), alpha=10)):
+                          )):
     m = []
     X, y = np.array(X), np.array(y).ravel()
     for train, test in ShuffleSplit(n_splits=40).split(X, y):
