@@ -14,13 +14,13 @@ from sampling import latin_square
 
 functions_ = list(functions.bounds.keys())
 
-fun = functions_[1]
+fun = functions.grammacy_lee_2009
 n0 = 30
 budget = 100
 n_step = 70
 
 estimator_parameters = {
-    0: dict(base_estimator=SVR(kernel="rbf", C=100, gamma=0.1,
+    0: dict(base_estimator=SVR(kernel="rbf", C=100, gamma="scale",
                                epsilon=0.1)),
     1: dict(base_estimator=GaussianProcessRegressor()),
     2: dict(base_estimator=RandomForestRegressor(min_samples_leaf=3)),
@@ -37,10 +37,9 @@ def run(fun, n0=10, budget=100, n_step=5):
     args = dict(
         bounds=np.array(bounds),
         estimator_parameters=estimator_parameters[3],
-        query_parameters=dict(batch_size=30)
     )
     active_learner = base.ActiveSRLearner(base.estimate_variance,
-                                          base.reject_on_bounds,
+                                          base.reject_on_bounds_ada,
                                           pd.DataFrame(x0),
                                           pd.DataFrame(fun(x0)), **args
                                           )
@@ -57,7 +56,7 @@ def run(fun, n0=10, budget=100, n_step=5):
         perf.append(evaluate(
             fun,
             active_learner.surface,
-            bounds, num_mc=1000))
+            bounds, num_mc=10000))
 
         s = pd.DataFrame(xall).sample(b)
         passive_learner = base.ActiveSRLearner(
@@ -70,7 +69,7 @@ def run(fun, n0=10, budget=100, n_step=5):
         perf_passive.append(evaluate(
             fun,
             passive_learner.surface,
-            bounds, num_mc=1000))
+            bounds, num_mc=10000))
     plot.figure()
     plot.plot(perf, c="r")
     plot.plot(perf_passive)
@@ -80,7 +79,7 @@ def run(fun, n0=10, budget=100, n_step=5):
 
 if __name__ == '__main__':
     from mpl_toolkits.axes_grid1 import make_axes_locatable
-    a, p = run(fun, n0=10, budget=40, n_step=6)
+    a, p = run(fun, n0=10, budget=30, n_step=5)
 
     bounds = np.array(functions.bounds[fun])
     xx = np.linspace(bounds[0, 0], bounds[0, 1], num=200)
@@ -107,6 +106,7 @@ if __name__ == '__main__':
     fig, ax = plot.subplots(ncols=2)
     sa = ((zz.ravel() - z).reshape(len(xx), len(yy))) ** 2
     sp = ((zzz.ravel() - z).reshape(len(xx), len(yy))) ** 2
+
     im = ax[0].pcolormesh(xx, yy, sa,
                           cmap="GnBu", vmin=sa.min(), vmax=sp.max())
     im = ax[1].pcolormesh(xx, yy, sp,
@@ -126,8 +126,8 @@ if __name__ == '__main__':
 
     plot.figure()
     plot.pcolormesh(xx, yy, std.reshape(len(xx), len(yy)), cmap="rainbow")
-    x_new = a.scaling_method.transform(a.x_new)
-    plot.scatter(a.x_new[0], a.x_new[1], c="k")
+    x_new = a.unscale_x(a.x_new)
+    plot.scatter(x_new[0], x_new[1], c="k")
     plot.scatter(X[0], X[1], c="b")
 
     plot.figure()
@@ -144,7 +144,7 @@ if __name__ == '__main__':
     plot.legend()
 
     plot.figure()
-    plot.contour(xx, yy, z.reshape(len(xx), len(yy)), levels=50, linewidths=0.3,
+    plot.contour(xx, yy, z.reshape(len(xx), len(yy)), levels=10, linewidths=0.3,
                  colors='k')
     x_new = a.scaling_method.transform(a.x_new)
     plot.scatter(X[0], X[1], cmap="rainbow", c=X.index)

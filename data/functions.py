@@ -32,8 +32,7 @@ def grammacy_lee_2009(x: typing.Iterable[typing.Iterable]):
     check_2d(x)
 
     x_square = x_ ** 2
-    return 10 * x_[:, 0] * np.exp(-x_square[:, 0] - x_square[:, 1]) + np.random.random(
-        size=len(x_[:, 0]))
+    return 10 * x_[:, 0] * np.exp(-x_square[:, 0] - x_square[:, 1])
 
 
 def himmelblau(x: typing.Iterable[typing.Iterable]):
@@ -41,8 +40,8 @@ def himmelblau(x: typing.Iterable[typing.Iterable]):
 
     check_2d(x_)
 
-    return (x_[:, 0] ** 2 + x_[:, 1] - 11) ** 2 + (
-            x_[:, 0] + x_[:, 1] ** 2 - 7) ** 2
+    return ((x_[:, 0] ** 2 + x_[:, 1] - 11) ** 2 + (
+            x_[:, 0] + x_[:, 1] ** 2 - 7) ** 2)/75
 
 
 def branin(x: typing.Iterable[typing.Iterable],
@@ -50,24 +49,39 @@ def branin(x: typing.Iterable[typing.Iterable],
            s=10, t=1 / (8 * np.pi)):
     x_ = np.array(x)
     check_2d(x_)
-    return a * (x_[:, 1] - b * x_[:, 0] ** 2 + c * x_[:, 0] - r) ** 2 + s * (
-            1 - t) * np.cos(x_[:, 0]) + s
+    return (a * (x_[:, 1] - b * x_[:, 0] ** 2 + c * x_[:, 0] - r) ** 2 + s * (
+            1 - t) * np.cos(x_[:, 0]) + s)/25
 
 
 def golden_price(x):
     x_ = np.array(x)
     check_2d(x)
     xx, yy = x_[:, 0], x_[:, 1]
-    return (1 + (xx + yy + 1) ** 2 * (
+    return ((1 + (xx + yy + 1) ** 2 * (
             19 - 14 * xx + 3 * xx ** 2 - 14 * yy + 6 * xx * yy + 3 * yy ** 2)) * (
                    30 + (2 * xx - 3 * yy) ** 2 * (
-                   18 - 32 * xx + 12 * xx ** 2 + 48 * yy - 36 * xx * yy + 27 * yy ** 2))
+                   18 - 32 * xx + 12 * xx ** 2 + 48 * yy - 36 * xx * yy + 27 * yy ** 2)))/500
 
+
+def perturbate(function):
+    def function_(x):
+        return function(x) + np.random.random(size=len(np.array(x)[:, 0]))
+
+    return function_
+
+
+branin_rand = perturbate(branin)
+golden_price_rand = perturbate(golden_price)
+himmelblau_rand = perturbate(himmelblau)
 
 bounds = {
     annie_sauer_2021: [[0, 1]],
     grammacy_lee_2009: [[-4, 4], [-4, 4]],
-    golden_price: [[0, 1], [0, 1]],
-    branin: [[0, 1], [0, 1]],
+    golden_price: [[-2, 2], [-2, 2]],
+    golden_price_rand: [[-2, 2], [-2, 2]],
+    branin: [[-5, 10], [0, 15]],
+    branin_rand: [[-5, 10], [0, 15]],
     himmelblau: [[-5, 5], [-5, 5]],
+    himmelblau_rand: [[-5, 5], [-5, 5]],
 }
+
