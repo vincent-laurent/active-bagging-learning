@@ -4,16 +4,8 @@ from sklearn.neighbors import BallTree
 from smt.sampling_methods import LHS
 
 
-def one_d_iterative_sampler(x_input: np.ndarray = None, size: int = 100,
-                            x_limits: np.ndarray = None,
-                            criterion="corr", batch_size=10):
-    pass
-
-
-def iterative_sampler(x_input: np.ndarray = None, size: int = 100,
-                      x_limits: np.ndarray = None,
-                      dim: int = None,
-                      criterion="corr", batch_size=10):
+def check_input(x_input: np.ndarray = None, size: int = 100,
+                x_limits: np.ndarray = None, dim: int = None, batch_size=10):
     if x_limits is None and x_input is None and dim is None:
         raise ValueError("You have to specify at least one of the three"
                          "following argument : x_input, x_limits or dim"
@@ -25,6 +17,41 @@ def iterative_sampler(x_input: np.ndarray = None, size: int = 100,
 
     if x_limits is None:
         x_limits = np.array([[0, 1]] * dim)
+    return x_limits
+
+
+def one_d_iterative_sampler(x_input: np.ndarray = None, size: int = 100,
+                            x_limits: np.ndarray = None,
+                            criterion="corr", batch_size=10):
+    x_limits = check_input(x_input, size, x_limits, 1, batch_size)
+
+    def sampler(size_):
+        return np.random.uniform(
+            x_limits[0][0], x_limits[0][1], size=size_)
+
+    if x_input is None:
+        return sampler(size)
+    else:
+        new_points = sampler(max(len(x_input), size))
+        dist = BallTree(x_input.reshape(-1, 1))
+        distances, query = dist.query(new_points.reshape(-1, 1))
+        orders = len(distances) - stats.rankdata(distances, method="ordinal")
+        select = orders < batch_size
+        x_new = new_points[np.ravel(select)]
+
+        if sum(select) < size:
+            return np.concatenate(
+                (one_d_iterative_sampler(np.concatenate((x_input, x_new)),
+                                         size - batch_size), x_new))
+        return x_new
+
+
+def iterative_sampler(x_input: np.ndarray = None, size: int = 100,
+                      x_limits: np.ndarray = None,
+                      dim: int = None,
+                      criterion="corr", batch_size=10):
+    x_limits = check_input(x_input, size, x_limits, dim, batch_size)
+
     lhs = LHS(xlimits=x_limits, criterion=criterion)
 
     if x_input is None:
@@ -71,3 +98,10 @@ if __name__ == '__main__':
 
     x_once = iterative_sampler(dim=200, size=len(x))
     plot.scatter(x_once[:, 0], x_once[:, 1], color="k")
+
+    x1d = one_d_iterative_sampler(x_limits=[[0, 1]], size=10)
+    x1d_new = one_d_iterative_sampler(x_input=x1d, size=10)
+
+    plot.figure()
+    plot.scatter(x1d, np.random.random(size=len(x1d)))
+    plot.scatter(x1d_new, np.random.random(size=len(x1d_new)))
