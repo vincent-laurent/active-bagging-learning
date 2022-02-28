@@ -73,10 +73,12 @@ def perturbate(function):
 branin_rand = perturbate(branin)
 golden_price_rand = perturbate(golden_price)
 himmelblau_rand = perturbate(himmelblau)
+grammacy_lee_2009_rand = perturbate(grammacy_lee_2009)
 
 bounds = {
     annie_sauer_2021: [[0, 1]],
     grammacy_lee_2009: [[-4, 4], [-4, 4]],
+    grammacy_lee_2009_rand: [[-4, 4], [-4, 4]],
     golden_price: [[-2, 2], [-2, 2]],
     golden_price_rand: [[-2, 2], [-2, 2]],
     branin: [[-5, 10], [0, 15]],

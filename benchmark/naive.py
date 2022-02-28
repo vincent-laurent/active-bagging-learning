@@ -7,14 +7,16 @@ from sklearn.model_selection import ShuffleSplit
 from sklearn.svm import SVR
 
 import base
-from benchmark.utils import evaluate
+from benchmark.utils import evaluate, eval_surf_2d
 from data import functions
 from models.smt_api import SurrogateKRG
 from sampling import latin_square
 
+import components.query_strategies as qs
+
 functions_ = list(functions.bounds.keys())
 
-fun = functions.grammacy_lee_2009
+fun = functions.grammacy_lee_2009_rand
 n0 = 30
 budget = 100
 n_step = 70
@@ -26,6 +28,7 @@ estimator_parameters = {
     2: dict(base_estimator=RandomForestRegressor(min_samples_leaf=3)),
     3: dict(base_estimator=SurrogateKRG(), splitter=ShuffleSplit(n_splits=5))
 }
+estimator = estimator_parameters[3]
 
 
 def run(fun, n0=10, budget=100, n_step=5):
@@ -36,32 +39,34 @@ def run(fun, n0=10, budget=100, n_step=5):
                                           size=budget)
     args = dict(
         bounds=np.array(bounds),
-        estimator_parameters=estimator_parameters[3],
+        estimator_parameters=estimator
     )
-    active_learner = base.ActiveSRLearner(base.estimate_variance,
-                                          base.reject_on_bounds_ada,
-                                          pd.DataFrame(x0),
-                                          pd.DataFrame(fun(x0)), **args
-                                          )
+    active_learner = base.ActiveSRLearner(
+        base.estimate_variance,
+        qs.reject_on_bounds,
+        pd.DataFrame(x0),
+        pd.DataFrame(fun(x0)), **args)
 
-    perf = []
     perf_passive = []
+    results = pd.DataFrame(index=range(n_step))
+    results["budget"] = n0
     for step in range(n_step):
         b = active_learner.budget
-        print(active_learner.budget)
-        x_new = active_learner.run(
-            int((budget - n0) / n_step)).drop_duplicates()
+        results.loc[step, "budget"] = b
+        n_points = int((budget - n0) / n_step)
+        print(active_learner.budget, n_points)
+        x_new = active_learner.run(n_points).drop_duplicates()
         y_new = pd.DataFrame(fun(x_new))
         active_learner.add_labels(x_new, y_new)
-        perf.append(evaluate(
+        active_learner.result[active_learner.iter]["error_l2"] = evaluate(
             fun,
             active_learner.surface,
-            bounds, num_mc=10000))
+            bounds, num_mc=10000)
 
         s = pd.DataFrame(xall).sample(b)
         passive_learner = base.ActiveSRLearner(
             active_learner.estimator,
-            base.reject_on_bounds,
+            active_learner.query_strategy,
             s, fun(s), **args
         )
 
@@ -70,37 +75,39 @@ def run(fun, n0=10, budget=100, n_step=5):
             fun,
             passive_learner.surface,
             bounds, num_mc=10000))
-    plot.figure()
-    plot.plot(perf, c="r")
-    plot.plot(perf_passive)
 
-    return active_learner, passive_learner
+    results["estimator"] = str(estimator)
+    results["error_l2_active"] = [
+        active_learner.result[i]["error_l2"] for i in active_learner.result.keys()]
+    results["error_l2_passive"] = perf_passive
+    return active_learner, passive_learner, results
+
+
+def add_to_benchmark(data:pd.DataFrame, path="benchmark/results.csv"):
+    try:
+        data_old = pd.read_csv(path)
+        data_new = pd.concat((data, data_old), axis=0)
+    except FileNotFoundError:
+        data_new = data
+    data_new.to_csv(path, index=False)
 
 
 if __name__ == '__main__':
     from mpl_toolkits.axes_grid1 import make_axes_locatable
-    a, p = run(fun, n0=10, budget=30, n_step=5)
+
+    a, p, r = run(fun, n0=10, budget=30, n_step=19)
+    add_to_benchmark(r)
 
     bounds = np.array(functions.bounds[fun])
-    xx = np.linspace(bounds[0, 0], bounds[0, 1], num=200)
-    yy = np.linspace(bounds[1, 0], bounds[1, 1], num=200)
-    x, y = np.meshgrid(xx, yy)
-    x = pd.DataFrame(dict(x0=x.ravel(), x1=y.ravel()))
-    z = fun(x.values)
-
-    plot.figure()
-    plot.pcolormesh(xx, yy, z.reshape(len(xx), len(yy)), cmap="rainbow")
-
-    active_learner = a
-    passive_learner = p
+    xx, yy, x, z = eval_surf_2d(fun, bounds, num=200)
 
     # X = active_learner.result[n_step + 1]["data"]
-    X = active_learner.x_input
-    prediction = active_learner.surface
-    coverage = active_learner.coverage
+    X = a.x_input
+    prediction = a.surface
+    coverage = a.coverage
 
     zz = prediction(x)
-    zzz = passive_learner.surface(x)
+    zzz = p.surface(x)
     std = coverage(x)
 
     fig, ax = plot.subplots(ncols=2)
@@ -110,7 +117,7 @@ if __name__ == '__main__':
     im = ax[0].pcolormesh(xx, yy, sa,
                           cmap="GnBu", vmin=sa.min(), vmax=sp.max())
     im = ax[1].pcolormesh(xx, yy, sp,
-         cmap="GnBu", vmin=sa.min(), vmax=sp.max())
+                          cmap="GnBu", vmin=sa.min(), vmax=sp.max())
 
     divider = make_axes_locatable(ax[1])
     cax = divider.append_axes("right", size="5%", pad=0.05)
@@ -154,6 +161,12 @@ if __name__ == '__main__':
 
     evaluate(
         true_function=fun,
-        learned_surface=prediction,
+        learned_surface=a.surface,
         bounds=list(bounds),
-        num_mc=100000, l=1)
+        num_mc=100000, l=2)
+    evaluate(
+        true_function=fun,
+        learned_surface=p.surface,
+        bounds=list(bounds),
+        num_mc=100000, l=2)
+
