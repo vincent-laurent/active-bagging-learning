@@ -40,8 +40,8 @@ def himmelblau(x: typing.Iterable[typing.Iterable]):
 
     check_2d(x_)
 
-    return ((x_[:, 0] ** 2 + x_[:, 1] - 11) ** 2 + (
-            x_[:, 0] + x_[:, 1] ** 2 - 7) ** 2)/75
+    return 1 - ((x_[:, 0] ** 2 + x_[:, 1] - 11) ** 2 + (
+            x_[:, 0] + x_[:, 1] ** 2 - 7) ** 2) / 75
 
 
 def branin(x: typing.Iterable[typing.Iterable],
@@ -50,7 +50,7 @@ def branin(x: typing.Iterable[typing.Iterable],
     x_ = np.array(x)
     check_2d(x_)
     return (a * (x_[:, 1] - b * x_[:, 0] ** 2 + c * x_[:, 0] - r) ** 2 + s * (
-            1 - t) * np.cos(x_[:, 0]) + s)/25
+            1 - t) * np.cos(x_[:, 0]) + s) / 25
 
 
 def golden_price(x):
@@ -59,8 +59,20 @@ def golden_price(x):
     xx, yy = x_[:, 0], x_[:, 1]
     return ((1 + (xx + yy + 1) ** 2 * (
             19 - 14 * xx + 3 * xx ** 2 - 14 * yy + 6 * xx * yy + 3 * yy ** 2)) * (
-                   30 + (2 * xx - 3 * yy) ** 2 * (
-                   18 - 32 * xx + 12 * xx ** 2 + 48 * yy - 36 * xx * yy + 27 * yy ** 2)))/500
+                    30 + (2 * xx - 3 * yy) ** 2 * (
+                    18 - 32 * xx + 12 * xx ** 2 + 48 * yy - 36 * xx * yy + 27 * yy ** 2))) / 500
+
+
+def synthetic_2d_1(x):
+    x_ = np.array(x)
+    check_2d(x)
+    return (x_[:, 0] * np.sin(x_[:, 0]) * np.cos(x_[:, 1]) - x_[:, 1])/10
+
+
+def synthetic_2d_2(x):
+    x_ = np.array(x)
+    check_2d(x)
+    return synthetic_2d_1(x_)*annie_sauer_2021(x_[:, 1]/10)
 
 
 def perturbate(function):
@@ -85,5 +97,33 @@ bounds = {
     branin_rand: [[-5, 10], [0, 15]],
     himmelblau: [[-5, 5], [-5, 5]],
     himmelblau_rand: [[-5, 5], [-5, 5]],
+    synthetic_2d_1: [[0, 10], [0, 10]],
+    synthetic_2d_2: [[0, 10], [0, 10]],
 }
 
+__all__ = [
+    annie_sauer_2021, branin_rand, himmelblau_rand, golden_price_rand,
+]
+
+__all2D__ = [
+    grammacy_lee_2009_rand, branin_rand, himmelblau_rand, golden_price_rand,
+    synthetic_2d_1, synthetic_2d_2
+]
+
+if __name__ == '__main__':
+    import matplotlib.pyplot as plot
+    import pandas as pd
+
+    fig, ax = plot.subplots(ncols=len(__all2D__) // 2 + len(__all2D__) % 2,
+                            nrows=2)
+    for i, fun in enumerate(__all2D__):
+        bounds_ = np.array(bounds[fun])
+        if len(bounds_) == 2:
+            xx = np.linspace(bounds_[0, 0], bounds_[0, 1], num=200)
+            yy = np.linspace(bounds_[1, 0], bounds_[1, 1], num=200)
+            x, y = np.meshgrid(xx, yy)
+            x = pd.DataFrame(dict(x0=x.ravel(), x1=y.ravel()))
+            z = fun(x.values)
+
+            ax[i % 2, i // 2].pcolormesh(xx, yy, z.reshape(len(xx), len(yy)),
+                                         cmap="rainbow")

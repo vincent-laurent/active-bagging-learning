@@ -7,26 +7,24 @@ from sklearn.model_selection import ShuffleSplit
 from sklearn.svm import SVR
 
 import base
+import components.query_strategies as qs
 from benchmark.utils import evaluate, eval_surf_2d
 from data import functions
 from models.smt_api import SurrogateKRG
 from sampling import latin_square
 
-import components.query_strategies as qs
-
 functions_ = list(functions.bounds.keys())
 
-fun = functions.grammacy_lee_2009_rand
-n0 = 30
-budget = 100
-n_step = 70
-
+name = "synthetic_2d_2"
+fun = functions.__dict__[name]
+__n_sim__ = 1
 estimator_parameters = {
     0: dict(base_estimator=SVR(kernel="rbf", C=100, gamma="scale",
                                epsilon=0.1)),
     1: dict(base_estimator=GaussianProcessRegressor()),
-    2: dict(base_estimator=RandomForestRegressor(min_samples_leaf=3)),
-    3: dict(base_estimator=SurrogateKRG(), splitter=ShuffleSplit(n_splits=5))
+    2: dict(base_estimator=RandomForestRegressor(n_estimators=5,
+                                                 min_samples_leaf=3)),
+    3: dict(base_estimator=SurrogateKRG(), splitter=ShuffleSplit(n_splits=2))
 }
 estimator = estimator_parameters[3]
 
@@ -76,14 +74,27 @@ def run(fun, n0=10, budget=100, n_step=5):
             passive_learner.surface,
             bounds, num_mc=10000))
 
-    results["estimator"] = str(estimator)
+    results["estimator_param"] = str(estimator)
     results["error_l2_active"] = [
-        active_learner.result[i]["error_l2"] for i in active_learner.result.keys()]
+        active_learner.result[i]["error_l2"] for i in
+        active_learner.result.keys()]
     results["error_l2_passive"] = perf_passive
+    results["function"] = name
+    results["n0"] = n0
+    results["budget_total"] = budget
+    results["estimator"] = str(estimator["base_estimator"]).split("(")[0]
     return active_learner, passive_learner, results
 
 
-def add_to_benchmark(data:pd.DataFrame, path="benchmark/results.csv"):
+def plot_results(path="benchmark/results.csv", n0=30, function=name):
+    import seaborn as sns
+    df = pd.read_csv(path)
+    df_select = df.query(f"n0=={n0} & function==@function")
+    sns.lineplot(data=df_select, x="budget", y='error_l2_active')
+    sns.lineplot(data=df_select, x="budget", y='error_l2_passive')
+
+
+def add_to_benchmark(data: pd.DataFrame, path="benchmark/results.csv"):
     try:
         data_old = pd.read_csv(path)
         data_new = pd.concat((data, data_old), axis=0)
@@ -92,11 +103,24 @@ def add_to_benchmark(data:pd.DataFrame, path="benchmark/results.csv"):
     data_new.to_csv(path, index=False)
 
 
+def plot_all_benchmark_function():
+    from data.functions import __all2D__
+    fig, ax = plot.subplots(ncols=len(__all2D__) // 2, nrows=2)
+    for i, fun in enumerate(__all2D__):
+        bound = np.array(functions.bounds[fun])
+        if len(bound) == 2:
+            xx, yy, x, z = eval_surf_2d(fun, bound, num=200)
+
+            ax[i // 2, i % 2].pcolormesh(xx, yy, z.reshape(len(xx), len(yy)),
+                                         cmap="rainbow")
+
+
 if __name__ == '__main__':
     from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-    a, p, r = run(fun, n0=10, budget=30, n_step=19)
-    add_to_benchmark(r)
+    for i in range(__n_sim__):
+        a, p, r = run(fun, n0=100, budget=150, n_step=10)
+        add_to_benchmark(r)
 
     bounds = np.array(functions.bounds[fun])
     xx, yy, x, z = eval_surf_2d(fun, bounds, num=200)
@@ -158,15 +182,7 @@ if __name__ == '__main__':
     # plot.scatter(x0[:, 0], x0[:, 1], c="k")
     # plot.scatter(passive_learner.result[1]["data"][0],
     #              passive_learner.result[1]["data"][1], c="k", marker="+")
-
-    evaluate(
-        true_function=fun,
-        learned_surface=a.surface,
-        bounds=list(bounds),
-        num_mc=100000, l=2)
-    evaluate(
-        true_function=fun,
-        learned_surface=p.surface,
-        bounds=list(bounds),
-        num_mc=100000, l=2)
-
+    print(
+        f"passive performance : {evaluate(fun, p.surface, bounds, num_mc=10000)}"
+        "\n"
+        f"active  performance : {evaluate(fun, a.surface, bounds, num_mc=10000)}")
