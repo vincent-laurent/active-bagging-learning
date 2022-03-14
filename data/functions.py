@@ -8,6 +8,20 @@ def check_2d(x: np.ndarray):
         raise ValueError("fail to understand input data")
 
 
+def marelli_2018(x):
+    x_ = np.array(x)
+    check_2d(x_)
+    x1, x2 = x_[:, 0], x_[:, 1]
+    a1 = 3 + 0.1*(x1 + x2)**2 - (x1 + x2)/np.sqrt(2)
+    a2 = 3 + 0.1*(x1 + x2)**2 + (x1 + x2)/np.sqrt(2)
+    a3 = (x1 - x2) + 6/np.sqrt(2)
+    a4 = (x2 - x1) + 6/np.sqrt(2)
+    g = a1
+    for a in [a2, a3, a4]:
+        g = np.where(a<g, a, g)
+    return x_
+
+
 def annie_sauer_2021(x: iter):
     """
     f (x) =
@@ -99,6 +113,31 @@ bounds = {
     himmelblau_rand: [[-5, 5], [-5, 5]],
     synthetic_2d_1: [[0, 10], [0, 10]],
     synthetic_2d_2: [[0, 10], [0, 10]],
+    marelli_2018: [[0, 1], [0, 1]]
+}
+
+
+budget_parameters = {
+    "grammacy_lee_2009": {
+        "fun": grammacy_lee_2009, 'n0': 50, "budget": 60, "n_step": 10},
+    "grammacy_lee_2009_rand": {
+        "fun": grammacy_lee_2009_rand,'n0': 60, "budget": 70, "n_step": 10},
+    "golden_price": {
+        "fun": golden_price,'n0': 50, "budget": 60, "n_step": 10},
+    "golden_price_rand": {
+        "fun": golden_price_rand,'n0': 50, "budget": 60, "n_step": 10},
+    "branin": {
+        "fun": branin,'n0': 50, "budget": 60, "n_step": 10},
+    "branin_rand": {
+        "fun": branin_rand,'n0': 50, "budget": 60, "n_step": 10},
+    "himmelblau": {
+        "fun": himmelblau,'n0': 50, "budget": 60, "n_step": 10},
+    "himmelblau_rand": {
+        "fun": himmelblau_rand,'n0': 50, "budget": 60, "n_step": 10},
+    "synthetic_2d_1": {
+        "fun": synthetic_2d_1,'n0': 50, "budget": 60, "n_step": 10},
+    "synthetic_2d_2": {
+        "fun": synthetic_2d_2,'n0': 100, "budget": 120, "n_step": 10},
 }
 
 __all__ = [
@@ -107,8 +146,9 @@ __all__ = [
 
 __all2D__ = [
     grammacy_lee_2009_rand, branin_rand, himmelblau_rand, golden_price_rand,
-    synthetic_2d_1, synthetic_2d_2
+    synthetic_2d_1, synthetic_2d_2, marelli_2018
 ]
+
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plot
@@ -121,9 +161,9 @@ if __name__ == '__main__':
         if len(bounds_) == 2:
             xx = np.linspace(bounds_[0, 0], bounds_[0, 1], num=200)
             yy = np.linspace(bounds_[1, 0], bounds_[1, 1], num=200)
-            x, y = np.meshgrid(xx, yy)
-            x = pd.DataFrame(dict(x0=x.ravel(), x1=y.ravel()))
-            z = fun(x.values)
+            x_, y = np.meshgrid(xx, yy)
+            x = pd.DataFrame(dict(x0=x_.ravel(), x1=y.ravel()))
+            z = fun(x_.values)
 
             ax[i % 2, i // 2].pcolormesh(xx, yy, z.reshape(len(xx), len(yy)),
                                          cmap="rainbow")

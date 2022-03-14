@@ -15,9 +15,9 @@ from sampling import latin_square
 
 functions_ = list(functions.bounds.keys())
 
-name = "synthetic_2d_2"
+name = "grammacy_lee_2009_rand"
 fun = functions.__dict__[name]
-__n_sim__ = 1
+
 estimator_parameters = {
     0: dict(base_estimator=SVR(kernel="rbf", C=100, gamma="scale",
                                epsilon=0.1)),
@@ -29,7 +29,7 @@ estimator_parameters = {
 estimator = estimator_parameters[3]
 
 
-def run(fun, n0=10, budget=100, n_step=5):
+def run(fun, n0=10, budget=100, n_step=5, name=name):
     bounds = functions.bounds[fun]
     x0 = latin_square.iterative_sampler(x_limits=np.array(bounds), size=n0,
                                         batch_size=n0 // 2)
@@ -86,12 +86,14 @@ def run(fun, n0=10, budget=100, n_step=5):
     return active_learner, passive_learner, results
 
 
-def plot_results(path="benchmark/results.csv", n0=30, function=name):
+def plot_results(path="benchmark/results.csv", n0=100, function=name):
     import seaborn as sns
     df = pd.read_csv(path)
     df_select = df.query(f"n0=={n0} & function==@function")
     sns.lineplot(data=df_select, x="budget", y='error_l2_active')
     sns.lineplot(data=df_select, x="budget", y='error_l2_passive')
+    plot.ylabel("$||f - f^2||$")
+    plot.xlabel("Number of training points")
 
 
 def add_to_benchmark(data: pd.DataFrame, path="benchmark/results.csv"):
@@ -115,74 +117,41 @@ def plot_all_benchmark_function():
                                          cmap="rainbow")
 
 
+def clear_benchmark_data(path="benchmark/results.csv", function=name):
+    df = pd.read_csv(path)
+    df_select = df.query(f"function==@function")
+    df.drop(df_select.index).to_csv(path)
+
+
+def run_whole_analysis():
+    from data.functions import budget_parameters
+    functions__ = list(budget_parameters.keys())
+    for f in functions__:
+        print(f)
+        for n in range(10):
+            _, _, r = run(**budget_parameters[f], name=f)
+            add_to_benchmark(r)
+
+
+def plot_benchmark_whole_analysis() -> None:
+    from data.functions import budget_parameters
+    functions__ = list(budget_parameters.keys())
+    fig, ax = plot.subplots(figsize=(12, 6), ncols=len(functions__) // 2,
+                            nrows=2
+                            )
+    for i, f in enumerate(functions__):
+        print(f)
+        ax_ = ax[i % 2, i // 2]
+
+        plot.sca(ax_)
+        plot_results(function=f, n0=budget_parameters[f]["n0"])
+        ax_.set_ylabel("$L_2$ error") if i // 2 == 0 else ax_.set_ylabel("")
+        plot.yticks(c="w")
+        plot.xlabel(f)
+        ax_.axes.yaxis.set_ticklabels([])
+    plot.savefig("benchmark/active_passive.png")
+
+
 if __name__ == '__main__':
-    from mpl_toolkits.axes_grid1 import make_axes_locatable
-
-    for i in range(__n_sim__):
-        a, p, r = run(fun, n0=100, budget=150, n_step=10)
-        add_to_benchmark(r)
-
-    bounds = np.array(functions.bounds[fun])
-    xx, yy, x, z = eval_surf_2d(fun, bounds, num=200)
-
-    # X = active_learner.result[n_step + 1]["data"]
-    X = a.x_input
-    prediction = a.surface
-    coverage = a.coverage
-
-    zz = prediction(x)
-    zzz = p.surface(x)
-    std = coverage(x)
-
-    fig, ax = plot.subplots(ncols=2)
-    sa = ((zz.ravel() - z).reshape(len(xx), len(yy))) ** 2
-    sp = ((zzz.ravel() - z).reshape(len(xx), len(yy))) ** 2
-
-    im = ax[0].pcolormesh(xx, yy, sa,
-                          cmap="GnBu", vmin=sa.min(), vmax=sp.max())
-    im = ax[1].pcolormesh(xx, yy, sp,
-                          cmap="GnBu", vmin=sa.min(), vmax=sp.max())
-
-    divider = make_axes_locatable(ax[1])
-    cax = divider.append_axes("right", size="5%", pad=0.05)
-
-    plot.colorbar(im, cax=cax)
-    ax[0].set_title("Estimation error $\hat{f}_{active} - f $")
-    ax[1].set_title("Estimation error $\hat{f}_{passive} - f $")
-
-    plot.figure()
-    plot.pcolormesh(xx, yy, std.reshape(len(xx), len(yy)), cmap="rainbow")
-    plot.colorbar()
-    plot.title("Estimation error $\sigma(\hat{f})$")
-
-    plot.figure()
-    plot.pcolormesh(xx, yy, std.reshape(len(xx), len(yy)), cmap="rainbow")
-    x_new = a.unscale_x(a.x_new)
-    plot.scatter(x_new[0], x_new[1], c="k")
-    plot.scatter(X[0], X[1], c="b")
-
-    plot.figure()
-    std_ = std.reshape(len(xx), len(yy))[len(yy) // 2]
-    pred = zz.reshape(len(xx), len(yy))[len(yy) // 2]
-    f = z.reshape(len(xx), len(yy))[len(yy) // 2]
-    fp = zzz.reshape(len(xx), len(yy))[len(yy) // 2]
-
-    plot.plot(yy, pred)
-    plot.fill_between(yy, pred, pred + std_, color="b", alpha=0.1)
-    plot.fill_between(yy, pred - std_, pred, color="b", alpha=0.1)
-    plot.plot(yy, f, label="true function")
-    plot.plot(yy, fp, label="passive")
-    plot.legend()
-
-    plot.figure()
-    plot.contour(xx, yy, z.reshape(len(xx), len(yy)), levels=10, linewidths=0.3,
-                 colors='k')
-    x_new = a.scaling_method.transform(a.x_new)
-    plot.scatter(X[0], X[1], cmap="rainbow", c=X.index)
-    # plot.scatter(x0[:, 0], x0[:, 1], c="k")
-    # plot.scatter(passive_learner.result[1]["data"][0],
-    #              passive_learner.result[1]["data"][1], c="k", marker="+")
-    print(
-        f"passive performance : {evaluate(fun, p.surface, bounds, num_mc=10000)}"
-        "\n"
-        f"active  performance : {evaluate(fun, a.surface, bounds, num_mc=10000)}")
+    # run_whole_analysis()
+    plot_all_benchmark_function()

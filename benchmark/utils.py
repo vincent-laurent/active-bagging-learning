@@ -7,9 +7,11 @@ def integrate(f: callable, bounds: iter, num_mc=int(1E6)):
     sampling = np.random.uniform(size=num_mc * len(bounds)).reshape(
         -1, len(bounds)
     )
+    vol = 1
     for i, (min_, max_) in enumerate(bounds):
-        sampling[i] = sampling[i] * (max_ - min_) + min_
-    return np.sum(f(sampling)) / len(sampling)
+        sampling[:, i] = sampling[:, i] * (max_ - min_) + min_
+        vol *= (max_ - min_)
+    return np.sum(f(sampling)) / len(sampling) *vol
 
 
 def evaluate(true_function, learned_surface, bounds, num_mc=int(1E6), l=2):
@@ -34,9 +36,10 @@ if __name__ == '__main__':
 
 
     def learned_surface(x):
-        return 1*np.ones_like(x[:, 0])
+        return 1.1*np.ones_like(x[:, 0])
 
 
     bounds = [[0, 5], [0, 1]]
-    a = evaluate(true_function, learned_surface, bounds)
+    a = evaluate(true_function, learned_surface, bounds, l=1)
     print(a)
+    integrate(learned_surface, bounds)
