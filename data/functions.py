@@ -18,8 +18,10 @@ def marelli_2018(x):
     a4 = (x2 - x1) + 6/np.sqrt(2)
     g = a1
     for a in [a2, a3, a4]:
-        g = np.where(a<g, a, g)
-    return x_
+        g = np.where(a < g, a, g)
+
+    g = np.where(g <= 0, 1, 0)
+    return g
 
 
 def annie_sauer_2021(x: iter):
@@ -113,7 +115,7 @@ bounds = {
     himmelblau_rand: [[-5, 5], [-5, 5]],
     synthetic_2d_1: [[0, 10], [0, 10]],
     synthetic_2d_2: [[0, 10], [0, 10]],
-    marelli_2018: [[0, 1], [0, 1]]
+    marelli_2018: [[-5, 5], [-6, 6]]
 }
 
 
@@ -138,6 +140,8 @@ budget_parameters = {
         "fun": synthetic_2d_1,'n0': 50, "budget": 60, "n_step": 10},
     "synthetic_2d_2": {
         "fun": synthetic_2d_2,'n0': 100, "budget": 120, "n_step": 10},
+    "marelli_2018": {
+        "fun": marelli_2018, 'n0': 30, "budget": 330, "n_step": 300}
 }
 
 __all__ = [

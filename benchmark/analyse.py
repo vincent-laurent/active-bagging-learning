@@ -1,15 +1,33 @@
-import matplotlib.pyplot as plot
-import numpy as np
-import pandas as pd
-
 from benchmark.naive import add_to_benchmark, run, plot_results
-from benchmark.utils import evaluate, eval_surf_2d
 from data import functions
 
 functions_ = list(functions.bounds.keys())
-__n_sim__ = 20
-name = "grammacy_lee_2009_rand"
+__n_sim__ = 1
+name = "marelli_2018"
 fun = functions.__dict__[name]
+
+import matplotlib.pyplot as plot
+import numpy as np
+import pandas as pd
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.model_selection import ShuffleSplit
+from sklearn.svm import SVR
+
+from benchmark.utils import evaluate, eval_surf_2d
+from data import functions
+from models.smt_api import SurrogateKRG
+
+
+estimator_parameters = {
+    0: dict(base_estimator=SVR(kernel="rbf", C=100, gamma="scale",
+                               epsilon=0.1)),
+    1: dict(base_estimator=GaussianProcessRegressor()),
+    2: dict(base_estimator=RandomForestRegressor(n_estimators=5,
+                                                 min_samples_leaf=1)),
+    3: dict(base_estimator=SurrogateKRG(), splitter=ShuffleSplit(n_splits=2))
+}
+estimator = estimator_parameters[3]
 
 
 def analyse_results(path):
@@ -22,12 +40,12 @@ if __name__ == '__main__':
 
     from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-    n0 = 60
-    n_step = 10
+    n0 = 30
+    n_step = 300
     budget = n0 + n_step
     a, p, r = None, None, None
     for i in range(__n_sim__):
-        a, p, r = run(fun, n0=n0, budget=budget, n_step=n_step)
+        a, p, r = run(fun, n0=n0, name="marelli_2018", budget=budget, n_step=n_step, estimator=estimator_parameters[2])
         add_to_benchmark(r)
 
     bounds = np.array(functions.bounds[fun])

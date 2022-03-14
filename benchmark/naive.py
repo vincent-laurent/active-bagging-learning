@@ -29,7 +29,7 @@ estimator_parameters = {
 estimator = estimator_parameters[3]
 
 
-def run(fun, n0=10, budget=100, n_step=5, name=name):
+def run(fun, n0=10, budget=100, n_step=5, name=name, estimator=estimator):
     bounds = functions.bounds[fun]
     x0 = latin_square.iterative_sampler(x_limits=np.array(bounds), size=n0,
                                         batch_size=n0 // 2)
@@ -106,14 +106,17 @@ def add_to_benchmark(data: pd.DataFrame, path="benchmark/results.csv"):
 
 
 def plot_all_benchmark_function():
-    from data.functions import __all2D__
-    fig, ax = plot.subplots(ncols=len(__all2D__) // 2, nrows=2)
-    for i, fun in enumerate(__all2D__):
-        bound = np.array(functions.bounds[fun])
+    from data.functions import budget_parameters
+    functions_ = list(budget_parameters.keys())
+    fig, ax = plot.subplots(ncols=len(functions_) // 2 + len(functions_) % 2,
+                            nrows=2)
+    for i, fun in enumerate(functions_):
+        f = budget_parameters[fun]["fun"]
+        bound = np.array(functions.bounds[f])
         if len(bound) == 2:
-            xx, yy, x, z = eval_surf_2d(fun, bound, num=200)
+            xx, yy, x, z = eval_surf_2d(f, bound, num=200)
 
-            ax[i // 2, i % 2].pcolormesh(xx, yy, z.reshape(len(xx), len(yy)),
+            ax[i % 2, i // 2].pcolormesh(xx, yy, z.reshape(len(xx), len(yy)),
                                          cmap="rainbow")
 
 
@@ -136,9 +139,11 @@ def run_whole_analysis():
 def plot_benchmark_whole_analysis() -> None:
     from data.functions import budget_parameters
     functions__ = list(budget_parameters.keys())
-    fig, ax = plot.subplots(figsize=(12, 6), ncols=len(functions__) // 2,
-                            nrows=2
-                            )
+    fig, ax = plot.subplots(
+        figsize=(12, 6),
+        ncols=len(functions__) // 2 + len(functions__) % 2,
+        nrows=2
+    )
     for i, f in enumerate(functions__):
         print(f)
         ax_ = ax[i % 2, i // 2]
@@ -155,3 +160,4 @@ def plot_benchmark_whole_analysis() -> None:
 if __name__ == '__main__':
     # run_whole_analysis()
     plot_all_benchmark_function()
+    plot_benchmark_whole_analysis()
