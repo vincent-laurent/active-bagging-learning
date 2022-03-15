@@ -107,17 +107,23 @@ def add_to_benchmark(data: pd.DataFrame, path="benchmark/results.csv"):
 
 def plot_all_benchmark_function():
     from data.functions import budget_parameters
-    functions_ = list(budget_parameters.keys())
+    functions__ = list(budget_parameters.keys())
     fig, ax = plot.subplots(ncols=len(functions_) // 2 + len(functions_) % 2,
                             nrows=2)
-    for i, fun in enumerate(functions_):
+    for i, fun in enumerate(functions__):
         f = budget_parameters[fun]["fun"]
         bound = np.array(functions.bounds[f])
         if len(bound) == 2:
+            ax_ =  ax[i % 2, i // 2]
             xx, yy, x, z = eval_surf_2d(f, bound, num=200)
 
-            ax[i % 2, i // 2].pcolormesh(xx, yy, z.reshape(len(xx), len(yy)),
-                                         cmap="rainbow")
+            ax_.pcolormesh(xx, yy, z.reshape(len(xx), len(yy)),
+                                         cmap="RdBu")
+
+            ax_.axes.yaxis.set_ticklabels([])
+            ax_.axes.xaxis.set_ticklabels([])
+    if len(functions__) % 2 == 1:
+        ax[(i + 1) % 2, (i + 1) // 2].axes.remove()
 
 
 def clear_benchmark_data(path="benchmark/results.csv", function=name):
@@ -140,7 +146,7 @@ def plot_benchmark_whole_analysis() -> None:
     from data.functions import budget_parameters
     functions__ = list(budget_parameters.keys())
     fig, ax = plot.subplots(
-        figsize=(12, 6),
+        figsize=(12, 7),
         ncols=len(functions__) // 2 + len(functions__) % 2,
         nrows=2
     )
@@ -154,6 +160,8 @@ def plot_benchmark_whole_analysis() -> None:
         plot.yticks(c="w")
         plot.xlabel(f)
         ax_.axes.yaxis.set_ticklabels([])
+    if len(functions__) % 2 == 1:
+        ax[(i + 1) % 2, (i + 1) // 2].axes.remove()
     plot.savefig("benchmark/active_passive.png")
 
 

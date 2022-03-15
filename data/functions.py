@@ -8,14 +8,14 @@ def check_2d(x: np.ndarray):
         raise ValueError("fail to understand input data")
 
 
-def marelli_2018(x):
+def marelli_2018(x: typing.Iterable[typing.Iterable]):
     x_ = np.array(x)
     check_2d(x_)
     x1, x2 = x_[:, 0], x_[:, 1]
-    a1 = 3 + 0.1*(x1 + x2)**2 - (x1 + x2)/np.sqrt(2)
-    a2 = 3 + 0.1*(x1 + x2)**2 + (x1 + x2)/np.sqrt(2)
-    a3 = (x1 - x2) + 6/np.sqrt(2)
-    a4 = (x2 - x1) + 6/np.sqrt(2)
+    a1 = 3 + 0.1 * (x1 + x2) ** 2 - (x1 + x2) / np.sqrt(2)
+    a2 = 3 + 0.1 * (x1 + x2) ** 2 + (x1 + x2) / np.sqrt(2)
+    a3 = (x1 - x2) + 6 / np.sqrt(2)
+    a4 = (x2 - x1) + 6 / np.sqrt(2)
     g = a1
     for a in [a2, a3, a4]:
         g = np.where(a < g, a, g)
@@ -24,19 +24,19 @@ def marelli_2018(x):
     return g
 
 
-def annie_sauer_2021(x: iter):
+def annie_sauer_2021(x: typing.Iterable[typing.Iterable]):
     """
     f (x) =
     - 1.35 cos(12πx) x ∈ [0, 0.33]
     - 1.35 x ∈ [0.33, 0.66]
     - 1.35 cos(6πx) x ∈ [0.66, 1].
     """
-    x = np.array(x)
-    y = np.where(x < 0, np.nan, x)
-    y = np.where(x < 0.33, 1.35 * np.cos(12 * np.pi * x), y)
-    y = np.where(x < 0.66, 1.35, y)
-    y = np.where(x <= 1, 1.35 * np.cos(6 * np.pi * x), y)
-    y = np.where(x > 1, np.nan, y)
+    x_ = np.array(x)
+    y = np.where(x_ < 0, np.nan, x_)
+    y = np.where(x_ < 0.33, 1.35 * np.cos(12 * np.pi * x_), y)
+    y = np.where(x_ < 0.66, 1.35, y)
+    y = np.where(x_ <= 1, 1.35 * np.cos(6 * np.pi * x_), y)
+    y = np.where(x_ > 1, np.nan, y)
     return y
 
 
@@ -45,7 +45,7 @@ def grammacy_lee_2009(x: typing.Iterable[typing.Iterable]):
 
     x_ = np.array(x)
 
-    check_2d(x)
+    check_2d(x_)
 
     x_square = x_ ** 2
     return 10 * x_[:, 0] * np.exp(-x_square[:, 0] - x_square[:, 1])
@@ -82,13 +82,13 @@ def golden_price(x):
 def synthetic_2d_1(x):
     x_ = np.array(x)
     check_2d(x)
-    return (x_[:, 0] * np.sin(x_[:, 0]) * np.cos(x_[:, 1]) - x_[:, 1])/10
+    return (x_[:, 0] * np.sin(x_[:, 0]) * np.cos(x_[:, 1]) - x_[:, 1]) / 10
 
 
 def synthetic_2d_2(x):
     x_ = np.array(x)
     check_2d(x)
-    return synthetic_2d_1(x_)*annie_sauer_2021(x_[:, 1]/10)
+    return synthetic_2d_1(x_) * annie_sauer_2021(x_[:, 1] / 10)
 
 
 def perturbate(function):
@@ -118,28 +118,27 @@ bounds = {
     marelli_2018: [[-5, 5], [-6, 6]]
 }
 
-
 budget_parameters = {
     "grammacy_lee_2009": {
         "fun": grammacy_lee_2009, 'n0': 50, "budget": 60, "n_step": 10},
     "grammacy_lee_2009_rand": {
-        "fun": grammacy_lee_2009_rand,'n0': 60, "budget": 70, "n_step": 10},
+        "fun": grammacy_lee_2009_rand, 'n0': 60, "budget": 70, "n_step": 10},
     "golden_price": {
-        "fun": golden_price,'n0': 50, "budget": 60, "n_step": 10},
+        "fun": golden_price, 'n0': 50, "budget": 60, "n_step": 10},
     "golden_price_rand": {
-        "fun": golden_price_rand,'n0': 50, "budget": 60, "n_step": 10},
+        "fun": golden_price_rand, 'n0': 50, "budget": 60, "n_step": 10},
     "branin": {
-        "fun": branin,'n0': 50, "budget": 60, "n_step": 10},
+        "fun": branin, 'n0': 50, "budget": 60, "n_step": 10},
     "branin_rand": {
-        "fun": branin_rand,'n0': 50, "budget": 60, "n_step": 10},
+        "fun": branin_rand, 'n0': 50, "budget": 60, "n_step": 10},
     "himmelblau": {
-        "fun": himmelblau,'n0': 50, "budget": 60, "n_step": 10},
+        "fun": himmelblau, 'n0': 50, "budget": 60, "n_step": 10},
     "himmelblau_rand": {
-        "fun": himmelblau_rand,'n0': 50, "budget": 60, "n_step": 10},
+        "fun": himmelblau_rand, 'n0': 50, "budget": 60, "n_step": 10},
     "synthetic_2d_1": {
-        "fun": synthetic_2d_1,'n0': 50, "budget": 60, "n_step": 10},
+        "fun": synthetic_2d_1, 'n0': 50, "budget": 60, "n_step": 10},
     "synthetic_2d_2": {
-        "fun": synthetic_2d_2,'n0': 100, "budget": 120, "n_step": 10},
+        "fun": synthetic_2d_2, 'n0': 100, "budget": 120, "n_step": 10},
     "marelli_2018": {
         "fun": marelli_2018, 'n0': 30, "budget": 330, "n_step": 300}
 }
@@ -153,7 +152,6 @@ __all2D__ = [
     synthetic_2d_1, synthetic_2d_2, marelli_2018
 ]
 
-
 if __name__ == '__main__':
     import matplotlib.pyplot as plot
     import pandas as pd
@@ -163,11 +161,11 @@ if __name__ == '__main__':
     for i, fun in enumerate(__all2D__):
         bounds_ = np.array(bounds[fun])
         if len(bounds_) == 2:
-            xx = np.linspace(bounds_[0, 0], bounds_[0, 1], num=200)
-            yy = np.linspace(bounds_[1, 0], bounds_[1, 1], num=200)
-            x_, y = np.meshgrid(xx, yy)
-            x = pd.DataFrame(dict(x0=x_.ravel(), x1=y.ravel()))
-            z = fun(x_.values)
+            xxx = np.linspace(bounds_[0, 0], bounds_[0, 1], num=200)
+            yyy = np.linspace(bounds_[1, 0], bounds_[1, 1], num=200)
+            x__, y__ = np.meshgrid(xxx, yyy)
+            x__ = pd.DataFrame(dict(x0=x__.ravel(), x1=y__.ravel()))
+            z = fun(x__.values)
 
-            ax[i % 2, i // 2].pcolormesh(xx, yy, z.reshape(len(xx), len(yy)),
+            ax[i % 2, i // 2].pcolormesh(xxx, yyy, z.reshape(len(xxx), len(yyy)),
                                          cmap="rainbow")
