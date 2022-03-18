@@ -11,14 +11,14 @@ def integrate(f: callable, bounds: iter, num_mc=int(1E6)):
     for i, (min_, max_) in enumerate(bounds):
         sampling[:, i] = sampling[:, i] * (max_ - min_) + min_
         vol *= (max_ - min_)
-    return np.sum(f(sampling)) / len(sampling) *vol
+    return np.sum(f(sampling)) / len(sampling) * vol
 
 
 def evaluate(true_function, learned_surface, bounds, num_mc=int(1E6), l=2):
     def f(x):
         return np.abs(np.ravel(true_function(x)) - np.ravel(learned_surface(x))) ** l
 
-    return integrate(f, bounds, num_mc) ** (1/l)
+    return integrate(f, bounds, num_mc) ** (1 / l)
 
 
 def eval_surf_2d(fun, bounds, num=200):
@@ -30,16 +30,15 @@ def eval_surf_2d(fun, bounds, num=200):
     return xx, yy, x, z
 
 
-if __name__ == '__main__':
+def test_evaluate():
     def true_function(x):
         return np.ones_like(x[:, 0])
 
-
     def learned_surface(x):
-        return 1.1*np.ones_like(x[:, 0])
-
+        return 1.1 * np.ones_like(x[:, 0])
 
     bounds = [[0, 5], [0, 1]]
     a = evaluate(true_function, learned_surface, bounds, l=1)
-    print(a)
-    integrate(learned_surface, bounds)
+    print(abs(a - 0.5)*1e15)
+    assert abs(a - 0.5) < 1e-15
+
