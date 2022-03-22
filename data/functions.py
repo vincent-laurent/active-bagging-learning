@@ -123,10 +123,8 @@ budget_parameters = {
         "fun": grammacy_lee_2009, 'n0': 50, "budget": 60, "n_step": 10},
     "grammacy_lee_2009_rand": {
         "fun": grammacy_lee_2009_rand, 'n0': 60, "budget": 70, "n_step": 10},
-    "golden_price": {
-        "fun": golden_price, 'n0': 50, "budget": 60, "n_step": 10},
-    "golden_price_rand": {
-        "fun": golden_price_rand, 'n0': 50, "budget": 60, "n_step": 10},
+    # "golden_price_rand": {
+    #     "fun": golden_price_rand, 'n0': 50, "budget": 60, "n_step": 10},
     "branin": {
         "fun": branin, 'n0': 50, "budget": 60, "n_step": 10},
     "branin_rand": {
@@ -135,12 +133,14 @@ budget_parameters = {
         "fun": himmelblau, 'n0': 50, "budget": 60, "n_step": 10},
     "himmelblau_rand": {
         "fun": himmelblau_rand, 'n0': 50, "budget": 60, "n_step": 10},
+    "golden_price": {
+        "fun": golden_price, 'n0': 50, "budget": 60, "n_step": 10},
+    "marelli_2018": {
+        "fun": marelli_2018, 'n0': 30, "budget": 330, "n_step": 300},
     "synthetic_2d_1": {
         "fun": synthetic_2d_1, 'n0': 50, "budget": 60, "n_step": 10},
     "synthetic_2d_2": {
         "fun": synthetic_2d_2, 'n0': 100, "budget": 120, "n_step": 10},
-    "marelli_2018": {
-        "fun": marelli_2018, 'n0': 30, "budget": 330, "n_step": 300}
 }
 
 __all__ = [

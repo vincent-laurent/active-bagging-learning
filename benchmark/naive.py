@@ -12,7 +12,7 @@ from benchmark.utils import evaluate, eval_surf_2d
 from data import functions
 from models.smt_api import SurrogateKRG
 from sampling import latin_square
-
+from sklearn.gaussian_process.kernels import RBF, WhiteKernel
 functions_ = list(functions.bounds.keys())
 
 name = "grammacy_lee_2009_rand"
@@ -21,7 +21,7 @@ fun = functions.__dict__[name]
 estimator_parameters = {
     0: dict(base_estimator=SVR(kernel="rbf", C=100, gamma="scale",
                                epsilon=0.1)),
-    1: dict(base_estimator=GaussianProcessRegressor()),
+    1: dict(base_estimator=GaussianProcessRegressor(kernel=RBF(length_scale=0.1))),
     2: dict(base_estimator=RandomForestRegressor(n_estimators=5,
                                                  min_samples_leaf=3)),
     3: dict(base_estimator=SurrogateKRG(), splitter=ShuffleSplit(n_splits=2))
@@ -90,8 +90,8 @@ def plot_results(path="benchmark/results.csv", n0=100, function=name):
     import seaborn as sns
     df = pd.read_csv(path)
     df_select = df.query(f"n0=={n0} & function==@function")
-    sns.lineplot(data=df_select, x="budget", y='error_l2_active')
-    sns.lineplot(data=df_select, x="budget", y='error_l2_passive')
+    sns.lineplot(data=df_select, x="budget", y='error_l2_active', label="Active")
+    sns.lineplot(data=df_select, x="budget", y='error_l2_passive', label="Passive")
     plot.ylabel("$||f - f^2||$")
     plot.xlabel("Number of training points")
 
@@ -108,8 +108,8 @@ def add_to_benchmark(data: pd.DataFrame, path="benchmark/results.csv"):
 def plot_all_benchmark_function():
     from data.functions import budget_parameters
     functions__ = list(budget_parameters.keys())
-    fig, ax = plot.subplots(ncols=len(functions_) // 2 + len(functions_) % 2,
-                            nrows=2)
+    fig, ax = plot.subplots(ncols=len(functions__) // 2 + len(functions__) % 2,
+                            nrows=2, figsize=(len(functions_)*0.7, 3), dpi=200)
     for i, fun in enumerate(functions__):
         f = budget_parameters[fun]["fun"]
         bound = np.array(functions.bounds[f])
@@ -124,6 +124,7 @@ def plot_all_benchmark_function():
             ax_.axes.xaxis.set_ticklabels([])
     if len(functions__) % 2 == 1:
         ax[(i + 1) % 2, (i + 1) // 2].axes.remove()
+    plot.savefig("benchmark/functions.png")
 
 
 def clear_benchmark_data(path="benchmark/results.csv", function=name):
@@ -145,10 +146,8 @@ def run_whole_analysis():
 def plot_benchmark_whole_analysis() -> None:
     from data.functions import budget_parameters
     functions__ = list(budget_parameters.keys())
-    fig, ax = plot.subplots(
-        figsize=(12, 7),
-        ncols=len(functions__) // 2 + len(functions__) % 2,
-        nrows=2
+    fig, ax = plot.subplots(ncols=len(functions__) // 2 + len(functions__) % 2,
+                            nrows=2, figsize=(len(functions_)*0.7, 3.5), dpi=200
     )
     for i, f in enumerate(functions__):
         print(f)
@@ -158,10 +157,13 @@ def plot_benchmark_whole_analysis() -> None:
         plot_results(function=f, n0=budget_parameters[f]["n0"])
         ax_.set_ylabel("$L_2$ error") if i // 2 == 0 else ax_.set_ylabel("")
         plot.yticks(c="w")
-        plot.xlabel(f)
+        plot.xlabel("")
         ax_.axes.yaxis.set_ticklabels([])
+        ax_.get_legend().remove()
     if len(functions__) % 2 == 1:
         ax[(i + 1) % 2, (i + 1) // 2].axes.remove()
+    ax_.legend()
+
     plot.savefig("benchmark/active_passive.png")
 
 
@@ -169,3 +171,7 @@ if __name__ == '__main__':
     # run_whole_analysis()
     plot_all_benchmark_function()
     plot_benchmark_whole_analysis()
+
+    # clear_benchmark_data(function="golden_price_rand")
+    # clear_benchmark_data(function="branin_rand")
+    # clear_benchmark_data(function="himmelblau_rand")

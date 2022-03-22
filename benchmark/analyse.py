@@ -1,11 +1,3 @@
-from benchmark.naive import add_to_benchmark, run, plot_results
-from data import functions
-
-functions_ = list(functions.bounds.keys())
-__n_sim__ = 1
-name = "marelli_2018"
-fun = functions.__dict__[name]
-
 import matplotlib.pyplot as plot
 import numpy as np
 import pandas as pd
@@ -14,20 +6,27 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.model_selection import ShuffleSplit
 from sklearn.svm import SVR
 
+from benchmark.naive import add_to_benchmark, run, plot_results
 from benchmark.utils import evaluate, eval_surf_2d
 from data import functions
 from models.smt_api import SurrogateKRG
+from sklearn.gaussian_process.kernels import RBF, WhiteKernel
+functions_ = list(functions.bounds.keys())
+__n_sim__ = 1
+name = "marelli_2018"
+fun = functions.__dict__[name]
+
 
 
 estimator_parameters = {
     0: dict(base_estimator=SVR(kernel="rbf", C=100, gamma="scale",
                                epsilon=0.1)),
-    1: dict(base_estimator=GaussianProcessRegressor()),
+    1: dict(base_estimator=GaussianProcessRegressor(kernel=RBF(length_scale=0.012))),
     2: dict(base_estimator=RandomForestRegressor(n_estimators=5,
                                                  min_samples_leaf=1)),
-    3: dict(base_estimator=SurrogateKRG(), splitter=ShuffleSplit(n_splits=2))
+3: dict(base_estimator=SurrogateKRG(), splitter=ShuffleSplit(n_splits=2))
 }
-estimator = estimator_parameters[3]
+estimator = estimator_parameters[2]
 
 
 def analyse_results(path):
@@ -40,12 +39,12 @@ if __name__ == '__main__':
 
     from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-    n0 = 30
-    n_step = 300
+    n0 = 31
+    n_step = 200
     budget = n0 + n_step
     a, p, r = None, None, None
     for i in range(__n_sim__):
-        a, p, r = run(fun, n0=n0, name="marelli_2018", budget=budget, n_step=n_step, estimator=estimator_parameters[2])
+        a, p, r = run(fun, n0=n0, name=name, budget=budget, n_step=n_step, estimator=estimator_parameters[2])
         add_to_benchmark(r)
 
     bounds = np.array(functions.bounds[fun])
@@ -100,7 +99,7 @@ if __name__ == '__main__':
     plot.plot(yy, fp, label="passive")
     plot.legend()
 
-    plot.figure()
+    plot.figure(figsize=(4, 4), dpi=200)
     plot.contour(xx, yy, z.reshape(len(xx), len(yy)), levels=10, linewidths=0.3,
                  colors='k')
     x_new = a.scaling_method.transform(a.x_new)
@@ -113,6 +112,8 @@ if __name__ == '__main__':
     print(
         f"passive performance : {eval_p}\n"
         f"active  performance : {eval_a}")
+    plot.tight_layout()
+    plot.savefig(f"benchmark/sampling_example_function_{name}.png")
 
     plot.figure()
     plot_results(n0=n0, function=name)
