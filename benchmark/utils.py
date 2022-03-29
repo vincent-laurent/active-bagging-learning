@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plot
 
 
 def integrate(f: callable, bounds: iter, num_mc=int(1E6)):
@@ -39,6 +38,5 @@ def test_evaluate():
 
     bounds = [[0, 5], [0, 1]]
     a = evaluate(true_function, learned_surface, bounds, l=1)
-    print(abs(a - 0.5)*1e15)
+    print(abs(a - 0.5) * 1e15)
     assert abs(a - 0.5) < 1e-15
-

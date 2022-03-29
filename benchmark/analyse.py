@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import RBF
 from sklearn.model_selection import ShuffleSplit
 from sklearn.svm import SVR
 
@@ -10,13 +11,11 @@ from benchmark.naive import add_to_benchmark, run, plot_results
 from benchmark.utils import evaluate, eval_surf_2d
 from data import functions
 from models.smt_api import SurrogateKRG
-from sklearn.gaussian_process.kernels import RBF, WhiteKernel
+
 functions_ = list(functions.bounds.keys())
 __n_sim__ = 1
-name = "marelli_2018"
+name = "grammacy_lee_2009_rand"
 fun = functions.__dict__[name]
-
-
 
 estimator_parameters = {
     0: dict(base_estimator=SVR(kernel="rbf", C=100, gamma="scale",
@@ -24,9 +23,9 @@ estimator_parameters = {
     1: dict(base_estimator=GaussianProcessRegressor(kernel=RBF(length_scale=0.012))),
     2: dict(base_estimator=RandomForestRegressor(n_estimators=5,
                                                  min_samples_leaf=1)),
-3: dict(base_estimator=SurrogateKRG(), splitter=ShuffleSplit(n_splits=2))
+    3: dict(base_estimator=SurrogateKRG(), splitter=ShuffleSplit(n_splits=2))
 }
-estimator = estimator_parameters[2]
+estimator = estimator_parameters[3]
 
 
 def analyse_results(path):
@@ -39,12 +38,12 @@ if __name__ == '__main__':
 
     from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-    n0 = 31
-    n_step = 200
+    n0 = 41
+    n_step = 10
     budget = n0 + n_step
     a, p, r = None, None, None
     for i in range(__n_sim__):
-        a, p, r = run(fun, n0=n0, name=name, budget=budget, n_step=n_step, estimator=estimator_parameters[2])
+        a, p, r = run(fun, n0=n0, name=name, budget=budget, n_step=n_step, estimator=estimator_parameters[1])
         add_to_benchmark(r)
 
     bounds = np.array(functions.bounds[fun])
@@ -53,11 +52,11 @@ if __name__ == '__main__':
     # X = active_learner.result[n_step + 1]["data"]
     X = a.x_input
     prediction = a.surface
-    coverage = a.coverage
+    active_criterion = a.active_criterion
 
     zz = prediction(x)
     zzz = p.surface(x)
-    std = coverage(x)
+    std = active_criterion(x)
 
     fig, ax = plot.subplots(ncols=2)
     sa = ((zz.ravel() - z).reshape(len(xx), len(yy))) ** 2
@@ -82,7 +81,7 @@ if __name__ == '__main__':
 
     plot.figure()
     plot.pcolormesh(xx, yy, std.reshape(len(xx), len(yy)), cmap="rainbow")
-    x_new = a.unscale_x(a.x_new)
+    x_new =a.x_new
     plot.scatter(x_new[0], x_new[1], c="k")
     plot.scatter(X[0], X[1], c="b")
 

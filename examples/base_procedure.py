@@ -6,7 +6,9 @@ from sklearn.model_selection import ShuffleSplit
 from data import functions
 from data.functions import bounds
 from models.smt_api import SurrogateKRG
-from base import ActiveSRLearner, estimate_variance, reject_on_bounds
+from base import ActiveSRLearner
+from components.active_criterion import estimate_variance
+from components.query_strategies import reject_on_bounds
 
 if __name__ == '__main__':
     fun = functions.grammacy_lee_2009
@@ -20,7 +22,7 @@ if __name__ == '__main__':
 
     plot.pcolormesh(xx, yy, z.reshape(len(xx), len(yy)), cmap="rainbow")
 
-    X = x.sample(n=12)
+    X = x.sample(n=20)
     y = -fun(X)
     active_learner = ActiveSRLearner(estimate_variance, reject_on_bounds, X,
                                      y,
@@ -32,10 +34,10 @@ if __name__ == '__main__':
                                      query_parameters=dict(
                                          batch_size=40,
                                      ))
-    x_new = active_learner.run(2)
+    x_new = active_learner.query(2)
 
     prediction = active_learner.surface
-    coverage = active_learner.coverage
+    coverage = active_learner.active_criterion
 
     zz = prediction(x).ravel()
     std = coverage(x).ravel()

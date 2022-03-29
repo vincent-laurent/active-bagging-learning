@@ -3,16 +3,18 @@ import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import RBF
 from sklearn.model_selection import ShuffleSplit
 from sklearn.svm import SVR
 
 import base
 import components.query_strategies as qs
 from benchmark.utils import evaluate, eval_surf_2d
+from components import active_criterion
 from data import functions
 from models.smt_api import SurrogateKRG
 from sampling import latin_square
-from sklearn.gaussian_process.kernels import RBF, WhiteKernel
+
 functions_ = list(functions.bounds.keys())
 
 name = "grammacy_lee_2009_rand"
@@ -40,7 +42,7 @@ def run(fun, n0=10, budget=100, n_step=5, name=name, estimator=estimator):
         estimator_parameters=estimator
     )
     active_learner = base.ActiveSRLearner(
-        base.estimate_variance,
+        active_criterion.estimate_variance,
         qs.reject_on_bounds,
         pd.DataFrame(x0),
         pd.DataFrame(fun(x0)), **args)
@@ -53,7 +55,7 @@ def run(fun, n0=10, budget=100, n_step=5, name=name, estimator=estimator):
         results.loc[step, "budget"] = b
         n_points = int((budget - n0) / n_step)
         print(active_learner.budget, n_points)
-        x_new = active_learner.run(n_points).drop_duplicates()
+        x_new = active_learner.query(n_points).drop_duplicates()
         y_new = pd.DataFrame(fun(x_new))
         active_learner.add_labels(x_new, y_new)
         active_learner.result[active_learner.iter]["error_l2"] = evaluate(
@@ -68,7 +70,7 @@ def run(fun, n0=10, budget=100, n_step=5, name=name, estimator=estimator):
             s, fun(s), **args
         )
 
-        passive_learner.run(1)
+        passive_learner.query(1)
         perf_passive.append(evaluate(
             fun,
             passive_learner.surface,
@@ -109,16 +111,16 @@ def plot_all_benchmark_function():
     from data.functions import budget_parameters
     functions__ = list(budget_parameters.keys())
     fig, ax = plot.subplots(ncols=len(functions__) // 2 + len(functions__) % 2,
-                            nrows=2, figsize=(len(functions_)*0.7, 3), dpi=200)
+                            nrows=2, figsize=(len(functions_) * 0.7, 3), dpi=200)
     for i, fun in enumerate(functions__):
         f = budget_parameters[fun]["fun"]
         bound = np.array(functions.bounds[f])
         if len(bound) == 2:
-            ax_ =  ax[i % 2, i // 2]
+            ax_ = ax[i % 2, i // 2]
             xx, yy, x, z = eval_surf_2d(f, bound, num=200)
 
             ax_.pcolormesh(xx, yy, z.reshape(len(xx), len(yy)),
-                                         cmap="RdBu")
+                           cmap="RdBu")
 
             ax_.axes.yaxis.set_ticklabels([])
             ax_.axes.xaxis.set_ticklabels([])
@@ -147,8 +149,8 @@ def plot_benchmark_whole_analysis() -> None:
     from data.functions import budget_parameters
     functions__ = list(budget_parameters.keys())
     fig, ax = plot.subplots(ncols=len(functions__) // 2 + len(functions__) % 2,
-                            nrows=2, figsize=(len(functions_)*0.7, 3.5), dpi=200
-    )
+                            nrows=2, figsize=(len(functions_) * 0.7, 3.5), dpi=200
+                            )
     for i, f in enumerate(functions__):
         print(f)
         ax_ = ax[i % 2, i // 2]
