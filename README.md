@@ -14,7 +14,7 @@ Plug in approach to active learning for surface response estimation
 
 * The objective is to approximate function $`f \in \mathcal{X} \rightarrow \mathbb{R}^n`$.
 * **Objective :** find an estimation of $`f`$, $`\hat{f}`$ in a family of measurable function $`\mathcal{F}`$ such that $` f^* = \underset{\hat{f} \in \mathcal{F}}{\text{argmin}} \|f - \hat{f} \| `$ 
-* At time $`t`$ we dispose of a set of $n$ evaluations $`(x_i, f(x_i))_{i\leqslant n}`$
+* At time $`t`$ we dispose of a set of $`n`$ evaluations $`(x_i, f(x_i))_{i\leqslant n}`$
 * All feasible points can be sampled, we assume having a implicitly defined domain $`\mathcal{X}`$
 
 ## Usage
@@ -26,7 +26,7 @@ import pandas as pd
 from sklearn.model_selection import ShuffleSplit
 
 import base
-import components.query_strategies as qs
+from components import query_strategies
 from components import active_criterion
 from data import functions
 from models.smt_api import SurrogateKRG
@@ -45,7 +45,7 @@ x0 = latin_square.iterative_sampler(    # Initiate distribution
 
 active_learner = base.ActiveSRLearner(
     active_criterion.estimate_variance,     # Active criterion as a surface
-    qs.reject_on_bounds,                    # Given active criterion surface, execute query 
+    query_strategies.reject_on_bounds,      # Given active criterion surface, execute query 
     pd.DataFrame(x0),                       # Input data X
     pd.DataFrame(fun(x0)),                  # Input data y (target)
     bounds=np.array(bounds),                # Bounds
@@ -54,11 +54,11 @@ x_new = active_learner.query(1)             # Request one point
 
 ```
 
-To use the script, one have to dispose of
+To use the approach, one have to dispose of
 
-1. Surface response estimator (linear model, gaussian vectors, etc.) in sklearn's API
-2. An active criterion surface estimator that will fit the estimator and estimate its variance in some way. 
-3. A resampling strategy that will take a function to optimize (the active criterion surface)
+1. Surface response estimator (linear model, gaussian vectors, etc.) in sklearn's API (`base_estimator` parameter)
+2. A surface describing an active learning criterion that will adjust the estimator and estimate its variance in some way (`active_criterion` component).
+3. A resampling strategy that will take a function (the active criterion surface) and makes it a query (`query_strategy` component).
 
 
 
