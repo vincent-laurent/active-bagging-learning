@@ -3,6 +3,7 @@
 ###### tags: `Surrogate Model` `Machine Learning`
 **Literature :**
 * **Review** [Simpson2001](https://ntrs.nasa.gov/api/citations/19990087092/downloads/19990087092.pdf) 
+
 ![](https://i.imgur.com/w571mZ7.png)
 * **Reliability** in [[Marelli2018]](https://arxiv.org/pdf/1709.01589) using polynomial chaos expansion. The problem is to find a region defined by a function $\{x ; \, g(x) \leqslant 0\}$ where $g$ is called limit state function. *Bootstrap approach to estimate variance* 
 * **Properties in multilayer percpetron network** [[Fukumizu2000]](https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.51.1885&rep=rep1&type=pdf) regression problem. Active learning : resampling trapped in local minima ? Redundancy of hidden units in active learning
