@@ -61,5 +61,7 @@ To use the approach, one have to dispose of
 2. A surface describing an active learning criterion that will adjust the estimator and estimate its variance in some way (`active_criterion` component).
 3. A resampling strategy that will take a function (the active criterion surface) and makes it a query (`query_strategy` component).
 
+## Benchmark
+![benchmark](public/benchmark.png)
 
 
