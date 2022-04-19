@@ -44,8 +44,8 @@ x0 = latin_square.iterative_sampler(
     batch_size=n0 // 2)
 
 active_learner = base.ActiveSRLearner(
-    active_criterion.estimate_variance,     # Active criterion
-    qs.reject_on_bounds,                    # Given active crietrion, 
+    active_criterion.estimate_variance,     # Active criterion as a surface
+    qs.reject_on_bounds,                    # Given active crietrion surface, execute query 
     pd.DataFrame(x0),                       # Input data X
     pd.DataFrame(fun(x0)),                  # Input data y (target)
     bounds=np.array(bounds),                # Bounds
@@ -56,5 +56,6 @@ x_new = active_learner.query(1)             # Request one point
 
 To use the script, one have to dispose of
 
-* Surface response estimator (linear model, gaussian vectors, etc.) in api sklearn
+* Surface response estimator (linear model, gaussian vectors, etc.) in sklearn's API
+* An active criterion surface that will fit the estimator
 * A resampling 
