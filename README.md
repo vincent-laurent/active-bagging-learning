@@ -12,10 +12,10 @@
 
 Plug in approach to active learning for surface response estimation
 
-* The objective is to approximate function $f \in \mathcal{X} \rightarrow \mathbb{R}^n$.
-* **Objective :** find an estimation of $f$, $\hat{f}$ in a family of measurable function $\mathcal{F}$ such that $$ f^* = \underset{\hat{f} \in \mathcal{F}}{\text{argmin}} \|f - \hat{f} \| $$ 
-* At time $t$ we dispose of a set of $n$ evaluations $$(x_i, f(x_i))_{i\leqslant n}$$ 
-* All feasible points can be sampled, we assume having a implicitly defined domain $\mathcal{X}$
+* The objective is to approximate function $`f \in \mathcal{X} \rightarrow \mathbb{R}^n`$.
+* **Objective :** find an estimation of $`f`$, $`\hat{f}`$ in a family of measurable function $`\mathcal{F}`$ such that $` f^* = \underset{\hat{f} \in \mathcal{F}}{\text{argmin}} \|f - \hat{f} \| `$ 
+* At time $`t`$ we dispose of a set of $n$ evaluations $`(x_i, f(x_i))_{i\leqslant n}`$
+* All feasible points can be sampled, we assume having a implicitly defined domain $`\mathcal{X}`$
 
 ## Usage
 
@@ -32,20 +32,20 @@ from data import functions
 from models.smt_api import SurrogateKRG
 from sampling import latin_square
 
-
+n0 = 100
 name = "grammacy_lee_2009_rand"
 fun = functions.__dict__[name]          # The function we want to learn
 estimator = dict(                       # Parameters to be used to estimate the surface response
     base_estimator=SurrogateKRG(),      # Base estimator for the surface
     splitter=ShuffleSplit(n_splits=2))  # Resampling strategy
 bounds = [[0, 1], [0, 1]]               # [x bounds, y bounds]
-x0 = latin_square.iterative_sampler(
+x0 = latin_square.iterative_sampler(    # Initiate distribution
     x_limits=np.array(bounds), size=n0,
     batch_size=n0 // 2)
 
 active_learner = base.ActiveSRLearner(
     active_criterion.estimate_variance,     # Active criterion as a surface
-    qs.reject_on_bounds,                    # Given active crietrion surface, execute query 
+    qs.reject_on_bounds,                    # Given active criterion surface, execute query 
     pd.DataFrame(x0),                       # Input data X
     pd.DataFrame(fun(x0)),                  # Input data y (target)
     bounds=np.array(bounds),                # Bounds
@@ -56,6 +56,9 @@ x_new = active_learner.query(1)             # Request one point
 
 To use the script, one have to dispose of
 
-* Surface response estimator (linear model, gaussian vectors, etc.) in sklearn's API
-* An active criterion surface that will fit the estimator
-* A resampling 
+1. Surface response estimator (linear model, gaussian vectors, etc.) in sklearn's API
+2. An active criterion surface estimator that will fit the estimator and estimate its variance in some way. 
+3. A resampling strategy that will take a function to optimize (the active criterion surface)
+
+
+
