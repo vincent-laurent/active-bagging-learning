@@ -16,7 +16,7 @@ Plug in approach to active learning for surface response estimation
 * The objective is to approximate function $`f \in \mathcal{X} \rightarrow \mathbb{R}^n`$.
 * **Objective :** find an estimation of $`f`$, $`\hat{f}`$ in a family of measurable function $`\mathcal{F}`$ such that $` f^* = \underset{\hat{f} \in \mathcal{F}}{\text{argmin}} \|f - \hat{f} \| `$ 
 * At time $`t`$ we dispose of a set of $`n`$ evaluations $`(x_i, f(x_i))_{i\leqslant n}`$
-* All feasible points can be sampled, we assume having a implicitly defined domain $`\mathcal{X}`$
+* All feasible points can be sampled in domain $`\mathcal{X}`$
 
 ## Usage
 
