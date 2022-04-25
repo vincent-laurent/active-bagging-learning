@@ -13,7 +13,7 @@ from benchmark.utils import evaluate, eval_surf_2d
 from components import active_criterion
 from data import functions
 from models.smt_api import SurrogateKRG
-from sampling import latin_square
+from components.sampling import latin_square
 
 functions_ = list(functions.bounds.keys())
 

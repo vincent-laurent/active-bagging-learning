@@ -2,7 +2,7 @@ from abc import ABCMeta
 
 from scipy import optimize
 
-from sampling.latin_square import iterative_sampler
+from components.sampling.latin_square import iterative_sampler
 
 
 class QueryStrategy(ABCMeta):

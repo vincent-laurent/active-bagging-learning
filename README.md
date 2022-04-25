@@ -29,9 +29,9 @@ from sklearn.model_selection import ShuffleSplit
 import base
 from components import query_strategies
 from components import active_criterion
+from components.sampling import latin_square
 from data import functions
 from models.smt_api import SurrogateKRG
-from sampling import latin_square
 
 n0 = 100
 name = "grammacy_lee_2009_rand"
@@ -55,9 +55,9 @@ x_new = active_learner.query(1)             # Request one point
 
 ```
 
-To use the approach, one have to dispose of
+To use the approach, one has to dispose of
 
-1. Surface response estimator (linear model, gaussian vectors, etc.) in sklearn's API (`base_estimator` parameter)
+1. An estimator (a set of function) to fit the surface (linear model, gaussian vectors, etc.) in sklearn's API (`base_estimator` parameter)
 2. A surface describing an active learning criterion that will adjust the estimator and estimate its variance in some way (`active_criterion` component).
 3. A resampling strategy that will take a function (the active criterion surface) and makes it a query (`query_strategy` component).
 
