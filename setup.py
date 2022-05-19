@@ -10,7 +10,7 @@ def parse_requirements(filename):
 install_reqs = parse_requirements("requirements.txt")
 
 setup(
-    name="Surrogate-Models",
+    name="Active_learning",
     version='0.0.1',
     author="Vincent LAURENT",
     author_email="vlaurent@eurobios.com",

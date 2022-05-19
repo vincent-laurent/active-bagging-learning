@@ -5,7 +5,7 @@
 ## Installation
 
 ```shell
-python -m pip install git+https://gitlab.eurobios.com/main/ml-toolbox.git
+python -m pip install git+https://gitlab.eurobios.com/vlaurent/surrogate-models.git
 ```
 
 ## Literature 
