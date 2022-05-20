@@ -7,13 +7,13 @@ from sklearn.gaussian_process.kernels import RBF
 from sklearn.model_selection import ShuffleSplit
 from sklearn.svm import SVR
 
-import base
-import components.query_strategies as qs
+from active_learning import base
+import active_learning.components.query_strategies as qs
 from benchmark.utils import evaluate, eval_surf_2d
-from components import active_criterion
-from data import functions
-from models.smt_api import SurrogateKRG
-from components.sampling import latin_square
+from active_learning.components import active_criterion
+from active_learning.data import functions
+from active_learning.models.smt_api import SurrogateKRG
+from active_learning.components.sampling import latin_square
 
 functions_ = list(functions.bounds.keys())
 

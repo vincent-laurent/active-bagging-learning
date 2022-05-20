@@ -9,8 +9,8 @@ from sklearn.svm import SVR
 
 from benchmark.naive import add_to_benchmark, run, plot_results
 from benchmark.utils import evaluate, eval_surf_2d
-from data import functions
-from models.smt_api import SurrogateKRG
+from active_learning.data import functions
+from active_learning.models.smt_api import SurrogateKRG
 
 functions_ = list(functions.bounds.keys())
 __n_sim__ = 1
