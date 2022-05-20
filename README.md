@@ -27,18 +27,18 @@ Plug in approach to active learning for surface response estimation
 
 ## Usage
 
-```python 
+```python
 
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import ShuffleSplit
 
-import base
-from components import query_strategies
-from components import active_criterion
-from components.sampling import latin_square
-from data import functions
-from models.smt_api import SurrogateKRG
+from active_learning import base
+from active_learning.components import query_strategies
+from active_learning.components import active_criterion
+from active_learning.components.sampling import latin_square
+from active_learning.data import functions
+from active_learning.models.smt_api import SurrogateKRG
 
 n0 = 100
 name = "grammacy_lee_2009_rand"
@@ -67,7 +67,7 @@ To use the approach, one has to dispose of
 1. An estimator (a set of function) to fit the surface (linear model, gaussian vectors, etc.) in sklearn's API (`base_estimator` parameter)
 2. A surface describing an active learning criterion that will adjust the estimator and estimate its variance in some way (`active_criterion` component).
 3. A resampling strategy that will take a function (the active criterion surface) and makes it a query (`query_strategy` component).
-4. 
+
 ## Benchmark
 ![benchmark](public/benchmark.png)
 
