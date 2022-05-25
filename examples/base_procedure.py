@@ -2,10 +2,10 @@ import numpy as np
 import pandas as pd
 
 from sklearn.model_selection import ShuffleSplit
-from models.smt_api import SurrogateKRG
 
 from active_learning import ActiveSRLearner
 from active_learning.data import functions
+from active_learning.models.smt_api import SurrogateKRG
 from active_learning.components.active_criterion import estimate_variance
 from active_learning.components.query_strategies import reject_on_bounds
 
