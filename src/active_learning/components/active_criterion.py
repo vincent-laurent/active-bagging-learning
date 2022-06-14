@@ -13,17 +13,9 @@ class ActiveCriterion(ABCMeta):
 
 
 def get_variance_function(estimator_list):
-    keys = range(len(estimator_list))
-
     def meta_estimator(*args, **kwargs):
-        m = estimator_list[0].predict(*args, **kwargs)
-        s = m ** 2
-        for key in keys[1:]:
-            elt = estimator_list[key].predict(*args, **kwargs)
-            m += elt
-            s += elt ** 2
-        return (s / len(keys)) - (m / len(keys)) ** 2
-
+        predictions = np.array([est.predict(*args, **kwargs) for est in estimator_list])
+        return np.std(predictions, axis=0)
     return meta_estimator
 
 
