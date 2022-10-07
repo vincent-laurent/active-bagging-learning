@@ -1,21 +1,93 @@
-from abc import ABCMeta
+from abc import ABC, abstractmethod
 
 import numpy as np
+import pandas as pd
 from sklearn import clone
 from sklearn.base import BaseEstimator
+from sklearn.ensemble import BaseEnsemble
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import BaseCrossValidator
 from sklearn.model_selection import ShuffleSplit
 
 
-class ActiveCriterion(ABCMeta):
-    pass
+class ActiveCriterion(ABC):
+    def __init__(self, *args):
+        super().__init__()
+
+    @abstractmethod
+    def __call__(self, X: pd.DataFrame, *args, **kwargs):
+        ...
+
+    @abstractmethod
+    def function(self, X: pd.DataFrame):
+        ...
+
+    def criterion(self, X: pd.DataFrame, *args, **kwargs):
+        return self(X, *args, **kwargs)
+
+    @abstractmethod
+    def fit(self, X, y):
+        ...
 
 
+class Variance(ActiveCriterion):
+    def __init__(self,
+                 base_estimator: BaseEstimator,
+                 splitter: BaseCrossValidator):
+        super().__init__()
+        self.models = []
+        self.splitter = splitter
+        self.estimator = base_estimator
+
+    def function(self, X):
+        res = 0
+        if len(X.shape) == 1:
+            X = X.reshape(1, -1)
+        for model_ in self.models:
+            res += model_.predict(X)
+        return res / len(self.models)
+
+    def __call__(self, X, *args, **kwargs):
+        ret = get_variance_function(self.models)(X)
+        return np.where(ret < 0, 0, ret)
+
+    def fit(self, X, y):
+        X, y = np.array(X), np.array(y).ravel()
+        for train, test in self.splitter.split(X, y):
+            model = clone(self.estimator)
+            self.models.append(model.fit(X[train, :], y[train]))
+
+
+class VarianceEnsembleMethod(ActiveCriterion):
+    def __init__(self,
+                 base_ensemble: BaseEnsemble,
+                 ):
+        super().__init__()
+        self.estimator = base_ensemble
+
+    def function(self, X):
+        if len(X.shape) == 1:
+            X = X.reshape(1, -1)
+        return self.model_.predict(X)
+
+    def __call__(self, X, *args, **kwargs):
+        ret = get_variance_function(self.model_.estimators_)(X)
+        return np.where(ret < 0, 0, ret)
+
+    def fit(self, X, y):
+        X, y = np.array(X), np.array(y).ravel()
+        self.model_ = clone(self.estimator)
+        self.model_.fit(X, y)
+
+
+# =====================================================================================
+#                           TOOLS
+# =====================================================================================
 def get_variance_function(estimator_list):
     def meta_estimator(*args, **kwargs):
         predictions = np.array([est.predict(*args, **kwargs) for est in estimator_list])
         return np.std(predictions, axis=0)
+
     return meta_estimator
 
 

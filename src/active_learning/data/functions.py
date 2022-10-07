@@ -136,7 +136,7 @@ budget_parameters = {
     "golden_price": {
         "fun": golden_price, 'n0': 50, "budget": 60, "n_step": 10},
     "marelli_2018": {
-        "fun": marelli_2018, 'n0': 30, "budget": 330, "n_step": 300},
+        "fun": marelli_2018, 'n0': 30, "budget": 330, "n_step": 10},
     "synthetic_2d_1": {
         "fun": synthetic_2d_1, 'n0': 50, "budget": 60, "n_step": 10},
     "synthetic_2d_2": {

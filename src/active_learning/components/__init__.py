@@ -1,2 +1,2 @@
-from . import active_criterion
-from . import query_strategies
+from active_learning.components.active_criterion import VarianceEnsembleMethod, Variance as VarianceCriterion
+

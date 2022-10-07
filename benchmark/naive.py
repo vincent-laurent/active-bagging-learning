@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plot
 import numpy as np
 import pandas as pd
+from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
@@ -8,12 +9,12 @@ from sklearn.model_selection import ShuffleSplit
 from sklearn.svm import SVR
 
 from active_learning import base
-import active_learning.components.query_strategies as qs
-from benchmark.utils import evaluate, eval_surf_2d
-from active_learning.components import active_criterion
+from active_learning.components.active_criterion import VarianceEnsembleMethod
+from active_learning.components.query_strategies import Reject
+from active_learning.components.sampling import latin_square
 from active_learning.data import functions
 from active_learning.models.smt_api import SurrogateKRG
-from active_learning.components.sampling import latin_square
+from benchmark.utils import evaluate, eval_surf_2d
 
 functions_ = list(functions.bounds.keys())
 
@@ -37,15 +38,14 @@ def run(fun, n0=10, budget=100, n_step=5, name=name, estimator=estimator):
                                         batch_size=n0 // 2)
     xall = latin_square.iterative_sampler(x_limits=np.array(bounds),
                                           size=budget)
-    args = dict(
-        bounds=np.array(bounds),
-        estimator_parameters=estimator
-    )
+
     active_learner = base.ActiveSRLearner(
-        active_criterion.estimate_variance,
-        qs.reject_on_bounds,
+        VarianceEnsembleMethod(
+            base_ensemble=ExtraTreesRegressor(max_features=0.5, bootstrap=True)),
+        Reject(bounds, num_eval=int(200)),
         pd.DataFrame(x0),
-        pd.DataFrame(fun(x0)), **args)
+        pd.DataFrame(fun(x0)),
+        bounds=np.array(bounds))
 
     perf_passive = []
     results = pd.DataFrame(index=range(n_step))
@@ -65,10 +65,12 @@ def run(fun, n0=10, budget=100, n_step=5, name=name, estimator=estimator):
 
         s = pd.DataFrame(xall).sample(b)
         passive_learner = base.ActiveSRLearner(
-            active_learner.estimator,
-            active_learner.query_strategy,
-            s, fun(s), **args
-        )
+            VarianceEnsembleMethod(
+                base_ensemble=ExtraTreesRegressor(max_features=0.5, bootstrap=True)),
+            Reject(bounds, num_eval=int(200)),
+            pd.DataFrame(s),
+            pd.DataFrame(fun(s)),
+            bounds=np.array(bounds))
 
         passive_learner.query(1)
         perf_passive.append(evaluate(
@@ -108,7 +110,7 @@ def add_to_benchmark(data: pd.DataFrame, path="benchmark/results.csv"):
 
 
 def plot_all_benchmark_function():
-    from data.functions import budget_parameters
+    from active_learning.data.functions import budget_parameters
     functions__ = list(budget_parameters.keys())
     fig, ax = plot.subplots(ncols=len(functions__) // 2 + len(functions__) % 2,
                             nrows=2, figsize=(len(functions_) * 0.7, 3), dpi=200)
@@ -136,7 +138,7 @@ def clear_benchmark_data(path="benchmark/results.csv", function=name):
 
 
 def run_whole_analysis():
-    from data.functions import budget_parameters
+    from active_learning.data.functions import budget_parameters
     functions__ = list(budget_parameters.keys())
     for f in functions__:
         print(f)
@@ -146,7 +148,7 @@ def run_whole_analysis():
 
 
 def plot_benchmark_whole_analysis() -> None:
-    from data.functions import budget_parameters
+    from active_learning.data.functions import budget_parameters
     functions__ = list(budget_parameters.keys())
     fig, ax = plot.subplots(ncols=len(functions__) // 2 + len(functions__) % 2,
                             nrows=2, figsize=(len(functions_) * 0.7, 3.5), dpi=200
@@ -170,7 +172,7 @@ def plot_benchmark_whole_analysis() -> None:
 
 
 if __name__ == '__main__':
-    # run_whole_analysis()
+    run_whole_analysis()
     plot_all_benchmark_function()
     plot_benchmark_whole_analysis()
 
