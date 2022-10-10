@@ -71,6 +71,18 @@ def iterative_sampler(x_input: np.ndarray = None, size: int = 100,
         return x_new
 
 
+def scipy_lhs_sampler(size: int = 100,
+                      x_limits: np.ndarray = None,
+                      dim: int = None):
+    from scipy.stats import qmc
+    dim = len(x_limits) if dim is None else dim
+    l_bounds = x_limits[:, 0]
+    u_bounds = x_limits[:, 1]
+    sampler = qmc.LatinHypercube(d=dim)
+    sample = sampler.random(size)
+    sample = qmc.scale(sample, l_bounds, u_bounds)
+    return sample
+
 if __name__ == '__main__':
     import matplotlib.pyplot as plot
 

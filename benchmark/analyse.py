@@ -7,7 +7,7 @@ from sklearn.gaussian_process.kernels import RBF
 from sklearn.model_selection import ShuffleSplit
 from sklearn.svm import SVR
 
-from benchmark.naive import add_to_benchmark, run, plot_results
+from benchmark.naive_2d import add_to_benchmark, run, plot_results
 from benchmark.utils import evaluate, eval_surf_2d
 from active_learning.data import functions
 from active_learning.models.smt_api import SurrogateKRG

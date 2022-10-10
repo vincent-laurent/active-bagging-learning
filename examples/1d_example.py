@@ -7,7 +7,7 @@ This example is a simple application of active learning.
 The 1D function allows for easy vizualisation of the model and its error
 estimate.
 """
-
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.ensemble import BaggingRegressor
@@ -17,6 +17,7 @@ from active_learning.components.query_strategies import random_sampling_in_domai
 
 SEED = 1234
 RNG = np.random.default_rng(seed=SEED)
+matplotlib.use("Qt5Agg")
 
 
 def unknown_function(x):

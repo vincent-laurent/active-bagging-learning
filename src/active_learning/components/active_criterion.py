@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
-
+from typing import Union
 import numpy as np
 import pandas as pd
 from sklearn import clone
 from sklearn.base import BaseEstimator
 from sklearn.ensemble import BaseEnsemble
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import BaseCrossValidator
+from sklearn.model_selection import BaseCrossValidator, ShuffleSplit
 from sklearn.model_selection import ShuffleSplit
 
 
@@ -33,7 +33,7 @@ class ActiveCriterion(ABC):
 class Variance(ActiveCriterion):
     def __init__(self,
                  base_estimator: BaseEstimator,
-                 splitter: BaseCrossValidator):
+                 splitter: Union[BaseCrossValidator, ShuffleSplit]):
         super().__init__()
         self.models = []
         self.splitter = splitter

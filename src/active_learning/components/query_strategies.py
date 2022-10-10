@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from scipy import optimize
 
-from active_learning.components.sampling.latin_square import iterative_sampler
+from active_learning.components.sampling.latin_square import iterative_sampler, scipy_lhs_sampler
 
 
 class QueryStrategy(ABC):
@@ -46,7 +46,7 @@ class QueryVariancePDF(QueryStrategy):
         self.__rng = np.random.default_rng()
 
     def query(self, size):
-        candidates = iterative_sampler(x_limits=self.bounds, size=self.num_eval)
+        candidates = scipy_lhs_sampler(x_limits=np.array(self.bounds), size=self.num_eval)
         probability = self.active_function(candidates)
         probability /= np.sum(probability)
         return self.__rng.choice(candidates, size=size, replace=False, p=probability, axis=0)
@@ -61,7 +61,7 @@ class Reject(QueryStrategy):
 
     def query(self, size):
         from scipy.stats import rankdata
-        candidates = iterative_sampler(x_limits=np.array(self.bounds), size=self.num_eval)
+        candidates = scipy_lhs_sampler(x_limits=np.array(self.bounds), size=self.num_eval)
         af = self.active_function(candidates)
         order = rankdata(-af, method="ordinal")
         selector = order <= size
