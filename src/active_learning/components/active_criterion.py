@@ -1,12 +1,14 @@
 from abc import ABC, abstractmethod
 from typing import Union
+
 import numpy as np
 import pandas as pd
 from sklearn import clone
 from sklearn.base import BaseEstimator
 from sklearn.ensemble import BaseEnsemble
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import BaseCrossValidator, ShuffleSplit
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.model_selection import BaseCrossValidator
 from sklearn.model_selection import ShuffleSplit
 
 
@@ -58,6 +60,23 @@ class Variance(ActiveCriterion):
             self.models.append(model.fit(X[train, :], y[train]))
 
 
+class VarianceBis(Variance):
+    def function(self, X):
+
+        if len(X.shape) == 1:
+            X = X.reshape(1, -1)
+
+        ret = self.final_estimator.predict(X)
+        return ret
+
+    def fit(self, X, y):
+        X, y = np.array(X), np.array(y).ravel()
+        for train, test in self.splitter.split(X, y):
+            model = clone(self.estimator)
+            self.models.append(model.fit(X[train, :], y[train]))
+        self.final_estimator = self.estimator.fit(X, y)
+
+
 class VarianceEnsembleMethod(ActiveCriterion):
     def __init__(self,
                  base_ensemble: BaseEnsemble,
@@ -72,6 +91,29 @@ class VarianceEnsembleMethod(ActiveCriterion):
 
     def __call__(self, X, *args, **kwargs):
         ret = get_variance_function(self.model_.estimators_)(X)
+        return np.where(ret < 0, 0, ret)
+
+    def fit(self, X, y):
+        X, y = np.array(X), np.array(y).ravel()
+        self.model_ = clone(self.estimator)
+        self.model_.fit(X, y)
+
+
+class GaussianProcessVariance(ActiveCriterion):
+    def __init__(self,
+                 kernel,
+                 ):
+        super().__init__()
+        self.kernel = kernel
+        self.estimator = GaussianProcessRegressor(kernel=kernel)
+
+    def function(self, X):
+        if len(X.shape) == 1:
+            X = X.reshape(1, -1)
+        return self.model_.predict(X)
+
+    def __call__(self, X, *args, **kwargs):
+        ret = self.model_.predict(X, return_std=True)[1]
         return np.where(ret < 0, 0, ret)
 
     def fit(self, X, y):
