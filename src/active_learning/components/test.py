@@ -1,3 +1,4 @@
+import typing
 from copy import deepcopy
 
 import numpy as np
@@ -13,58 +14,54 @@ class TestingClass:
                  active_criterion: ActiveCriterion,
                  query_strategy: QueryStrategy,
                  x_sampler: callable, n_steps: int,
-                 bounds,
-
+                 bounds, name=None
                  ):
         self.f = funcion
         self.budget = budget
-        x_train = x_sampler(budget_0)
-        self.active_object = base.ActiveSRLearner(
-            active_criterion,
-            query_strategy,
-            x_train,
-            self.f(x_train),
-            bounds)
         self.n_steps = n_steps
         self.budget_0 = budget_0
-        self.x_large_sample = pd.DataFrame(x_sampler(budget * 100))
+        self.x_sampler = x_sampler
+        self.active_criterion = active_criterion
+        self.query_strategy = query_strategy
         self.bounds = bounds
-        self.perf_passive = []
-        self.perf_active = []
-        self.functions = {}
-        self.criterion = {}
+        self.parameters = dict(
+            budget=budget,
+            budget_0=budget_0,
+            n_steps=n_steps,
+            function_hash=hash(funcion) + hash(str(bounds)),
+            active_criterion=str(active_criterion),
+            query_strategy=str(query_strategy),
+            x_sampler_hash=hash(x_sampler),
+        )
+        self.parameters["test_id"] = self.parameters["budget"] + \
+                                     self.parameters["function_hash"] + \
+                                     self.parameters["n_steps"]
+        self.parameters["name"] = hash(np.random.uniform()) if name is None else name
+
+        self.metric = []
 
     def run(self):
-        results = pd.DataFrame(index=range(self.n_steps))
-        for step in range(self.n_steps):
-            b = self.active_object.budget
-            results.loc[step, "budget"] = b
-            n_points = int((self.budget - self.budget_0) / self.n_steps)
+        x_train = self.x_sampler(self.budget_0)
+        self.learner = base.ActiveSRLearner(
+            self.active_criterion,
+            self.query_strategy,
+            x_train,
+            pd.DataFrame(self.f(x_train)),
+            self.bounds)
 
-            x_new = self.active_object.query(n_points).drop_duplicates()
-            y_new = self.f(x_new)
-            self.active_object.add_labels(x_new, y_new)
-            self.functions[step] = deepcopy(self.active_object.active_criterion.function)
-            self.criterion[step] = deepcopy(self.active_object.active_criterion.__call__)
+        nb_sample_cumul = np.linspace(self.budget_0, self.budget, num=self.n_steps, dtype=int)
+        nb_sample = np.concatenate(([nb_sample_cumul[0]], np.diff(nb_sample_cumul)))
+        print(nb_sample)
+        for n_points in nb_sample[1:]:
+            i = self.learner.iter
+            x_new = self.learner.query(n_points)
+            y_new = pd.DataFrame(self.f(x_new))
+            self.learner.add_labels(x_new, y_new)
 
-            s = self.x_large_sample.sample(b)
-
-            passive_learner = base.ActiveSRLearner(
-                self.active_object.active_criterion,
-                self.active_object.query_strategy,
-                pd.DataFrame(s),
-                pd.DataFrame(self.f(s)),
-                bounds=np.array(self.bounds))
-
-            # EVALUATE STRATEGIES
-            passive_learner.query(n_points)
-            self.perf_active.append(evaluate(
+            # EVALUATE STRATEGY
+            self.metric.append(evaluate(
                 self.f,
-                self.functions[step],
-                self.bounds, num_mc=100000))
-            self.perf_passive.append(evaluate(
-                self.f,
-                self.active_object.surface,
+                self.learner.result[i]["surface"],
                 self.bounds, num_mc=100000))
 
     def plot_error_vs_criterion(self, n=1000):
@@ -73,7 +70,7 @@ class TestingClass:
         x = self.x_large_sample.sample(n)
         for i in self.functions.keys():
             error = np.abs(np.ravel(self.f(x)) - self.functions[i](x)) ** 2
-            crit_ = self.active_object.active_criterion(x)
+            crit_ = self.learner.active_criterion(x)
             sns.kdeplot(x=error, y=crit_, c=plt.get_cmap("rainbow")(i / len(self.functions)), log_scale=(True, True),
                         linewidth=0.1)
         plt.xlabel("$L_2$ error")
@@ -81,8 +78,8 @@ class TestingClass:
 
     def plot_error_vs_criterion_pointwise(self, num_mc=10000):
         import matplotlib.pyplot as plt
-        for i_, i in enumerate(self.functions.keys()):
-            res = self.perf_active[i_]
+        for i_, i in enumerate(self.learner.result.keys()):
+            res = self.metric[i_]
             variance = integrate(self.criterion[i], self.bounds, num_mc)
             plt.loglog([res], [variance], c=plt.get_cmap("rainbow")(i / len(self.functions)), marker="o", lw=0)
         plt.xlabel("$L_2$ error")
@@ -90,41 +87,31 @@ class TestingClass:
 
 
 class Experiment:
-    def __init__(self, test1: TestingClass, test2: TestingClass = None):
-        self.test1 = test1
-        self.test2 = test2
-        self.results_1 = {}
-        self.results_2 = {}
+    def __init__(self, test_list: typing.List[TestingClass], n_experiment=10):
+        self.test_list = test_list
+        self.results = {}
+        self.n_experiment = n_experiment
+        columns = [*test_list[0].parameters.keys(), "L2-norm"]
 
-    def run(self, n_experiment=10):
-        self.n_experiment_ = n_experiment
-        self.cv_result_1_ = pd.DataFrame(columns=range(n_experiment))
-        self.cv_result_2_ = pd.DataFrame(columns=range(n_experiment))
-        for i in range(n_experiment):
-            test1 = deepcopy(self.test1)
-            test2 = deepcopy(self.test2)
-            test1.run()
-            test2.run()
-            self.results_1[i] = test1
-            self.results_2[i] = test2
-            self.cv_result_1_[i] = test1.perf_active
-            self.cv_result_2_[i] = test2.perf_active
+        self._cv_result = pd.DataFrame(
+            columns=columns,
+        )
 
-    def plot_performance(self):
-        import matplotlib.pyplot as plt
-        budgets = pd.DataFrame(self.results_1[0].active_object.result).loc["budget"].astype(float)
-        d1 = self.cv_result_1_
-        d2 = self.cv_result_2_
-        plt.figure()
-        plt.plot(budgets, d1.mean(axis=1), c="r", label="bootstrap")
-        plt.plot(budgets, d2.mean(axis=1), c="b", label="regular")
-        plt.fill_between(budgets, d1.mean(axis=1) - d1.std(axis=1), d1.mean(axis=1) + d1.std(axis=1), color="r", alpha=0.2)
-        plt.fill_between(budgets, d2.mean(axis=1) - d2.std(axis=1), d2.mean(axis=1) + d2.std(axis=1), color="b", alpha=0.2)
-        plt.legend()
+    def run(self):
 
+        for test in self.test_list:
+            for i in range(self.n_experiment):
+                test_ = deepcopy(test)
+                test_.run()
+                res = pd.DataFrame(columns=self._cv_result.columns)
+                res["L2-norm"] = test_.metric
+                res["num_sample"] = pd.DataFrame(test_.learner.result).loc["budget"].astype(float).values
 
+                for c in test.parameters.keys():
+                    res[c] = test.parameters[c]
+                self._cv_result = pd.concat((self._cv_result, res), axis=0)
 
-
+        self.cv_result_ = self._cv_result
 
 
 def integrate(f: callable, bounds: iter, num_mc=int(1E6)):
@@ -172,30 +159,60 @@ def analyse_1d(test: TestingClass):
     import seaborn as sns
 
     plt.figure()
-    plt.scatter(test.active_object.x_input, test.f(test.active_object.x_input),
-                c=test.active_object.x_input.index, cmap="coolwarm", alpha=0.2)
+    plt.scatter(test.learner.x_input, test.f(test.learner.x_input),
+                c=test.learner.x_input.index, cmap="coolwarm", alpha=0.2)
 
     plt.figure()
-    sns.histplot(test.active_object.x_input, bins=50)
+    sns.histplot(test.learner.x_input, bins=50)
 
 
 def plot_iter(test: TestingClass):
     import matplotlib.pyplot as plt
-    domain = np.linspace(test.bounds[0][0], test.bounds[0][1], 1000)
-    iter_ = int(test.active_object.x_input.index.max())
+    domain = np.linspace(test.bounds[0][0], test.bounds[0][1], 2000)
+    iter_ = int(test.learner.x_input.index.max())
     fig, axs = plt.subplots(4, iter_ // 4, sharey=True, sharex=True, figsize=(8, 8), dpi=200)
 
-    test.active_object.x_input.index = test.active_object.x_input.index.astype(int)
+    test.learner.x_input.index = test.learner.x_input.index.astype(int)
     for iter, ax in enumerate(axs.ravel()):
-        error = test.criterion[iter](domain.reshape(-1, 1))
-        prediction = test.functions[iter](domain.reshape(-1, 1))
+        res = test.learner.result[iter]
+        error = res["active_criterion"](domain.reshape(-1, 1))
+        prediction = res["surface"](domain.reshape(-1, 1))
         ax.plot(domain, prediction, color="b", label="iter={}".format(iter))
         ax.plot(domain, test.f(domain), color="grey", linestyle="--")
         ax.fill_between(domain.ravel(), prediction - error / 2, prediction + error / 2, color="b", alpha=0.2)
-        training_dataset = test.active_object.x_input.loc[range(iter + 1)]
-        new_samples = test.active_object.x_input.loc[iter + 1]
+        training_dataset = test.learner.x_input.loc[range(iter + 1)]
+        new_samples = test.learner.x_input.loc[iter + 1]
         ax.scatter(training_dataset, test.f(training_dataset), color="k", marker=".")
 
-        if iter > 0: ax.scatter(new_samples, test.f(new_samples), color="r", marker=".")
+        ax.scatter(new_samples, test.f(new_samples), color="r", marker=".")
         ax.set_ylim(-0.9, 0.7)
         ax.legend()
+
+
+def write_benchmark(data: pd.DataFrame, path="data/benchmark.csv", update=True):
+    import os
+
+    if update:
+        if not os.path.exists(path):
+            data.to_csv(path, mode='a', index=False)
+        else:
+            data.to_csv(path, mode='a', header=False, index=False)
+    else:
+        data.to_csv(path, index=False)
+
+
+def read_benchmark(path="data/benchmark.csv"):
+    return pd.read_csv(path)
+
+
+def plot_benchmark(data: pd.DataFrame, cmap="rainbow_r"):
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+
+    names = data["name"].drop_duplicates().values
+    for i, n in enumerate(names):
+        data_ = data[data["name"] == n]
+        color = plt.get_cmap(cmap)(i / (len(names)))
+        sns.lineplot(data=data_, x="num_sample", y="L2-norm", label=n, color=color)
+
+    plt.legend()

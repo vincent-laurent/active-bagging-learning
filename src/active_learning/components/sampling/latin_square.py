@@ -83,6 +83,7 @@ def scipy_lhs_sampler(size: int = 100,
     sample = qmc.scale(sample, l_bounds, u_bounds)
     return sample
 
+
 if __name__ == '__main__':
     import matplotlib.pyplot as plot
 

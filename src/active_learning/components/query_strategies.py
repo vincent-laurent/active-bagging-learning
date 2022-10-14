@@ -3,11 +3,12 @@ from abc import ABC, abstractmethod
 import numpy as np
 import pandas as pd
 from scipy import optimize
+from sklearn.base import BaseEstimator
 
 from active_learning.components.sampling.latin_square import iterative_sampler, scipy_lhs_sampler
 
 
-class QueryStrategy(ABC):
+class QueryStrategy(ABC, BaseEstimator):
 
     def __init__(self):
         super().__init__()
@@ -46,6 +47,7 @@ class QueryVariancePDF(QueryStrategy):
         self.__rng = np.random.default_rng()
 
     def query(self, size):
+        assert size > 0
         candidates = scipy_lhs_sampler(x_limits=np.array(self.bounds), size=self.num_eval)
         probability = self.active_function(candidates)
         probability /= np.sum(probability)
@@ -66,6 +68,16 @@ class Reject(QueryStrategy):
         order = rankdata(-af, method="ordinal")
         selector = order <= size
         return candidates[selector]
+
+
+class Uniform(QueryStrategy):
+    def __init__(self, bounds):
+        super().__init__()
+        self.bounds = bounds
+
+    def query(self, size):
+        candidates = scipy_lhs_sampler(x_limits=np.array(self.bounds), size=size)
+        return candidates
 
 
 def find_max(X, y, active_function, size=1, batch_size=500,
@@ -129,14 +141,15 @@ def random_sampling_in_finite_set(pdf, candidates, nb_samples, *, rng=DEFAULT_RN
 
 
 def random_sampling_in_domain(pdf, bounds, nb_samples, *, candidates_per_sample=50, rng=DEFAULT_RNG):
-    """Pick `nb_samples` items in the domain delimited by `bounds` according to the probability density function `pdf`."""
+    """ Pick `nb_samples` items in the domain delimited by `bounds` according to
+    the probability density function `pdf`."""
     dimension = len(bounds[0])
     candidates = (bounds[1] - bounds[0]) * rng.random((candidates_per_sample * nb_samples, dimension)) + bounds[0]
     return random_sampling_in_finite_set(pdf, candidates, nb_samples, rng=rng)
 
 
 def random_query(X, y, active_function, size=10, batch_size=10, bounds=None, **args):
-    """Wrap the above function with the same API as the other query strategies."""
+    """ Wrap the above function with the same API as the other query strategies."""
     return random_sampling_in_domain(active_function, bounds, size, candidates_per_sample=batch_size // size)
 
 

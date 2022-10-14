@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from copy import deepcopy
 
 from active_learning.components.active_criterion import ActiveCriterion
 from active_learning.components.query_strategies import QueryStrategy
@@ -24,40 +25,33 @@ class ActiveSRLearner:
         self.iter = 0
         self.budget = len(X_train)
         self.x_input.index = 0 * np.ones(len(self.x_input))
+        self.x_new = pd.DataFrame()
 
-    def teach(self):
+    def learn(self):
         self.active_criterion.fit(
             self.x_input,
             self.y_input)
 
     def query(self, *args):
-        self.iter += 1
-        self.teach()
-        self.query_strategy.set_active_function(self.active_criterion)
-        self.x_new = self.query_strategy.query(*args)
-        self.x_new = pd.DataFrame(self.x_new, columns=self.x_input.columns)
+        self.learn()
+        self.query_strategy.set_active_function(self.active_criterion.__call__)
+        self.x_new = pd.DataFrame(self.query_strategy.query(*args), columns=self.x_input.columns)
         self.save()
 
         return self.x_new
 
     def add_labels(self, x: pd.DataFrame, y: pd.DataFrame):
+        self.iter += 1
         x.index = self.iter * np.ones(len(x))
         y.index = self.iter * np.ones(len(x))
         self.x_input = pd.concat((x, self.x_input), axis=0)
         self.y_input = pd.concat((y, self.y_input), axis=0)
         self.budget = len(self.x_input)
 
-    def surface(self, x):
-        return self.active_criterion.function(x)
-
     def save(self):
-        def surf(x): return self.surface(x)
-
-        def active(x): return self.active_criterion(x)
-
         self.result[self.iter] = dict(
-            surface=surf,
-            active_criterion=active,
+            surface=deepcopy(self.active_criterion.function),
+            active_criterion=deepcopy(self.active_criterion),
             budget=int(self.budget),
             data=self.x_input
         )

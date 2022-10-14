@@ -12,9 +12,9 @@ from sklearn.model_selection import BaseCrossValidator
 from sklearn.model_selection import ShuffleSplit
 
 
-class ActiveCriterion(ABC):
+class ActiveCriterion(ABC, BaseEstimator):
     def __init__(self, *args):
-        super().__init__()
+        super().__init__(*args)
 
     @abstractmethod
     def __call__(self, X: pd.DataFrame, *args, **kwargs):
@@ -34,12 +34,12 @@ class ActiveCriterion(ABC):
 
 class Variance(ActiveCriterion):
     def __init__(self,
-                 base_estimator: BaseEstimator,
+                 estimator: BaseEstimator,
                  splitter: Union[BaseCrossValidator, ShuffleSplit]):
         super().__init__()
         self.models = []
         self.splitter = splitter
-        self.estimator = base_estimator
+        self.estimator = estimator
 
     def function(self, X):
         res = 0
@@ -60,7 +60,19 @@ class Variance(ActiveCriterion):
             self.models.append(model.fit(X[train, :], y[train]))
 
 
-class VarianceBis(Variance):
+class VarianceBis(ActiveCriterion):
+    def __init__(self,
+                 estimator: BaseEstimator,
+                 splitter: Union[BaseCrossValidator, ShuffleSplit]):
+        super().__init__()
+        self.models = []
+        self.splitter = splitter
+        self.estimator = estimator
+
+    def __call__(self, X, *args, **kwargs):
+        ret = get_variance_function(self.models)(X)
+        return np.where(ret < 0, 0, ret)
+
     def function(self, X):
 
         if len(X.shape) == 1:
@@ -79,10 +91,10 @@ class VarianceBis(Variance):
 
 class VarianceEnsembleMethod(ActiveCriterion):
     def __init__(self,
-                 base_ensemble: BaseEnsemble,
+                 estimator: BaseEnsemble,
                  ):
         super().__init__()
-        self.estimator = base_ensemble
+        self.estimator = estimator
 
     def function(self, X):
         if len(X.shape) == 1:

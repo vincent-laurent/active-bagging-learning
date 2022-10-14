@@ -20,7 +20,7 @@ def marelli_2018(x: typing.Iterable[typing.Iterable]):
     for a in [a2, a3, a4]:
         g = np.where(a < g, a, g)
 
-    g = np.where(g <= 0, 1, 0)
+    # g = np.where(g <= 0, 1, 0)
     return g
 
 

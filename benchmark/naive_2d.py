@@ -2,92 +2,35 @@ import matplotlib.pyplot as plot
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import ExtraTreesRegressor
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF
-from sklearn.model_selection import ShuffleSplit
-from sklearn.svm import SVR
 
-from active_learning import base
 from active_learning.components.active_criterion import VarianceEnsembleMethod
-from active_learning.components.query_strategies import Reject
+from active_learning.components.query_strategies import QueryVariancePDF, Uniform
 from active_learning.components.sampling import latin_square
+from active_learning.components.test import TestingClass
 from active_learning.data import functions
-from active_learning.models.smt_api import SurrogateKRG
-from benchmark.utils import evaluate, eval_surf_2d
+from benchmark.utils import eval_surf_2d
 
 functions_ = list(functions.bounds.keys())
 
 name = "grammacy_lee_2009_rand"
 fun = functions.__dict__[name]
 
-estimator_parameters = {
-    0: dict(base_estimator=SVR(kernel="rbf", C=100, gamma="scale",
-                               epsilon=0.1)),
-    1: dict(base_estimator=GaussianProcessRegressor(kernel=RBF(length_scale=0.1))),
-    2: dict(base_estimator=RandomForestRegressor(n_estimators=5,
-                                                 min_samples_leaf=3)),
-    3: dict(base_estimator=SurrogateKRG(), splitter=ShuffleSplit(n_splits=2))
-}
-estimator = estimator_parameters[3]
+xtra_trees_b = ExtraTreesRegressor(bootstrap=True, n_estimators=50, max_samples=0.7)
 
 
-def run(fun, n0=10, budget=100, n_step=5, name=name, estimator=estimator):
+def run(fun, n0=10, budget=100, n_step=5, name=name, estimator=xtra_trees_b):
     bounds = functions.bounds[fun]
-    x0 = latin_square.iterative_sampler(x_limits=np.array(bounds), size=n0,
-                                        batch_size=n0 // 2)
-    xall = latin_square.iterative_sampler(x_limits=np.array(bounds),
-                                          size=budget)
 
-    active_learner = base.ActiveSRLearner(
-        VarianceEnsembleMethod(
-            base_ensemble=ExtraTreesRegressor(max_features=0.5, bootstrap=True)),
-        Reject(bounds, num_eval=int(200)),
-        pd.DataFrame(x0),
-        pd.DataFrame(fun(x0)),
-        bounds=np.array(bounds))
+    def sampler(size): return pd.DataFrame(latin_square.scipy_lhs_sampler(size=size, x_limits=np.array(bounds)))
 
-    perf_passive = []
-    results = pd.DataFrame(index=range(n_step))
-    results["budget"] = n0
-    for step in range(n_step):
-        b = active_learner.budget
-        results.loc[step, "budget"] = b
-        n_points = int((budget - n0) / n_step)
-        print(active_learner.budget, n_points)
-        x_new = active_learner.query(n_points).drop_duplicates()
-        y_new = pd.DataFrame(fun(x_new))
-        active_learner.add_labels(x_new, y_new)
-        active_learner.result[active_learner.iter]["error_l2"] = evaluate(
-            fun,
-            active_learner.surface,
-            bounds, num_mc=10000)
-
-        s = pd.DataFrame(xall).sample(b)
-        passive_learner = base.ActiveSRLearner(
-            VarianceEnsembleMethod(
-                base_ensemble=ExtraTreesRegressor(max_features=0.5, bootstrap=True)),
-            Reject(bounds, num_eval=int(200)),
-            pd.DataFrame(s),
-            pd.DataFrame(fun(s)),
-            bounds=np.array(bounds))
-
-        passive_learner.query(1)
-        perf_passive.append(evaluate(
-            fun,
-            passive_learner.surface,
-            bounds, num_mc=10000))
-
-    results["estimator_param"] = str(estimator)
-    results["error_l2_active"] = [
-        active_learner.result[i]["error_l2"] for i in
-        active_learner.result.keys()]
-    results["error_l2_passive"] = perf_passive
-    results["function"] = name
-    results["n0"] = n0
-    results["budget_total"] = budget
-    results["estimator"] = str(estimator["base_estimator"]).split("(")[0]
-    return active_learner, passive_learner, results
+    testing_bootstrap = TestingClass(
+        budget, n0, fun,
+        VarianceEnsembleMethod(estimator=estimator),
+        QueryVariancePDF(bounds, num_eval=200),
+        sampler, n_steps=n_step, bounds=bounds, name=name
+    )
+    testing_bootstrap.run()
+    testing_bootstrap.metric
 
 
 def plot_results(path="benchmark/results.csv", n0=100, function=name):
@@ -147,18 +90,19 @@ def run_whole_analysis():
             add_to_benchmark(r)
 
 
-def plot_benchmark_whole_analysis() -> None:
+def plot_benchmark_whole_analysis(data:pd.DataFrame) -> None:
+    from active_learning.components import test
     from active_learning.data.functions import budget_parameters
-    functions__ = list(budget_parameters.keys())
+    functions__ = data["name"].drop_duplicates()
     fig, ax = plot.subplots(ncols=len(functions__) // 2 + len(functions__) % 2,
-                            nrows=2, figsize=(len(functions_) * 0.7, 3.5), dpi=200
-                            )
+                            nrows=2, figsize=(len(functions_) * 0.7, 3.5), dpi=200)
     for i, f in enumerate(functions__):
         print(f)
         ax_ = ax[i % 2, i // 2]
 
         plot.sca(ax_)
-        plot_results(function=f, n0=budget_parameters[f]["n0"])
+        data_temp = data[data["name"]]
+        test.plot_benchmark(data=1, n0=budget_parameters[f]["n0"])
         ax_.set_ylabel("$L_2$ error") if i // 2 == 0 else ax_.set_ylabel("")
         plot.yticks(c="w")
         plot.xlabel("")
@@ -172,10 +116,48 @@ def plot_benchmark_whole_analysis() -> None:
 
 
 if __name__ == '__main__':
-    run_whole_analysis()
-    plot_all_benchmark_function()
-    plot_benchmark_whole_analysis()
+    from active_learning.components import test
+    from active_learning.data.functions import budget_parameters
 
-    # clear_benchmark_data(function="golden_price_rand")
-    # clear_benchmark_data(function="branin_rand")
-    # clear_benchmark_data(function="himmelblau_rand")
+    estimator = xtra_trees_b
+
+    def get_sampler(bounds):
+        def sampler(size):
+            return pd.DataFrame(latin_square.scipy_lhs_sampler(size=size, x_limits=np.array(bounds)))
+
+        return sampler
+
+
+    active_testing_classes = [test.TestingClass(
+        budget_parameters[name]["budget"],
+        budget_parameters[name]["n0"],
+        budget_parameters[name]["fun"],
+        VarianceEnsembleMethod(estimator=estimator),
+        QueryVariancePDF(functions.bounds[budget_parameters[name]["fun"]], num_eval=200),
+        get_sampler(functions.bounds[budget_parameters[name]["fun"]]),
+        n_steps=budget_parameters[name]["n_step"],
+        bounds=functions.bounds[budget_parameters[name]["fun"]],
+        name=name
+    ) for name in list(budget_parameters.keys())
+    ]
+
+    passive_testing_classes = [test.TestingClass(
+        budget_parameters[name]["budget"],
+        budget_parameters[name]["n0"],
+        budget_parameters[name]["fun"],
+        VarianceEnsembleMethod(estimator=estimator),
+        Uniform(functions.bounds[budget_parameters[name]["fun"]]),
+        get_sampler(functions.bounds[budget_parameters[name]["fun"]]),
+        n_steps=budget_parameters[name]["n_step"],
+        bounds=functions.bounds[budget_parameters[name]["fun"]],
+        name=name + "_passive"
+    ) for name in list(budget_parameters.keys())
+    ]
+
+    experiment = test.Experiment([active_testing_classes[0], passive_testing_classes[0]], n_experiment=20)
+    experiment.run()
+    data = experiment.cv_result_
+    test.write_benchmark(data, path="data/benchmark_2d.csv")
+
+    for test in experiment.test_list:
+        test.plot_error_vs_criterion_pointwise()
