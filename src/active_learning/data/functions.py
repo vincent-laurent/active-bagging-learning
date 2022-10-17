@@ -2,6 +2,8 @@ import typing
 
 import numpy as np
 
+# TODO : add time series https://link.springer.com/content/pdf/10.1023/A:1012474916001.pdf
+
 
 def check_2d(x: np.ndarray):
     if len(x.shape) != 2 or x.shape[1] != 2:
@@ -12,15 +14,15 @@ def marelli_2018(x: typing.Iterable[typing.Iterable]):
     x_ = np.array(x)
     check_2d(x_)
     x1, x2 = x_[:, 0], x_[:, 1]
-    a1 = 3 + 0.1 * (x1 + x2) ** 2 - (x1 + x2) / np.sqrt(2)
-    a2 = 3 + 0.1 * (x1 + x2) ** 2 + (x1 + x2) / np.sqrt(2)
-    a3 = (x1 - x2) + 6 / np.sqrt(2)
-    a4 = (x2 - x1) + 6 / np.sqrt(2)
+    a1 = 3 + 0.1 * (x1 - x2) ** 2 - (x1 + x2) / np.sqrt(2)
+    a2 = 3 + 0.1 * (x1 - x2) ** 2 + (x1 + x2) / np.sqrt(2)
+    a3 = (x1 - x2) + 3 * np.sqrt(2)
+    a4 = (x2 - x1) + 3 * np.sqrt(2)
     g = a1
     for a in [a2, a3, a4]:
-        g = np.where(a < g, a, g)
+        g = np.where(g < a, g, a)
 
-    # g = np.where(g <= 0, 1, 0)
+    g = np.where(g <= 0, 0, 1)
     return g
 
 
@@ -115,7 +117,7 @@ bounds = {
     himmelblau_rand: [[-5, 5], [-5, 5]],
     synthetic_2d_1: [[0, 10], [0, 10]],
     synthetic_2d_2: [[0, 10], [0, 10]],
-    marelli_2018: [[-5, 5], [-6, 6]]
+    marelli_2018: [[-6, 6], [-6, 6]]
 }
 
 budget_parameters = {
@@ -168,4 +170,4 @@ if __name__ == '__main__':
             z = fun(x__.values)
 
             ax[i % 2, i // 2].pcolormesh(xxx, yyy, z.reshape(len(xxx), len(yyy)),
-                                         cmap="rainbow")
+                                         cmap="RdBu")

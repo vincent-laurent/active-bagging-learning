@@ -90,19 +90,22 @@ def run_whole_analysis():
             add_to_benchmark(r)
 
 
-def plot_benchmark_whole_analysis(data:pd.DataFrame) -> None:
+def plot_benchmark_whole_analysis(data: pd.DataFrame) -> None:
     from active_learning.components import test
     from active_learning.data.functions import budget_parameters
-    functions__ = data["name"].drop_duplicates()
+    functions__ = data["name"].str.replace("_passive", "").drop_duplicates()
     fig, ax = plot.subplots(ncols=len(functions__) // 2 + len(functions__) % 2,
                             nrows=2, figsize=(len(functions_) * 0.7, 3.5), dpi=200)
+    if ax.shape.__len__() == 1:
+        ax = ax.reshape(-1, 1)
     for i, f in enumerate(functions__):
         print(f)
         ax_ = ax[i % 2, i // 2]
 
         plot.sca(ax_)
-        data_temp = data[data["name"]]
-        test.plot_benchmark(data=1, n0=budget_parameters[f]["n0"])
+        data_temp = data[data["name"] == f]
+        data_temp_p = data[data["name"] == f + "_passive"]
+        test.plot_benchmark(data=pd.concat((data_temp, data_temp_p)), cmap="crest")
         ax_.set_ylabel("$L_2$ error") if i // 2 == 0 else ax_.set_ylabel("")
         plot.yticks(c="w")
         plot.xlabel("")
@@ -154,10 +157,10 @@ if __name__ == '__main__':
     ) for name in list(budget_parameters.keys())
     ]
 
-    experiment = test.Experiment([active_testing_classes[0], passive_testing_classes[0]], n_experiment=20)
+    experiment = test.Experiment([*active_testing_classes, *passive_testing_classes], n_experiment=50)
     experiment.run()
     data = experiment.cv_result_
     test.write_benchmark(data, path="data/benchmark_2d.csv")
+    data = test.read_benchmark(path="data/benchmark_2d.csv")
 
-    for test in experiment.test_list:
-        test.plot_error_vs_criterion_pointwise()
+    plot_benchmark_whole_analysis(data)

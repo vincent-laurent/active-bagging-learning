@@ -87,7 +87,7 @@ class TestingClass:
 
 
 class Experiment:
-    def __init__(self, test_list: typing.List[TestingClass], n_experiment=10):
+    def __init__(self, test_list: typing.List[TestingClass], n_experiment=10, save=False):
         self.test_list = test_list
         self.results = {}
         self.n_experiment = n_experiment
@@ -96,6 +96,9 @@ class Experiment:
         self._cv_result = pd.DataFrame(
             columns=columns,
         )
+        self.save = save
+        if self.save:
+            self.saving_class = {}
 
     def run(self):
 
