@@ -8,7 +8,6 @@ from active_learning.components.query_strategies import QueryVariancePDF, Unifor
 from active_learning.components.sampling import latin_square
 from active_learning.components.test import TestingClass
 from active_learning.data import functions
-from benchmark.utils import eval_surf_2d
 
 functions_ = list(functions.bounds.keys())
 
@@ -18,7 +17,7 @@ fun = functions.__dict__[name]
 xtra_trees_b = ExtraTreesRegressor(bootstrap=True, n_estimators=50, max_samples=0.7)
 
 
-def run(fun, n0=10, budget=100, n_step=5, name=name, estimator=xtra_trees_b):
+def run(name):
     bounds = functions.bounds[fun]
 
     def sampler(size): return pd.DataFrame(latin_square.scipy_lhs_sampler(size=size, x_limits=np.array(bounds)))

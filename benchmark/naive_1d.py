@@ -38,7 +38,7 @@ bounds = [[0, 1]]
 
 
 def unknown_function(x):
-    return x ** 5 * np.sin(10 * np.pi * x) * np.sin(30 * np.pi * x)
+    return x ** 5 * np.sin(10 * np.pi * x)  # * np.sin(30 * np.pi * x)
 
 
 def sampler(n):
@@ -46,7 +46,7 @@ def sampler(n):
     return pd.DataFrame(x0)
 
 
-kernel = 1 * RBF(0.01)
+kernel = 1 * RBF(0.03)
 xtra_trees = ExtraTreesRegressor(bootstrap=False, n_estimators=50)
 xtra_trees_b = ExtraTreesRegressor(bootstrap=True, n_estimators=50, max_samples=0.7)
 spline_fitting = make_pipeline(PolynomialFeatures(100, include_bias=True), Ridge(alpha=1e-3))

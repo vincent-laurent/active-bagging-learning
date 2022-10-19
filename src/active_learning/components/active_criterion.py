@@ -70,6 +70,8 @@ class VarianceBis(ActiveCriterion):
         self.estimator = estimator
 
     def __call__(self, X, *args, **kwargs):
+        if len(X.shape) == 1:
+            X = X.reshape(1, -1)
         ret = get_variance_function(self.models)(X)
         return np.where(ret < 0, 0, ret)
 

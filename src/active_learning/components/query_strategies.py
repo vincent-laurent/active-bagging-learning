@@ -13,9 +13,13 @@ class QueryStrategy(ABC, BaseEstimator):
     def __init__(self):
         super().__init__()
         self.active_function = None
+        self.bounds = None
 
     def set_active_function(self, fun: callable):
         self.active_function = fun
+
+    def set_bounds(self, bounds):
+        self.bounds = bounds
 
     @abstractmethod
     def query(self, *args):
@@ -23,27 +27,32 @@ class QueryStrategy(ABC, BaseEstimator):
 
 
 class QueryMax(QueryStrategy):
-    def __init__(self, x0, xtol=0.001, maxiter=40, disp=0):
+    def __init__(self, x0, bounds=None, xtol=0.001, maxiter=40, disp=0):
         super().__init__()
         self.xtol = xtol
         self.maxiter = maxiter
         self.disp = disp
         self.x0 = x0.reshape(1, -1)
+        if bounds is not None:
+            self.bounds = bounds
 
-    def query(self) -> np.ndarray:
+    def query(self, *args_) -> np.ndarray:
         def fun(*args, **kwargs):
             return - self.active_function(*args, **kwargs)
 
-        res = optimize.fmin(fun, x0=self.x0,
-                            xtol=self.xtol, maxiter=self.maxiter, disp=self.disp)
+        res = optimize.minimize(
+            fun, x0=self.x0,
+            bounds=self.bounds, options={'gtol': 1e-6, 'disp': True}).x
+        print(res)
         return res.reshape(self.x0.shape)
 
 
 class QueryVariancePDF(QueryStrategy):
-    def __init__(self, bounds, num_eval: int = int(1e5)):
+    def __init__(self, bounds=None, num_eval: int = int(1e5)):
         super().__init__()
         self.num_eval = num_eval
-        self.bounds = bounds
+        if bounds is not None:
+            self.bounds = bounds
         self.__rng = np.random.default_rng()
 
     def query(self, size):
@@ -55,10 +64,11 @@ class QueryVariancePDF(QueryStrategy):
 
 
 class Reject(QueryStrategy):
-    def __init__(self, bounds, num_eval: int = int(1e5)):
+    def __init__(self, bounds=None, num_eval: int = int(1e5)):
         super().__init__()
+        if bounds is not None:
+            self.bounds = bounds
         self.num_eval = num_eval
-        self.bounds = bounds
         self.__rng = np.random.default_rng()
 
     def query(self, size):
@@ -71,9 +81,10 @@ class Reject(QueryStrategy):
 
 
 class Uniform(QueryStrategy):
-    def __init__(self, bounds):
+    def __init__(self, bounds=None):
         super().__init__()
-        self.bounds = bounds
+        if bounds is not None:
+            self.bounds = bounds
 
     def query(self, size):
         candidates = scipy_lhs_sampler(x_limits=np.array(self.bounds), size=size)

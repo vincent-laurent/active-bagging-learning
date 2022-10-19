@@ -51,7 +51,7 @@ class TestingClass:
 
         nb_sample_cumul = np.linspace(self.budget_0, self.budget, num=self.n_steps, dtype=int)
         nb_sample = np.concatenate(([nb_sample_cumul[0]], np.diff(nb_sample_cumul)))
-        print(nb_sample)
+        print("Distribution of budget :", nb_sample)
         for n_points in nb_sample[1:]:
             i = self.learner.iter
             x_new = self.learner.query(n_points)
@@ -178,13 +178,19 @@ def plot_iter(test: TestingClass):
     test.learner.x_input.index = test.learner.x_input.index.astype(int)
     for iter, ax in enumerate(axs.ravel()):
         res = test.learner.result[iter]
-        error = res["active_criterion"](domain.reshape(-1, 1))
+        active_criterion = res["active_criterion"]
+        error = active_criterion(domain.reshape(-1, 1))
         prediction = res["surface"](domain.reshape(-1, 1))
         ax.plot(domain, prediction, color="b", label="iter={}".format(iter))
         ax.plot(domain, test.f(domain), color="grey", linestyle="--")
         ax.fill_between(domain.ravel(), prediction - error / 2, prediction + error / 2, color="b", alpha=0.2)
         training_dataset = test.learner.x_input.loc[range(iter + 1)]
         new_samples = test.learner.x_input.loc[iter + 1]
+
+        if hasattr(active_criterion, "models"):
+            for m in active_criterion.models:
+                y = m.predict(domain.reshape(-1, 1))
+                ax.plot(domain, y, color="gray", lw=0.5)
         ax.scatter(training_dataset, test.f(training_dataset), color="k", marker=".")
 
         ax.scatter(new_samples, test.f(new_samples), color="r", marker=".")

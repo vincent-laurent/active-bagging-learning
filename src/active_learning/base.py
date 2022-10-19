@@ -34,6 +34,7 @@ class ActiveSRLearner:
 
     def query(self, *args):
         self.learn()
+        self.query_strategy.set_bounds(self.bounds)
         self.query_strategy.set_active_function(self.active_criterion.__call__)
         self.x_new = pd.DataFrame(self.query_strategy.query(*args), columns=self.x_input.columns)
         self.save()
@@ -49,6 +50,7 @@ class ActiveSRLearner:
         self.budget = len(self.x_input)
 
     def save(self):
+
         self.result[self.iter] = dict(
             surface=deepcopy(self.active_criterion.function),
             active_criterion=deepcopy(self.active_criterion),
