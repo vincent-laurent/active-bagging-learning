@@ -59,6 +59,7 @@ class QueryVariancePDF(QueryStrategy):
         assert size > 0
         candidates = scipy_lhs_sampler(x_limits=np.array(self.bounds), size=self.num_eval)
         probability = self.active_function(candidates)
+        probability = probability + 1e-5
         probability /= np.sum(probability)
         return self.__rng.choice(candidates, size=size, replace=False, p=probability, axis=0)
 

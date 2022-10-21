@@ -24,7 +24,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from sklearn.preprocessing import StandardScaler
 from sklearn import ensemble
 
-name = "marelli_2018"
+name = "grammacy_lee_2009_rand"
 fun = functions.__dict__[name]
 
 
@@ -33,19 +33,12 @@ def analyse_results(path):
     print(res)
 
 
-#
-# est = Pipeline([("est", KNeighborsClassifier())])
-# est = Pipeline([("est", SVC(C=500))])
-# est = Pipeline([("est", RandomForestRegressor(n_estimators=10, bootstrap=True, max_samples=0.9))])
-# est = Pipeline([("poly", PolynomialFeatures(degree=[1, 3])), ("est", LinearRegression())])
-# est = ExtraTreesClassifier(n_estimators=10)
-# est = Pipeline([("scale", StandardScaler()), ("est", SVC(degree=10, C=100000, gamma=1))])
 def get_method_for_benchmark(name):
     if name == "marelli_2018":
         est = VarianceBis(
-            estimator=Pipeline([("scale", StandardScaler()), ("est", SVC(degree=10, C=100000, gamma=1))]),
-            splitter=ShuffleSplit(n_splits=10, train_size=0.6))
-        crit = query_strategies.QueryVariancePDF(num_eval=5000)
+            estimator=Pipeline([("scale", StandardScaler()), ("est", SVC(degree=2, C=5, gamma=10))]),
+            splitter=ShuffleSplit(n_splits=3, train_size=0.8))
+        crit = query_strategies.QueryVariancePDF(num_eval=500)
 
     elif name == "grammacy_lee_2009":
         est = VarianceBis(
@@ -57,7 +50,7 @@ def get_method_for_benchmark(name):
         est = VarianceBis(
             estimator=Pipeline([("scale", StandardScaler()), ("est", SVR(degree=2, C=10, gamma=10))]),
             splitter=ShuffleSplit(n_splits=3, train_size=0.7))
-        crit = query_strategies.QueryVariancePDF(num_eval=1000)
+        crit = query_strategies.Reject(num_eval=100)
 
     elif name == "branin":
         est = active_criterion.VarianceEnsembleMethod(
@@ -124,7 +117,7 @@ if __name__ == '__main__':
     a.run()
     p.run()
 
-    xx, yy, x, z = eval_surf_2d(fun, bounds, num=300)
+    xx, yy, x, z = eval_surf_2d(fun, bounds, num=100)
 
     # X = active_learner.result[n_step + 1]["data"]
     X = a.learner.x_input

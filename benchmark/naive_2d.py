@@ -79,19 +79,10 @@ def clear_benchmark_data(path="benchmark/results.csv", function=name):
     df.drop(df_select.index).to_csv(path)
 
 
-def run_whole_analysis():
-    from active_learning.data.functions import budget_parameters
-    functions__ = list(budget_parameters.keys())
-    for f in functions__:
-        print(f)
-        for n in range(10):
-            _, _, r = run(**budget_parameters[f], name=f)
-            add_to_benchmark(r)
-
-
 def plot_benchmark_whole_analysis(data: pd.DataFrame) -> None:
     from active_learning.components import test
-    from active_learning.data.functions import budget_parameters
+    from matplotlib.offsetbox import AnchoredText
+
     functions__ = data["name"].str.replace("_passive", "").drop_duplicates()
     fig, ax = plot.subplots(ncols=len(functions__) // 2 + len(functions__) % 2,
                             nrows=2, figsize=(len(functions_) * 0.7, 3.5), dpi=200)
@@ -100,10 +91,15 @@ def plot_benchmark_whole_analysis(data: pd.DataFrame) -> None:
     for i, f in enumerate(functions__):
         print(f)
         ax_ = ax[i % 2, i // 2]
-
+        at = AnchoredText(
+            f, prop=dict(size=5), frameon=True, loc='upper left')
+        at.patch.set_boxstyle("round,pad=0.,rounding_size=0.2")
+        ax_.add_artist(at)
         plot.sca(ax_)
-        data_temp = data[data["name"] == f]
-        data_temp_p = data[data["name"] == f + "_passive"]
+        data_temp = data[data["name"] == f].copy()
+        data_temp_p = data[data["name"] == f + "_passive"].copy()
+        data_temp["name"] = "active"
+        data_temp_p["name"] = "passive"
         test.plot_benchmark(data=pd.concat((data_temp, data_temp_p)), cmap="crest")
         ax_.set_ylabel("$L_2$ error") if i // 2 == 0 else ax_.set_ylabel("")
         plot.yticks(c="w")
@@ -119,6 +115,7 @@ def plot_benchmark_whole_analysis(data: pd.DataFrame) -> None:
 
 if __name__ == '__main__':
     from active_learning.components import test
+
     from active_learning.data.functions import budget_parameters
 
     estimator = xtra_trees_b
@@ -160,6 +157,10 @@ if __name__ == '__main__':
     experiment.run()
     data = experiment.cv_result_
     test.write_benchmark(data, path="data/benchmark_2d.csv")
+    identifier = ["budget", "budget_0", "n_steps", "active_criterion", "query_strategy", "name"]
     data = test.read_benchmark(path="data/benchmark_2d.csv")
-
-    plot_benchmark_whole_analysis(data)
+    df_property = data.groupby(identifier)["num_sample"].count().reset_index()
+    df_property = df_property.sort_values("date", ascending=True).drop_duplicates(
+        "name")
+    data_unique = pd.merge(data, df_property[identifier], on=identifier)
+    plot_benchmark_whole_analysis(data_unique)

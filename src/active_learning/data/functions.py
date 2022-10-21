@@ -124,7 +124,7 @@ budget_parameters = {
     "grammacy_lee_2009": {
         "fun": grammacy_lee_2009, 'n0': 20, "budget": 60, "n_step": 10},
     "grammacy_lee_2009_rand": {
-        "fun": grammacy_lee_2009_rand, 'n0': 60, "budget": 70, "n_step": 10},
+        "fun": grammacy_lee_2009_rand, 'n0': 60, "budget": 100, "n_step": 10},
     # "golden_price_rand": {
     #     "fun": golden_price_rand, 'n0': 50, "budget": 60, "n_step": 10},
     "branin": {
@@ -138,7 +138,7 @@ budget_parameters = {
     "golden_price": {
         "fun": golden_price, 'n0': 50, "budget": 60, "n_step": 10},
     "marelli_2018": {
-        "fun": marelli_2018, 'n0': 31, "budget": 60, "n_step": 30},
+        "fun": marelli_2018, 'n0': 150, "budget": 600, "n_step": 30},
     "synthetic_2d_1": {
         "fun": synthetic_2d_1, 'n0': 100, "budget": 900, "n_step": 10},
     "synthetic_2d_2": {

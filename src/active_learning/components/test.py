@@ -91,7 +91,7 @@ class Experiment:
         self.test_list = test_list
         self.results = {}
         self.n_experiment = n_experiment
-        columns = [*test_list[0].parameters.keys(), "L2-norm"]
+        columns = [*test_list[0].parameters.keys(), "L2-norm", "date"]
 
         self._cv_result = pd.DataFrame(
             columns=columns,
@@ -101,6 +101,7 @@ class Experiment:
             self.saving_class = {}
 
     def run(self):
+        from datetime import datetime
 
         for test in self.test_list:
             for i in range(self.n_experiment):
@@ -109,12 +110,13 @@ class Experiment:
                 res = pd.DataFrame(columns=self._cv_result.columns)
                 res["L2-norm"] = test_.metric
                 res["num_sample"] = pd.DataFrame(test_.learner.result).loc["budget"].astype(float).values
-
+                res["date"] = datetime.today()
                 for c in test.parameters.keys():
                     res[c] = test.parameters[c]
                 self._cv_result = pd.concat((self._cv_result, res), axis=0)
 
         self.cv_result_ = self._cv_result
+        self.cv_result_["date"] = pd.to_datetime(self.cv_result_["date"])
 
 
 def integrate(f: callable, bounds: iter, num_mc=int(1E6)):
