@@ -54,6 +54,7 @@ class Variance(ActiveCriterion):
         return np.where(ret < 0, 0, ret)
 
     def fit(self, X, y):
+        self.models = []
         X, y = np.array(X), np.array(y).ravel()
         for train, test in self.splitter.split(X, y):
             model = clone(self.estimator)
@@ -84,6 +85,7 @@ class VarianceBis(ActiveCriterion):
         return ret
 
     def fit(self, X, y):
+        self.models = []
         X, y = np.array(X), np.array(y).ravel()
         for train, test in self.splitter.split(X, y):
             model = clone(self.estimator)

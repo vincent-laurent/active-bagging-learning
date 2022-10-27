@@ -4,7 +4,7 @@ import pandas as pd
 from sklearn.ensemble import ExtraTreesRegressor
 
 from active_learning.components.active_criterion import VarianceEnsembleMethod
-from active_learning.components.query_strategies import QueryVariancePDF, Uniform
+from active_learning.components.query_strategies import QueryVariancePDF
 from active_learning.components.sampling import latin_square
 from active_learning.components.test import TestingClass
 from active_learning.data import functions
@@ -80,9 +80,9 @@ def clear_benchmark_data(path="benchmark/results.csv", function=name):
 
 
 def plot_benchmark_whole_analysis(data: pd.DataFrame) -> None:
-    from active_learning.components import test
-    from matplotlib.offsetbox import AnchoredText
-
+    import matplotlib
+    import seaborn as sns
+    matplotlib.rcParams.update({'font.size': 6})
     functions__ = data["name"].str.replace("_passive", "").drop_duplicates()
     fig, ax = plot.subplots(ncols=len(functions__) // 2 + len(functions__) % 2,
                             nrows=2, figsize=(len(functions_) * 0.7, 3.5), dpi=200)
@@ -91,76 +91,94 @@ def plot_benchmark_whole_analysis(data: pd.DataFrame) -> None:
     for i, f in enumerate(functions__):
         print(f)
         ax_ = ax[i % 2, i // 2]
-        at = AnchoredText(
-            f, prop=dict(size=5), frameon=True, loc='upper left')
-        at.patch.set_boxstyle("round,pad=0.,rounding_size=0.2")
-        ax_.add_artist(at)
+        bbox_props = dict(boxstyle="rarrow,pad=0.3", fc="cyan", ec="b", lw=2)
         plot.sca(ax_)
         data_temp = data[data["name"] == f].copy()
         data_temp_p = data[data["name"] == f + "_passive"].copy()
         data_temp["name"] = "active"
         data_temp_p["name"] = "passive"
-        test.plot_benchmark(data=pd.concat((data_temp, data_temp_p)), cmap="crest")
+        data_plot = pd.concat((data_temp, data_temp_p))
+        names = data_plot["name"].drop_duplicates().values
+
+        for j, n in enumerate(names):
+            data_ = data_plot[data_plot["name"] == n]
+            color = plot.get_cmap("crest")(j / (len(names)))
+            if i > 0:
+                label = '_nolegend_'
+            else:
+                label = n
+            sns.lineplot(data=data_, x="num_sample", y="L2-norm", label=label, color=color)
+        ax_.annotate(f, xy=(1, 0.8), xycoords='axes fraction',
+                     xytext=(1, 20), textcoords='offset pixels',
+                     horizontalalignment='right',
+                     verticalalignment='bottom',
+                     bbox=dict(boxstyle="round", fc="white", lw=0.4))
+        ax_.legend().set_visible(False)
         ax_.set_ylabel("$L_2$ error") if i // 2 == 0 else ax_.set_ylabel("")
         plot.yticks(c="w")
         plot.xlabel("")
         ax_.axes.yaxis.set_ticklabels([])
-        ax_.get_legend().remove()
-    if len(functions__) % 2 == 1:
-        ax[(i + 1) % 2, (i + 1) // 2].axes.remove()
-    ax_.legend()
+        ax_.grid()
+        if len(functions__) % 2 == 1:
+            ax[(i + 1) % 2, (i + 1) // 2].axes.remove()
 
+    fig.legend(
+        bbox_to_anchor=(0.6, 0.98),
+        # loc='lower left',
+        # mode="expand",
+        ncol=2)
     plot.savefig("benchmark/active_passive.png")
 
 
 if __name__ == '__main__':
     from active_learning.components import test
 
-    from active_learning.data.functions import budget_parameters
-
-    estimator = xtra_trees_b
-
-    def get_sampler(bounds):
-        def sampler(size):
-            return pd.DataFrame(latin_square.scipy_lhs_sampler(size=size, x_limits=np.array(bounds)))
-
-        return sampler
-
-
-    active_testing_classes = [test.TestingClass(
-        budget_parameters[name]["budget"],
-        budget_parameters[name]["n0"],
-        budget_parameters[name]["fun"],
-        VarianceEnsembleMethod(estimator=estimator),
-        QueryVariancePDF(functions.bounds[budget_parameters[name]["fun"]], num_eval=200),
-        get_sampler(functions.bounds[budget_parameters[name]["fun"]]),
-        n_steps=budget_parameters[name]["n_step"],
-        bounds=functions.bounds[budget_parameters[name]["fun"]],
-        name=name
-    ) for name in list(budget_parameters.keys())
-    ]
-
-    passive_testing_classes = [test.TestingClass(
-        budget_parameters[name]["budget"],
-        budget_parameters[name]["n0"],
-        budget_parameters[name]["fun"],
-        VarianceEnsembleMethod(estimator=estimator),
-        Uniform(functions.bounds[budget_parameters[name]["fun"]]),
-        get_sampler(functions.bounds[budget_parameters[name]["fun"]]),
-        n_steps=budget_parameters[name]["n_step"],
-        bounds=functions.bounds[budget_parameters[name]["fun"]],
-        name=name + "_passive"
-    ) for name in list(budget_parameters.keys())
-    ]
-
-    experiment = test.Experiment([*active_testing_classes, *passive_testing_classes], n_experiment=50)
-    experiment.run()
-    data = experiment.cv_result_
-    test.write_benchmark(data, path="data/benchmark_2d.csv")
+    # from active_learning.data.functions import budget_parameters
+    #
+    # estimator = xtra_trees_b
+    #
+    # def get_sampler(bounds):
+    #     def sampler(size):
+    #         return pd.DataFrame(latin_square.scipy_lhs_sampler(size=size, x_limits=np.array(bounds)))
+    #
+    #     return sampler
+    #
+    #
+    # active_testing_classes = [test.TestingClass(
+    #     budget_parameters[name]["budget"],
+    #     budget_parameters[name]["n0"],
+    #     budget_parameters[name]["fun"],
+    #     VarianceEnsembleMethod(estimator=estimator),
+    #     QueryVariancePDF(functions.bounds[budget_parameters[name]["fun"]], num_eval=200),
+    #     get_sampler(functions.bounds[budget_parameters[name]["fun"]]),
+    #     n_steps=budget_parameters[name]["n_step"],
+    #     bounds=functions.bounds[budget_parameters[name]["fun"]],
+    #     name=name
+    # ) for name in list(budget_parameters.keys())
+    # ]
+    #
+    # passive_testing_classes = [test.TestingClass(
+    #     budget_parameters[name]["budget"],
+    #     budget_parameters[name]["n0"],
+    #     budget_parameters[name]["fun"],
+    #     VarianceEnsembleMethod(estimator=estimator),
+    #     Uniform(functions.bounds[budget_parameters[name]["fun"]]),
+    #     get_sampler(functions.bounds[budget_parameters[name]["fun"]]),
+    #     n_steps=budget_parameters[name]["n_step"],
+    #     bounds=functions.bounds[budget_parameters[name]["fun"]],
+    #     name=name + "_passive"
+    # ) for name in list(budget_parameters.keys())
+    # ]
+    #
+    # experiment = test.Experiment([*active_testing_classes, *passive_testing_classes], n_experiment=50)
+    # experiment.run()
+    # data = experiment.cv_result_
+    # test.write_benchmark(data, path="data/benchmark_2d.csv")
     identifier = ["budget", "budget_0", "n_steps", "active_criterion", "query_strategy", "name"]
     data = test.read_benchmark(path="data/benchmark_2d.csv")
-    df_property = data.groupby(identifier)["num_sample"].count().reset_index()
-    df_property = df_property.sort_values("date", ascending=True).drop_duplicates(
+
+    df_property = data.groupby(identifier)["date"].last().reset_index()
+    df_property = df_property.sort_values("date", ascending=False).drop_duplicates(
         "name")
     data_unique = pd.merge(data, df_property[identifier], on=identifier)
     plot_benchmark_whole_analysis(data_unique)

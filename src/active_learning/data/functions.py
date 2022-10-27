@@ -2,6 +2,7 @@ import typing
 
 import numpy as np
 
+
 # TODO : add time series https://link.springer.com/content/pdf/10.1023/A:1012474916001.pdf
 
 
@@ -150,24 +151,48 @@ __all__ = [
 ]
 
 __all2D__ = [
-    grammacy_lee_2009_rand, branin_rand, himmelblau_rand, golden_price_rand,
-    synthetic_2d_1, synthetic_2d_2, marelli_2018
+    "grammacy_lee_2009", "grammacy_lee_2009_rand",
+    "branin", "branin_rand",
+    "himmelblau", "himmelblau_rand", "golden_price",
+    "marelli_2018",
+    "synthetic_2d_1", "synthetic_2d_2"
 ]
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plot
     import pandas as pd
+    import seaborn as sns
+    import matplotlib
 
-    fig, ax = plot.subplots(ncols=len(__all2D__) // 2 + len(__all2D__) % 2,
-                            nrows=2)
+    matplotlib.rcParams.update({'font.size': 6})
+    fig, ax = plot.subplots(
+        figsize=(10, 4.2),
+        ncols=len(__all2D__) // 2 + len(__all2D__) % 2,
+        nrows=2, dpi=250)
     for i, fun in enumerate(__all2D__):
-        bounds_ = np.array(bounds[fun])
+        bounds_ = np.array(bounds[budget_parameters[fun]["fun"]])
         if len(bounds_) == 2:
             xxx = np.linspace(bounds_[0, 0], bounds_[0, 1], num=200)
             yyy = np.linspace(bounds_[1, 0], bounds_[1, 1], num=200)
             x__, y__ = np.meshgrid(xxx, yyy)
             x__ = pd.DataFrame(dict(x0=x__.ravel(), x1=y__.ravel()))
-            z = fun(x__.values)
+            z = budget_parameters[fun]["fun"](x__.values)
 
-            ax[i % 2, i // 2].pcolormesh(xxx, yyy, z.reshape(len(xxx), len(yyy)),
-                                         cmap="RdBu")
+            im = ax[i % 2, i // 2].pcolormesh(xxx, yyy, z.reshape(len(xxx), len(yyy)),
+                                              cmap=sns.color_palette("RdBu_r", as_cmap=True))
+            ax_ = ax[i % 2, i // 2]
+            ax_.set_xticklabels([])
+            ax_.set_yticklabels([])
+            ax_.annotate(fun, xy=(1, 0.8), xycoords='axes fraction',
+                         xytext=(1, 20), textcoords='offset pixels',
+                         horizontalalignment='right',
+                         verticalalignment='bottom',
+                         bbox=dict(boxstyle="round", fc="white", lw=0.4))
+
+    fig.subplots_adjust(right=0.9)
+    cbar_ax = fig.add_axes([0.91, 0.11, 0.01, 0.77])
+    fig.colorbar(im, cax=cbar_ax, ticks=[-2, -0.32, 1.5])
+    cbar_ax.set_yticklabels(['low \nvalues', '0', 'high \nvalues'])  #
+    plot.show()
+
+    fig.savefig("benchmark/figures/benchmark_functions.png")

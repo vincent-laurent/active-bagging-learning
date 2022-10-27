@@ -175,7 +175,8 @@ def plot_iter(test: TestingClass):
     import matplotlib.pyplot as plt
     domain = np.linspace(test.bounds[0][0], test.bounds[0][1], 2000)
     iter_ = int(test.learner.x_input.index.max())
-    fig, axs = plt.subplots(4, iter_ // 4, sharey=True, sharex=True, figsize=(8, 8), dpi=200)
+    n_row = int(np.sqrt(iter_))
+    fig, axs = plt.subplots(iter_ // n_row, n_row, sharey=True, sharex=True, figsize=(8, 8), dpi=200)
 
     test.learner.x_input.index = test.learner.x_input.index.astype(int)
     for iter, ax in enumerate(axs.ravel()):
@@ -183,8 +184,8 @@ def plot_iter(test: TestingClass):
         active_criterion = res["active_criterion"]
         error = active_criterion(domain.reshape(-1, 1))
         prediction = res["surface"](domain.reshape(-1, 1))
-        ax.plot(domain, prediction, color="b", label="iter={}".format(iter))
-        ax.plot(domain, test.f(domain), color="grey", linestyle="--")
+        ax.plot(domain, prediction, color="b", label="iter={}".format(iter), zorder=5)
+        ax.plot(domain, test.f(domain), color="grey", linestyle="--", zorder=0)
         ax.fill_between(domain.ravel(), prediction - error / 2, prediction + error / 2, color="b", alpha=0.2)
         training_dataset = test.learner.x_input.loc[range(iter + 1)]
         new_samples = test.learner.x_input.loc[iter + 1]
@@ -193,11 +194,12 @@ def plot_iter(test: TestingClass):
             for m in active_criterion.models:
                 y = m.predict(domain.reshape(-1, 1))
                 ax.plot(domain, y, color="gray", lw=0.5)
-        ax.scatter(training_dataset, test.f(training_dataset), color="k", marker=".")
+        ax.scatter(training_dataset, test.f(training_dataset), color="k", marker=".", zorder=10)
 
-        ax.scatter(new_samples, test.f(new_samples), color="r", marker=".")
+        ax.scatter(new_samples, test.f(new_samples), color="r", marker=".", zorder=30)
         ax.set_ylim(-0.9, 0.7)
         ax.legend()
+        # ax.axis("off")
 
 
 def write_benchmark(data: pd.DataFrame, path="data/benchmark.csv", update=True):
@@ -226,4 +228,3 @@ def plot_benchmark(data: pd.DataFrame, cmap="rainbow_r"):
         color = plt.get_cmap(cmap)(i / (len(names)))
         sns.lineplot(data=data_, x="num_sample", y="L2-norm", label=n, color=color)
 
-    plt.legend()
