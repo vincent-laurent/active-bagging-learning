@@ -195,4 +195,4 @@ if __name__ == '__main__':
     cbar_ax.set_yticklabels(['low \nvalues', '0', 'high \nvalues'])  #
     plot.show()
 
-    fig.savefig("benchmark/figures/benchmark_functions.png")
+    fig.savefig("examples/2d_benchmark/figures/benchmark_functions.png")

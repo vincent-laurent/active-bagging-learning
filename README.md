@@ -9,9 +9,10 @@ python -m pip install git+https://gitlab.eurobios.com/vlaurent/surrogate-models.
 ```
 
 ## Literature 
-* **Review** [Simpson2001](https://ntrs.nasa.gov/api/citations/19990087092/downloads/19990087092.pdf) 
+* **Review** [Simpson2001](https://ntrs.nasa.gov/api/citations/19990087092/downloads/19990087092.pdf)
 
-![](https://i.imgur.com/w571mZ7.png)
+<img height="300" src="https://i.imgur.com/w571mZ7.png" width="400"/>
+
 * **Reliability** in [[Marelli2018]](https://arxiv.org/pdf/1709.01589) using polynomial chaos expansion. The problem is to find a region defined by a function $\{x ; \, g(x) \leqslant 0\}$ where $g$ is called limit state function. *Bootstrap approach to estimate variance* 
 * **Properties in multilayer percpetron network** [[Fukumizu2000]](https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.51.1885&rep=rep1&type=pdf) regression problem. Active learning : resampling trapped in local minima ? Redundancy of hidden units in active learning
 * Gaussian process using mutual information 
@@ -25,50 +26,63 @@ Plug in approach to active learning for surface response estimation
 * At time $`t`$ we dispose of a set of $`n`$ evaluations $`(x_i, f(x_i))_{i\leqslant n}`$
 * All feasible points can be sampled in domain $`\mathcal{X}`$
 
-## Usage
+## Basic usage
 
 ```python
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import ShuffleSplit
+from sklearn.ensemble import ExtraTreesRegressor
 
-from active_learning import base
-from active_learning.components import query_strategies
-from active_learning.components import active_criterion
-from active_learning.components.sampling import latin_square
+from active_learning import ActiveSRLearner
+from active_learning.components.active_criterion import VarianceEnsembleMethod
+from active_learning.components.query_strategies import QueryVariancePDF
 from active_learning.data import functions
-from active_learning.models.smt_api import SurrogateKRG
 
-n0 = 100
-name = "grammacy_lee_2009_rand"
-fun = functions.__dict__[name]          # The function we want to learn
-estimator = dict(                       # Parameters to be used to estimate the surface response
-    base_estimator=SurrogateKRG(),      # Base estimator for the surface
-    splitter=ShuffleSplit(n_splits=2))  # Resampling strategy
-bounds = [[0, 1], [0, 1]]               # [x bounds, y bounds]
-x0 = latin_square.iterative_sampler(    # Initiate distribution
-    x_limits=np.array(bounds), size=n0,
-    batch_size=n0 // 2)
+fun = functions.grammacy_lee_2009                  # The function we want to learn
+bounds = np.array(functions.bounds[fun])           # [x1 bounds, x2 bounds]
+n = 50
+X_train = pd.DataFrame(
+    {'x1': (bounds[0, 0] - bounds[0, 1]) * np.random.rand(n) + bounds[0, 1],
+     'x2': (bounds[1, 0] - bounds[1, 1]) * np.random.rand(n) + bounds[1, 1],
+     })                                             # Initiate distribution
+y_train = -fun(X_train)
 
-active_learner = base.ActiveSRLearner(
-    active_criterion.estimate_variance,     # Active criterion as a surface
-    query_strategies.reject_on_bounds,      # Given active criterion surface, execute query 
-    pd.DataFrame(x0),                       # Input data X
-    pd.DataFrame(fun(x0)),                  # Input data y (target)
-    bounds=np.array(bounds),                # Bounds
-    estimator_parameters=estimator)         
-x_new = active_learner.query(1)             # Request one point
+active_criterion =VarianceEnsembleMethod(           # Parameters to be used to estimate the surface response
+        estimator=ExtraTreesRegressor(              # Base estimator for the surface
+            max_features=0.8, bootstrap=True)
+)
+query_strategy = QueryVariancePDF(bounds, num_eval=int(20000))
 
+# QUERY NEW POINTS
+active_learner = ActiveSRLearner(
+    active_criterion,                               # Active criterion yields a surface
+    query_strategy,                                 # Given active criterion surface, execute query 
+    X_train,                                        # Input data X
+    y_train,                                        # Input data y (target)
+    bounds=bounds)
+
+X_new = active_learner.query(3)                     # Request 3 points
 ```
-
 To use the approach, one has to dispose of
 
 1. An estimator (a set of function) to fit the surface (linear model, gaussian vectors, etc.) in sklearn's API (`base_estimator` parameter)
 2. A surface describing an active learning criterion that will adjust the estimator and estimate its variance in some way (`active_criterion` component).
 3. A resampling strategy that will take a function (the active criterion surface) and makes it a query (`query_strategy` component).
 
+
+
+<img alt="benchmark" height="500" src="public/active_surface.png" width="500"/>
+
+## Exemples
+
+* 1D example :  
+
+
 ## Benchmark
+
+
 ![benchmark](public/benchmark.png)
 
 

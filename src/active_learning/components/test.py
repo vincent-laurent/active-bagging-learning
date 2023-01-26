@@ -10,13 +10,13 @@ from active_learning.components.query_strategies import QueryStrategy
 
 
 class TestingClass:
-    def __init__(self, budget: int, budget_0: int, funcion: callable,
+    def __init__(self, budget: int, budget_0: int, function: callable,
                  active_criterion: ActiveCriterion,
                  query_strategy: QueryStrategy,
                  x_sampler: callable, n_steps: int,
                  bounds, name=None
                  ):
-        self.f = funcion
+        self.f = function
         self.budget = budget
         self.n_steps = n_steps
         self.budget_0 = budget_0
@@ -28,7 +28,7 @@ class TestingClass:
             budget=budget,
             budget_0=budget_0,
             n_steps=n_steps,
-            function_hash=hash(funcion) + hash(str(bounds)),
+            function_hash=hash(function) + hash(str(bounds)),
             active_criterion=str(active_criterion),
             query_strategy=str(query_strategy),
             x_sampler_hash=hash(x_sampler),
@@ -36,7 +36,8 @@ class TestingClass:
         self.parameters["test_id"] = self.parameters["budget"] + \
                                      self.parameters["function_hash"] + \
                                      self.parameters["n_steps"]
-        self.parameters["name"] = hash(np.random.uniform()) if name is None else name
+        self.parameters["name"] = hash(
+            np.random.uniform()) if name is None else name
 
         self.metric = []
 
@@ -49,9 +50,10 @@ class TestingClass:
             pd.DataFrame(self.f(x_train)),
             self.bounds)
 
-        nb_sample_cumul = np.linspace(self.budget_0, self.budget, num=self.n_steps, dtype=int)
-        nb_sample = np.concatenate(([nb_sample_cumul[0]], np.diff(nb_sample_cumul)))
-        print("Distribution of budget :", nb_sample)
+        nb_sample_cumul = np.linspace(self.budget_0, self.budget,
+                                      num=self.n_steps, dtype=int)
+        nb_sample = np.concatenate(
+            ([nb_sample_cumul[0]], np.diff(nb_sample_cumul)))
         for n_points in nb_sample[1:]:
             i = self.learner.iter
             x_new = self.learner.query(n_points)
@@ -71,7 +73,9 @@ class TestingClass:
         for i in self.functions.keys():
             error = np.abs(np.ravel(self.f(x)) - self.functions[i](x)) ** 2
             crit_ = self.learner.active_criterion(x)
-            sns.kdeplot(x=error, y=crit_, c=plt.get_cmap("rainbow")(i / len(self.functions)), log_scale=(True, True),
+            sns.kdeplot(x=error, y=crit_,
+                        c=plt.get_cmap("rainbow")(i / len(self.functions)),
+                        log_scale=(True, True),
                         linewidth=0.1)
         plt.xlabel("$L_2$ error")
         plt.ylabel("Estimated variance")
@@ -81,13 +85,16 @@ class TestingClass:
         for i_, i in enumerate(self.learner.result.keys()):
             res = self.metric[i_]
             variance = integrate(self.criterion[i], self.bounds, num_mc)
-            plt.loglog([res], [variance], c=plt.get_cmap("rainbow")(i / len(self.functions)), marker="o", lw=0)
+            plt.loglog([res], [variance],
+                       c=plt.get_cmap("rainbow")(i / len(self.functions)),
+                       marker="o", lw=0)
         plt.xlabel("$L_2$ error")
         plt.ylabel("Estimated variance")
 
 
 class Experiment:
-    def __init__(self, test_list: typing.List[TestingClass], n_experiment=10, save=False):
+    def __init__(self, test_list: typing.List[TestingClass], n_experiment=10,
+                 save=False):
         self.test_list = test_list
         self.results = {}
         self.n_experiment = n_experiment
@@ -109,7 +116,8 @@ class Experiment:
                 test_.run()
                 res = pd.DataFrame(columns=self._cv_result.columns)
                 res["L2-norm"] = test_.metric
-                res["num_sample"] = pd.DataFrame(test_.learner.result).loc["budget"].astype(float).values
+                res["num_sample"] = pd.DataFrame(test_.learner.result).loc[
+                    "budget"].astype(float).values
                 res["date"] = datetime.today()
                 for c in test.parameters.keys():
                     res[c] = test.parameters[c]
@@ -132,7 +140,8 @@ def integrate(f: callable, bounds: iter, num_mc=int(1E6)):
 
 def evaluate(true_function, learned_surface, bounds, num_mc=int(1E6), l=2):
     def f(x):
-        return np.abs(np.ravel(true_function(x)) - np.ravel(learned_surface(x))) ** l
+        return np.abs(
+            np.ravel(true_function(x)) - np.ravel(learned_surface(x))) ** l
 
     return integrate(f, bounds, num_mc) ** (1 / l)
 
@@ -176,7 +185,8 @@ def plot_iter(test: TestingClass):
     domain = np.linspace(test.bounds[0][0], test.bounds[0][1], 2000)
     iter_ = int(test.learner.x_input.index.max())
     n_row = int(np.sqrt(iter_))
-    fig, axs = plt.subplots(iter_ // n_row, n_row, sharey=True, sharex=True, figsize=(8, 8), dpi=200)
+    fig, axs = plt.subplots(iter_ // n_row, n_row, sharey=True, sharex=True,
+                            figsize=(8, 8), dpi=200)
 
     test.learner.x_input.index = test.learner.x_input.index.astype(int)
     for iter, ax in enumerate(axs.ravel()):
@@ -184,9 +194,11 @@ def plot_iter(test: TestingClass):
         active_criterion = res["active_criterion"]
         error = active_criterion(domain.reshape(-1, 1))
         prediction = res["surface"](domain.reshape(-1, 1))
-        ax.plot(domain, prediction, color="b", label="iter={}".format(iter), zorder=5)
+        ax.plot(domain, prediction, color="b", label="iter={}".format(iter),
+                zorder=5)
         ax.plot(domain, test.f(domain), color="grey", linestyle="--", zorder=0)
-        ax.fill_between(domain.ravel(), prediction - error / 2, prediction + error / 2, color="b", alpha=0.2)
+        ax.fill_between(domain.ravel(), prediction - error / 2,
+                        prediction + error / 2, color="b", alpha=0.2)
         training_dataset = test.learner.x_input.loc[range(iter + 1)]
         new_samples = test.learner.x_input.loc[iter + 1]
 
@@ -194,15 +206,19 @@ def plot_iter(test: TestingClass):
             for m in active_criterion.models:
                 y = m.predict(domain.reshape(-1, 1))
                 ax.plot(domain, y, color="gray", lw=0.5)
-        ax.scatter(training_dataset, test.f(training_dataset), color="k", marker=".", zorder=10)
+        ax.scatter(training_dataset, test.f(training_dataset), color="k",
+                   marker=".", zorder=10)
 
-        ax.scatter(new_samples, test.f(new_samples), color="r", marker=".", zorder=30)
+        ax.scatter(new_samples, test.f(new_samples), color="r", marker=".",
+                   zorder=30)
         ax.set_ylim(-0.9, 0.7)
         ax.legend()
         # ax.axis("off")
 
 
-def write_benchmark(data: pd.DataFrame, path="data/benchmark.csv", update=True):
+def write_benchmark(
+        data: pd.DataFrame,
+        path="examples/data/benchmark.csv", update=True):
     import os
 
     if update:
@@ -226,5 +242,5 @@ def plot_benchmark(data: pd.DataFrame, cmap="rainbow_r"):
     for i, n in enumerate(names):
         data_ = data[data["name"] == n]
         color = plt.get_cmap(cmap)(i / (len(names)))
-        sns.lineplot(data=data_, x="num_sample", y="L2-norm", label=n, color=color)
-
+        sns.lineplot(data=data_, x="num_sample", y="L2-norm", label=n,
+                     color=color)

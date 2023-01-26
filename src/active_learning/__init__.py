@@ -1,4 +1,4 @@
-from .base import ActiveSRLearner
-from . import data
-from . import components
+from active_learning.base import ActiveSRLearner
+from active_learning.components import query_strategies
+from active_learning.components import active_criterion
 

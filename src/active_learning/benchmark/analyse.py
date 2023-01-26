@@ -1,28 +1,23 @@
 import os
 
-import matplotlib
 import matplotlib.colors as colors
-try:
-    matplotlib.use("qt5agg")
-except:
-    pass
 import matplotlib.pyplot as plot
 import numpy as np
 import pandas as pd
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+from sklearn import ensemble
+from sklearn.model_selection import ShuffleSplit
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC, SVR
 
-from active_learning.components.active_criterion import VarianceBis
+from active_learning.benchmark import functions
+from active_learning.benchmark.utils import evaluate, eval_surf_2d
 from active_learning.components import active_criterion
 from active_learning.components import query_strategies
-from sklearn.model_selection import ShuffleSplit
+from active_learning.components.active_criterion import VarianceBis
 from active_learning.components.sampling import latin_square
 from active_learning.components.test import TestingClass
-from active_learning.data import functions
-from benchmark.utils import evaluate, eval_surf_2d
-from sklearn.svm import SVC, SVR
-from sklearn.pipeline import Pipeline
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-from sklearn.preprocessing import StandardScaler
-from sklearn import ensemble
 
 name = "grammacy_lee_2009_rand"
 fun = functions.__dict__[name]
@@ -36,19 +31,22 @@ def analyse_results(path):
 def get_method_for_benchmark(name):
     if name == "marelli_2018":
         est = VarianceBis(
-            estimator=Pipeline([("scale", StandardScaler()), ("est", SVC(degree=2, C=5, gamma=10))]),
+            estimator=Pipeline([("scale", StandardScaler()),
+                                ("est", SVC(degree=2, C=5, gamma=10))]),
             splitter=ShuffleSplit(n_splits=3, train_size=0.8))
         crit = query_strategies.QueryVariancePDF(num_eval=500)
 
     elif name == "grammacy_lee_2009":
         est = VarianceBis(
-            estimator=Pipeline([("scale", StandardScaler()), ("est", SVR(degree=2, C=10, gamma=10))]),
+            estimator=Pipeline([("scale", StandardScaler()),
+                                ("est", SVR(degree=2, C=10, gamma=10))]),
             splitter=ShuffleSplit(n_splits=3, train_size=0.7))
         crit = query_strategies.QueryVariancePDF(num_eval=1000)
 
     elif name == "grammacy_lee_2009_rand":
         est = VarianceBis(
-            estimator=Pipeline([("scale", StandardScaler()), ("est", SVR(degree=2, C=10, gamma=10))]),
+            estimator=Pipeline([("scale", StandardScaler()),
+                                ("est", SVR(degree=2, C=10, gamma=10))]),
             splitter=ShuffleSplit(n_splits=3, train_size=0.7))
         crit = query_strategies.Reject(num_eval=100)
 
@@ -78,18 +76,21 @@ def get_method_for_benchmark(name):
 
     elif name == "synthetic_2d_2":
         est = active_criterion.VarianceEnsembleMethod(
-            estimator=ensemble.ExtraTreesRegressor(bootstrap=True, max_samples=0.9))
+            estimator=ensemble.ExtraTreesRegressor(bootstrap=True,
+                                                   max_samples=0.9))
         crit = query_strategies.QueryVariancePDF(num_eval=1000)
 
     else:
         est = active_criterion.VarianceEnsembleMethod(
-            estimator=ensemble.ExtraTreesRegressor(bootstrap=True, max_samples=0.9, max_features=1))
+            estimator=ensemble.ExtraTreesRegressor(bootstrap=True,
+                                                   max_samples=0.9,
+                                                   max_features=1))
         crit = query_strategies.QueryVariancePDF(num_eval=1000)
     return est, crit
 
 
 if __name__ == '__main__':
-    path = f"benchmark/figures/{name}"
+    path = f"examples/2d_benchmark/figures/{name}"
     if not os.path.exists(path):
         os.makedirs(path)
 
@@ -101,7 +102,9 @@ if __name__ == '__main__':
 
 
     def sampler(size):
-        return pd.DataFrame(latin_square.scipy_lhs_sampler(size=size, x_limits=bounds))
+        return pd.DataFrame(
+            latin_square.scipy_lhs_sampler(size=size, x_limits=bounds))
+
 
     active_criterion_, crit_ = get_method_for_benchmark(name)
     a = TestingClass(
@@ -136,12 +139,14 @@ if __name__ == '__main__':
     ax[0].pcolormesh(
         xx, yy, sa, cmap=cmap,
         norm=colors.LogNorm(vmin=1e-4, vmax=sa.max()))
-    ax[0].contour(xx, yy, z.reshape(len(xx), len(yy)), levels=10, linewidths=0.3,
+    ax[0].contour(xx, yy, z.reshape(len(xx), len(yy)), levels=10,
+                  linewidths=0.3,
                   colors='k')
 
     im = ax[1].pcolormesh(xx, yy, sp, cmap=cmap,
                           norm=colors.LogNorm(vmin=1e-4, vmax=sp.max()))
-    ax[1].contour(xx, yy, z.reshape(len(xx), len(yy)), levels=10, linewidths=0.3,
+    ax[1].contour(xx, yy, z.reshape(len(xx), len(yy)), levels=10,
+                  linewidths=0.3,
                   colors='k')
 
     divider = make_axes_locatable(ax[1])
@@ -184,7 +189,8 @@ if __name__ == '__main__':
     plot.contour(xx, yy, z.reshape(len(xx), len(yy)), levels=30, linewidths=0.3,
                  colors='k')
 
-    plot.scatter(a.learner.x_input.drop(0)[0], a.learner.x_input.drop(0)[1], cmap="rainbow",
+    plot.scatter(a.learner.x_input.drop(0)[0], a.learner.x_input.drop(0)[1],
+                 cmap="rainbow",
                  c=a.learner.x_input.drop(0).index, marker=".")
     plot.scatter(a.learner.x_input.loc[0][0], a.learner.x_input.loc[0][1],
                  c="k", marker="x")

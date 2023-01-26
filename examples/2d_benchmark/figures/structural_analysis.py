@@ -12,16 +12,13 @@ from active_learning.components.active_criterion import VarianceBis
 from active_learning.components import query_strategies
 from active_learning.components.sampling import latin_square
 from sklearn.model_selection import ShuffleSplit
-from active_learning.data import functions
+from active_learning.benchmark import functions
 from sklearn.svm import SVC
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn import gaussian_process
 from sklearn.gaussian_process.kernels import RBF
 from sklearn.gaussian_process.kernels import Matern
-from benchmark.utils import evaluate, eval_surf_2d
-from sklearn.preprocessing import PolynomialFeatures
-from sklearn.neighbors import KNeighborsClassifier
+from benchmark.utils import eval_surf_2d
 
 if __name__ == '__main__':
     name = "marelli_2018"
@@ -48,8 +45,8 @@ if __name__ == '__main__':
     # )
     # crit = query_strategies.QueryVariancePDF(num_eval=500)
 
-    n0 = functions.budget_parameters[name]["n0"]*5
-    budget = functions.budget_parameters[name]["budget"]*10
+    n0 = functions.budget_parameters[name]["n0"] * 5
+    budget = functions.budget_parameters[name]["budget"] * 10
     steps = 30
     bounds = np.array(functions.bounds[fun])
 

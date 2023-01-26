@@ -7,7 +7,7 @@ from active_learning.components.active_criterion import VarianceEnsembleMethod
 from active_learning.components.query_strategies import QueryVariancePDF
 from active_learning.components.sampling import latin_square
 from active_learning.components.test import TestingClass
-from active_learning.data import functions
+from active_learning.benchmark import functions
 
 functions_ = list(functions.bounds.keys())
 
@@ -52,7 +52,7 @@ def add_to_benchmark(data: pd.DataFrame, path="benchmark/results.csv"):
 
 
 def plot_all_benchmark_function():
-    from active_learning.data.functions import budget_parameters
+    from active_learning.benchmark.functions import budget_parameters
     functions__ = list(budget_parameters.keys())
     fig, ax = plot.subplots(ncols=len(functions__) // 2 + len(functions__) % 2,
                             nrows=2, figsize=(len(functions_) * 0.7, 3), dpi=200)

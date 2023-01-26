@@ -4,7 +4,7 @@ from typing import Union
 import numpy as np
 import pandas as pd
 from sklearn import clone
-from sklearn.base import BaseEstimator
+from sklearn.base import RegressorMixin
 from sklearn.ensemble import BaseEnsemble
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.gaussian_process import GaussianProcessRegressor
@@ -12,7 +12,7 @@ from sklearn.model_selection import BaseCrossValidator
 from sklearn.model_selection import ShuffleSplit
 
 
-class ActiveCriterion(ABC, BaseEstimator):
+class ActiveCriterion(ABC, RegressorMixin):
     def __init__(self, *args):
         super().__init__(*args)
 
@@ -34,7 +34,7 @@ class ActiveCriterion(ABC, BaseEstimator):
 
 class Variance(ActiveCriterion):
     def __init__(self,
-                 estimator: BaseEstimator,
+                 estimator,
                  splitter: Union[BaseCrossValidator, ShuffleSplit]):
         super().__init__()
         self.models = []
@@ -63,7 +63,7 @@ class Variance(ActiveCriterion):
 
 class VarianceBis(ActiveCriterion):
     def __init__(self,
-                 estimator: BaseEstimator,
+                 estimator,
                  splitter: Union[BaseCrossValidator, ShuffleSplit]):
         super().__init__()
         self.models = []
@@ -150,7 +150,7 @@ def get_variance_function(estimator_list):
 
 
 def estimate_variance(X, y,
-                      base_estimator: BaseEstimator = RandomForestRegressor(),
+                      base_estimator = RandomForestRegressor(),
                       splitter: BaseCrossValidator = ShuffleSplit(n_splits=5)):
     list_models = []
     X, y = np.array(X), np.array(y).ravel()
