@@ -66,7 +66,7 @@ plot_iter(testing_bootstrap)
 plt.tight_layout()
 plt.show()
 
-plt.savefig("public//example_krg.png")
+plt.savefig("public//example_krg.png", dpi=100)
 
 testing = TestingClass(
     budget,

@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plot
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import ExtraTreesRegressor
@@ -127,7 +128,6 @@ def plot_benchmark_whole_analysis(data: pd.DataFrame) -> None:
         # loc='lower left',
         # mode="expand",
         ncol=2)
-    plot.savefig("benchmark/active_passive.png")
 
 
 if __name__ == '__main__':
@@ -175,10 +175,11 @@ if __name__ == '__main__':
     # data = experiment.cv_result_
     # test.write_benchmark(data, path="data/benchmark_2d.csv")
     identifier = ["budget", "budget_0", "n_steps", "active_criterion", "query_strategy", "name"]
-    data = test.read_benchmark(path="data/benchmark_2d.csv")
+    data = test.read_benchmark(path="./examples/2d_benchmark/data/benchmark_2d.csv")
 
     df_property = data.groupby(identifier)["date"].last().reset_index()
     df_property = df_property.sort_values("date", ascending=False).drop_duplicates(
         "name")
     data_unique = pd.merge(data, df_property[identifier], on=identifier)
     plot_benchmark_whole_analysis(data_unique)
+    plt.savefig("public/active_vs_passive.png", dpi=150)
