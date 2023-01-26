@@ -30,7 +30,6 @@ Plug in approach to active learning for surface response estimation
 
 ```python
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import ExtraTreesRegressor
@@ -38,7 +37,7 @@ from sklearn.ensemble import ExtraTreesRegressor
 from active_learning import ActiveSRLearner
 from active_learning.components.active_criterion import VarianceEnsembleMethod
 from active_learning.components.query_strategies import QueryVariancePDF
-from active_learning.data import functions
+from active_learning.benchmark import functions
 
 fun = functions.grammacy_lee_2009                  # The function we want to learn
 bounds = np.array(functions.bounds[fun])           # [x1 bounds, x2 bounds]
