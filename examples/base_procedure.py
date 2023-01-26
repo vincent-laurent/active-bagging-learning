@@ -53,7 +53,7 @@ filled_marker_style = dict(marker='o', lw=0, markersize=5,
                            markerfacecoloralt='lightsteelblue',
                            markeredgecolor='darkgreen')
 
-plt.figure(figsize=(7, 6), dpi=200)
+plt.figure(figsize=(7, 6), dpi=100)
 plt.pcolormesh(x1_plot, x2_plot, prediction(X_plot).reshape(n_plot, n_plot), cmap="RdBu_r")
 plt.colorbar()
 plt.scatter(X_train.x1, X_train.x2, label="training samples", c="k", marker=".")
@@ -62,7 +62,7 @@ plt.title("Predictions")
 plt.legend()
 plt.savefig("public/example.png")
 
-plt.figure(figsize=(7, 6), dpi=200)
+plt.figure(figsize=(7, 6), dpi=100)
 plt.pcolormesh(x1_plot, x2_plot, criterion(X_plot).reshape(n_plot, n_plot), cmap="RdBu_r")
 plt.colorbar()
 plt.scatter(X_train.x1, X_train.x2, label="training samples", c="k", marker=".")

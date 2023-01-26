@@ -82,6 +82,6 @@ To use the approach, one has to dispose of
 ## Benchmark
 
 
-![benchmark](public/benchmark.png)
+![benchmark](public/active_vs_passive.png)
 
 
