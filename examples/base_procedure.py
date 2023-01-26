@@ -6,7 +6,7 @@ from sklearn.ensemble import ExtraTreesRegressor
 from active_learning import ActiveSRLearner
 from active_learning.components.active_criterion import VarianceEnsembleMethod
 from active_learning.components.query_strategies import QueryVariancePDF
-from active_learning.data import functions
+from active_learning.benchmark import functions
 
 plt.style.use("bmh")
 plt.rcParams["font.family"] = "ubuntu"
