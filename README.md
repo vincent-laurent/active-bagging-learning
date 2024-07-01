@@ -1,7 +1,8 @@
 
 # Active  Strategy for surface response estimation
-###### tags: `Surrogate Model` `Machine Learning`
 
+
++ [![cov](https://eurobios-mews-labs.github.io/active-bagging-learning/badges/coverage.svg)](https://github.com/eurobios-mews-labs.github.io/active-bagging-learning/actions)
 ## Installation
 
 ```shell
