@@ -16,6 +16,7 @@ import numpy as np
 import pandas as pd
 
 from active_learning import base
+from active_learning.benchmark.utils import evaluate
 from active_learning.components.active_criterion import IActiveCriterion
 from active_learning.components.query_strategies import IQueryStrategy
 

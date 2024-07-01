@@ -73,12 +73,13 @@ To use the approach, one has to dispose of
 
 
 
-<img alt="benchmark" height="500" src="public/active_surface.png" width="500"/>
+<img alt="benchmark" height="500" src=".public/active_surface.png" width="500"/>
 
 ## Exemples
 
 * 1D example :  
 
+<img alt="benchmark" height="500" src=".public/example_krg.png" width="800"/>
 
 ## Benchmark
 
