@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61.0.0"]
+build-backend = "setuptools.build_meta"
+package-name = "active_learning"
+
+[project]
+name = "active_learning"
+version = "2024.2.1"
+description = ""
+authors = [{ name = 'Vincent Laurent', email = 'vlaurent@mews-labs.com' }]
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = '>=3.9'
+
+
+dynamic = ["dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
