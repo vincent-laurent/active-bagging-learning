@@ -1,3 +1,15 @@
+# Copyright 2024 Eurobios
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#     http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
 import os
 
 import matplotlib.colors as colors
@@ -17,7 +29,7 @@ from active_learning.components import active_criterion
 from active_learning.components import query_strategies
 from active_learning.components.active_criterion import VarianceBis
 from active_learning.components.sampling import latin_square
-from active_learning.components.test import TestingClass
+from active_learning.benchmark.test import TestingClass
 
 name = "grammacy_lee_2009_rand"
 fun = functions.__dict__[name]
@@ -34,58 +46,58 @@ def get_method_for_benchmark(name):
             estimator=Pipeline([("scale", StandardScaler()),
                                 ("est", SVC(degree=2, C=5, gamma=10))]),
             splitter=ShuffleSplit(n_splits=3, train_size=0.8))
-        crit = query_strategies.QueryVariancePDF(num_eval=500)
+        crit = query_strategies.ServiceQueryVariancePDF(num_eval=500)
 
     elif name == "grammacy_lee_2009":
         est = VarianceBis(
             estimator=Pipeline([("scale", StandardScaler()),
                                 ("est", SVR(degree=2, C=10, gamma=10))]),
             splitter=ShuffleSplit(n_splits=3, train_size=0.7))
-        crit = query_strategies.QueryVariancePDF(num_eval=1000)
+        crit = query_strategies.ServiceQueryVariancePDF(num_eval=1000)
 
     elif name == "grammacy_lee_2009_rand":
         est = VarianceBis(
             estimator=Pipeline([("scale", StandardScaler()),
                                 ("est", SVR(degree=2, C=10, gamma=10))]),
             splitter=ShuffleSplit(n_splits=3, train_size=0.7))
-        crit = query_strategies.Reject(num_eval=100)
+        crit = query_strategies.ServiceReject(num_eval=100)
 
     elif name == "branin":
-        est = active_criterion.VarianceEnsembleMethod(
+        est = active_criterion.ServiceVarianceEnsembleMethod(
             estimator=ensemble.ExtraTreesRegressor(bootstrap=True))
-        crit = query_strategies.QueryVariancePDF(num_eval=1000)
+        crit = query_strategies.ServiceQueryVariancePDF(num_eval=1000)
 
     elif name == "branin_rand":
-        est = active_criterion.VarianceEnsembleMethod(
+        est = active_criterion.ServiceVarianceEnsembleMethod(
             estimator=ensemble.ExtraTreesRegressor(bootstrap=True))
-        crit = query_strategies.QueryVariancePDF(num_eval=1000)
+        crit = query_strategies.ServiceQueryVariancePDF(num_eval=1000)
     elif name == "himmelblau":
-        est = active_criterion.VarianceEnsembleMethod(
+        est = active_criterion.ServiceVarianceEnsembleMethod(
             estimator=ensemble.ExtraTreesRegressor(bootstrap=True))
-        crit = query_strategies.QueryVariancePDF(num_eval=1000)
+        crit = query_strategies.ServiceQueryVariancePDF(num_eval=1000)
 
     elif name == "himmelblau_rand":
-        est = active_criterion.VarianceEnsembleMethod(
+        est = active_criterion.ServiceVarianceEnsembleMethod(
             estimator=ensemble.ExtraTreesRegressor(bootstrap=True))
-        crit = query_strategies.QueryVariancePDF(num_eval=1000)
+        crit = query_strategies.ServiceQueryVariancePDF(num_eval=1000)
 
     elif name == "synthetic_2d_1":
-        est = active_criterion.VarianceEnsembleMethod(
+        est = active_criterion.ServiceVarianceEnsembleMethod(
             estimator=ensemble.ExtraTreesRegressor(bootstrap=True))
-        crit = query_strategies.QueryVariancePDF(num_eval=1000)
+        crit = query_strategies.ServiceQueryVariancePDF(num_eval=1000)
 
     elif name == "synthetic_2d_2":
-        est = active_criterion.VarianceEnsembleMethod(
+        est = active_criterion.ServiceVarianceEnsembleMethod(
             estimator=ensemble.ExtraTreesRegressor(bootstrap=True,
                                                    max_samples=0.9))
-        crit = query_strategies.QueryVariancePDF(num_eval=1000)
+        crit = query_strategies.ServiceQueryVariancePDF(num_eval=1000)
 
     else:
-        est = active_criterion.VarianceEnsembleMethod(
-            estimator=ensemble.ExtraTreesRegressor(bootstrap=True,
+        est = active_criterion.ServiceVarianceEnsembleMethod(
+            estimator=ensemble.ServiceExtraTreesRegressor(bootstrap=True,
                                                    max_samples=0.9,
                                                    max_features=1))
-        crit = query_strategies.QueryVariancePDF(num_eval=1000)
+        crit = query_strategies.ServiceQueryVariancePDF(num_eval=1000)
     return est, crit
 
 

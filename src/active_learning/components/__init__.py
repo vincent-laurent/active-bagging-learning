@@ -1,2 +1,0 @@
-from active_learning.components.active_criterion import VarianceEnsembleMethod, Variance as VarianceCriterion
-

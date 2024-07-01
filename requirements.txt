@@ -2,5 +2,6 @@ scikit-learn
 numpy
 pandas>=1.1.5
 scipy
-smt
 matplotlib
+smt
+seaborn

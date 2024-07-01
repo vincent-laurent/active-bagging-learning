@@ -1,17 +1,28 @@
+# Copyright 2024 Eurobios
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#     http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import numpy as np
 import pandas as pd
 from copy import deepcopy
 
-from active_learning.components.active_criterion import ActiveCriterion
-from active_learning.components.query_strategies import QueryStrategy
+from active_learning.components.active_criterion import IActiveCriterion
+from active_learning.components.query_strategies import IQueryStrategy
 
 
 class ActiveSRLearner:
 
     def __init__(
             self,
-            active_criterion: ActiveCriterion,
-            query_strategy: QueryStrategy,
+            active_criterion: IActiveCriterion,
+            query_strategy: IQueryStrategy,
             X_train: pd.DataFrame,
             y_train: pd.DataFrame,
             bounds=None,
@@ -50,7 +61,6 @@ class ActiveSRLearner:
         self.budget = len(self.x_input)
 
     def save(self):
-
         self.result[self.iter] = dict(
             surface=deepcopy(self.active_criterion.function),
             active_criterion=deepcopy(self.active_criterion),

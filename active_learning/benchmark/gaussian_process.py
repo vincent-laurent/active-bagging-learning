@@ -1,3 +1,14 @@
+# Copyright 2024 Eurobios
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#     http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import numpy as np
 import pandas as pd
 import sklearn.model_selection
@@ -9,12 +20,12 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures
 
-from active_learning.components.active_criterion import GaussianProcessVariance, \
+from active_learning.components.active_criterion import ServiceGaussianProcessVariance, \
     VarianceBis
 from active_learning.components.query_strategies import QueryVariancePDF, \
     Uniform
-from active_learning.components.test import Experiment
-from active_learning.components.test import TestingClass, \
+from active_learning.benchmark.test import Experiment
+from active_learning.benchmark.test import TestingClass, \
     write_benchmark, read_benchmark, plot_benchmark
 
 SEED = 1234
@@ -55,14 +66,14 @@ if __name__ == '__main__':
 
     )
     testing = TestingClass(
-        budget, n0, unknown_function, GaussianProcessVariance(kernel=kernel),
+        budget, n0, unknown_function, ServiceGaussianProcessVariance(kernel=kernel),
         QueryVariancePDF(bounds, num_eval=200),
         sampler, steps, bounds=bounds, name="Gaussian process"
 
     )
 
     passive = TestingClass(
-        budget, n0, unknown_function, GaussianProcessVariance(kernel=kernel),
+        budget, n0, unknown_function, ServiceGaussianProcessVariance(kernel=kernel),
         Uniform(bounds),
         sampler, steps, bounds=bounds, name="Gaussian process (passive)"
     )

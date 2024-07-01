@@ -1,14 +1,25 @@
+# Copyright 2024 Eurobios
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#     http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import matplotlib.pyplot as plot
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import ExtraTreesRegressor
 
-from active_learning.components.active_criterion import VarianceEnsembleMethod
+from active_learning.components.active_criterion import ServiceVarianceEnsembleMethod
 from active_learning.components.query_strategies import QueryVariancePDF
 from active_learning.components.sampling import latin_square
-from active_learning.components.test import TestingClass
-from active_learning.benchmark import functions
+from active_learning.benchmark.test import TestingClass
+from active_learning.benchmark import functions, test
 
 functions_ = list(functions.bounds.keys())
 
@@ -25,7 +36,7 @@ def run(name):
 
     testing_bootstrap = TestingClass(
         budget, n0, fun,
-        VarianceEnsembleMethod(estimator=estimator),
+        ServiceVarianceEnsembleMethod(estimator=estimator),
         QueryVariancePDF(bounds, num_eval=200),
         sampler, n_steps=n_step, bounds=bounds, name=name
     )
@@ -131,8 +142,6 @@ def plot_benchmark_whole_analysis(data: pd.DataFrame) -> None:
 
 
 if __name__ == '__main__':
-    from active_learning.components import test
-
     # from active_learning.data.functions import budget_parameters
     #
     # estimator = xtra_trees_b
