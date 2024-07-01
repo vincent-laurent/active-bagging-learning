@@ -191,4 +191,4 @@ if __name__ == '__main__':
         "name")
     data_unique = pd.merge(data, df_property[identifier], on=identifier)
     plot_benchmark_whole_analysis(data_unique)
-    plt.savefig("public/active_vs_passive.png", dpi=150)
+    plt.savefig(".public/active_vs_passive.png", dpi=150)
