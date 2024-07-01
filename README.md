@@ -1,8 +1,8 @@
 
 # Active  Strategy for surface response estimation
 
+![cov](https://github.com/eurobios-mews-labs/active-bagging-learning/blob/coverage-badge/coverage.svg)
 
-+ [![cov](https://eurobios-mews-labs.github.io/active-bagging-learning/badges/coverage.svg)](https://github.com/eurobios-mews-labs.github.io/active-bagging-learning/actions)
 ## Installation
 
 ```shell
@@ -73,7 +73,7 @@ To use the approach, one has to dispose of
 
 
 
-<img alt="benchmark" height="500" src="public/active_surface.png" width="500"/>
+<img alt="benchmark" height="500" src=".public/active_surface.png" width="500"/>
 
 ## Exemples
 
