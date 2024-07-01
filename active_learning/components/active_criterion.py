@@ -38,6 +38,10 @@ class IActiveCriterion(ABC, RegressorMixin):
     def fit(self, X, y):
         ...
 
+    @abstractmethod
+    def function(self, X):
+        ...
+
     def __add__(self, other):
         # TODO
         ...
@@ -59,8 +63,7 @@ class ServiceVarianceCriterion(IActiveCriterion):
 
     def __call__(self, X, *args, **kwargs):
         X = self.reshape_x(X)
-        ret = utils.get_variance_function(self.models)(X)
-        return np.where(ret < 0, 0, ret)
+        return utils.get_variance_function(self.models)(X)
 
     def fit(self, X, y):
         self.models = []
@@ -69,6 +72,13 @@ class ServiceVarianceCriterion(IActiveCriterion):
             model = self.estimator.__sklearn_clone__()
             self.models.append(model.fit(X[train, :], y[train]))
 
+    def function(self, X):
+        res = 0
+        X = self.reshape_x(X)
+        for model_ in self.models:
+            res += model_.predict(X)
+        return res / len(self.models)
+
 
 class ServiceVarianceEnsembleMethod(IActiveCriterion):
     def __init__(self,
@@ -76,6 +86,10 @@ class ServiceVarianceEnsembleMethod(IActiveCriterion):
                  ):
         super().__init__()
         self.estimator = estimator
+
+    def function(self, X):
+        X = self.reshape_x(X)
+        return self.model_.predict(X)
 
     def __call__(self, X, *args, **kwargs):
         X = self.reshape_x(X)
@@ -100,6 +114,10 @@ class ServiceGaussianProcessVariance(IActiveCriterion):
     def __call__(self, X, *args, **kwargs):
         ret = self.model_.predict(X, return_std=True)[1]
         return np.where(ret < 0, 0, ret)
+
+    def function(self, X):
+        X = self.reshape_x(X)
+        return self.model_.predict(X)
 
     def fit(self, X, y):
         X, y = np.array(X), np.array(y).ravel()

@@ -65,7 +65,7 @@ def analyse_1d(test):
     sns.histplot(test.learner.x_input, bins=50)
 
 
-def plot_iter(test: TestingClass):
+def plot_iter(test: "TestingClass"):
     import matplotlib.pyplot as plt
     domain = np.linspace(test.bounds[0][0], test.bounds[0][1], 2000)
     iter_ = int(test.learner.x_input.index.max())

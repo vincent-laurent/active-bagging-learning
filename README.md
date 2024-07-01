@@ -79,6 +79,7 @@ To use the approach, one has to dispose of
 
 * 1D example :  
 
+<img alt="benchmark" height="500" src=".public/example_krg.png" width="800"/>
 
 ## Benchmark
 

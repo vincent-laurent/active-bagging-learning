@@ -48,19 +48,19 @@ class IQueryStrategy(ABC, BaseEstimator):
 class ServiceQueryMax(IQueryStrategy):
     def __init__(self, x0, bounds=None, xtol=0.001, maxiter=40, disp=True):
         super().__init__(bounds)
-        self._xtol = xtol
-        self._maxiter = maxiter
-        self._disp = disp
-        self._x0 = x0.reshape(1, -1)
+        self.__xtol = xtol
+        self.__maxiter = maxiter
+        self.__disp = disp
+        self.__x0 = x0.reshape(1, -1)
 
     def query(self, *args_) -> np.ndarray:
         def fun(*args, **kwargs):
             return - self.active_function(*args, **kwargs)
 
         res = optimize.minimize(
-            fun, x0=self._x0.flatten(),
-            bounds=self.bounds, options={'gtol': self._xtol, 'disp': self._disp}).x
-        return res.reshape(self._x0.shape)
+            fun, x0=self.__x0.flatten(),
+            bounds=self.bounds, options={'gtol': self.__xtol, 'disp': self.__disp}).x
+        return res.reshape(self.__x0.shape)
 
 
 class ServiceQueryVariancePDF(IQueryStrategy):
