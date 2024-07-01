@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.ensemble import BaggingRegressor
 
-from active_learning.components.active_criterion import get_variance_function
+from active_learning.components.utils import get_variance_function
 from active_learning.components.query_strategies import random_sampling_in_domain
 
 SEED = 1234

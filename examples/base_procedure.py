@@ -4,14 +4,13 @@ import pandas as pd
 from sklearn.ensemble import ExtraTreesRegressor
 
 from active_learning import ActiveSRLearner
-from active_learning.components.active_criterion import VarianceEnsembleMethod
-from active_learning.components.query_strategies import QueryVariancePDF
 from active_learning.benchmark import functions
+from active_learning.components.active_criterion import ServiceVarianceEnsembleMethod
+from active_learning.components.query_strategies import ServiceQueryVariancePDF
 
 plt.style.use("bmh")
 plt.rcParams["font.family"] = "ubuntu"
 plt.rcParams['axes.facecolor'] = "white"
-
 
 # CREATE INITIAL DATASET
 fun = functions.grammacy_lee_2009
@@ -23,9 +22,9 @@ X_train = pd.DataFrame(
      })
 y_train = -fun(X_train)
 
-active_criterion =VarianceEnsembleMethod(
-        estimator=ExtraTreesRegressor(max_features=0.8, bootstrap=True))
-query_strategy = QueryVariancePDF(bounds, num_eval=int(20000))
+active_criterion = ServiceVarianceEnsembleMethod(
+    estimator=ExtraTreesRegressor(max_features=0.8, bootstrap=True))
+query_strategy = ServiceQueryVariancePDF(bounds, num_eval=int(20000))
 
 # QUERY NEW POINTS
 active_learner = ActiveSRLearner(

@@ -18,8 +18,8 @@ import pandas as pd
 from sklearn.ensemble import BaggingRegressor
 from sklearn.model_selection import train_test_split
 
-from active_learning.data import functions
-from active_learning.components.active_criterion import get_variance_function
+from active_learning.benchmark import functions
+from active_learning.components.utils import get_variance_function
 from active_learning.components.query_strategies import indices_of_random_sampling_in_finite_set
 
 

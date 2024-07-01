@@ -35,8 +35,8 @@ import pandas as pd
 from sklearn.ensemble import ExtraTreesRegressor
 
 from active_learning import ActiveSRLearner
-from active_learning.components.active_criterion import VarianceEnsembleMethod
-from active_learning.components.query_strategies import QueryVariancePDF
+from active_learning.components.active_criterion import ServiceVarianceEnsembleMethod
+from active_learning.components.query_strategies import ServiceQueryVariancePDF
 from active_learning.benchmark import functions
 
 fun = functions.grammacy_lee_2009                  # The function we want to learn
@@ -48,11 +48,11 @@ X_train = pd.DataFrame(
      })                                             # Initiate distribution
 y_train = -fun(X_train)
 
-active_criterion =VarianceEnsembleMethod(           # Parameters to be used to estimate the surface response
+active_criterion = ServiceVarianceEnsembleMethod(           # Parameters to be used to estimate the surface response
         estimator=ExtraTreesRegressor(              # Base estimator for the surface
             max_features=0.8, bootstrap=True)
 )
-query_strategy = QueryVariancePDF(bounds, num_eval=int(20000))
+query_strategy = ServiceQueryVariancePDF(bounds, num_eval=int(20000))
 
 # QUERY NEW POINTS
 active_learner = ActiveSRLearner(
