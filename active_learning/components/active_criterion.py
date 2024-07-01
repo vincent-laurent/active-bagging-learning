@@ -14,7 +14,6 @@ from typing import Union
 
 import numpy as np
 import pandas as pd
-from sklearn import clone
 from sklearn.base import RegressorMixin
 from sklearn.ensemble import BaseEnsemble
 from sklearn.gaussian_process import GaussianProcessRegressor
@@ -30,10 +29,6 @@ class IActiveCriterion(ABC, RegressorMixin):
 
     @abstractmethod
     def __call__(self, X: pd.DataFrame, *args, **kwargs):
-        ...
-
-    @abstractmethod
-    def function(self, X: pd.DataFrame):
         ...
 
     def criterion(self, X: pd.DataFrame, *args, **kwargs):
@@ -62,14 +57,6 @@ class ServiceVarianceCriterion(IActiveCriterion):
         self.splitter = splitter
         self.estimator = estimator
 
-    def function(self, X):
-
-        res = 0
-        X = self.reshape_x(X)
-        for model_ in self.models:
-            res += model_.predict(X)
-        return res / len(self.models)
-
     def __call__(self, X, *args, **kwargs):
         X = self.reshape_x(X)
         ret = utils.get_variance_function(self.models)(X)
@@ -90,10 +77,6 @@ class ServiceVarianceEnsembleMethod(IActiveCriterion):
         super().__init__()
         self.estimator = estimator
 
-    def function(self, X):
-        X = self.reshape_x(X)
-        return self.model_.predict(X)
-
     def __call__(self, X, *args, **kwargs):
         X = self.reshape_x(X)
         ret = utils.get_variance_function(self.model_.estimators_)(X)
@@ -113,11 +96,6 @@ class ServiceGaussianProcessVariance(IActiveCriterion):
         super().__init__()
         self.kernel = kernel
         self.estimator = GaussianProcessRegressor(kernel=kernel)
-
-    def function(self, X):
-        if len(X.shape) == 1:
-            X = X.reshape(1, -1)
-        return self.model_.predict(X)
 
     def __call__(self, X, *args, **kwargs):
         ret = self.model_.predict(X, return_std=True)[1]

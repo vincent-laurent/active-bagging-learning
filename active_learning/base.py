@@ -62,7 +62,7 @@ class ActiveSRLearner:
 
     def save(self):
         self.result[self.iter] = dict(
-            surface=deepcopy(self.active_criterion.function),
+            surface=deepcopy(self.active_criterion),
             active_criterion=deepcopy(self.active_criterion),
             budget=int(self.budget),
             data=self.x_input
