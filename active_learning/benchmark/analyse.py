@@ -29,7 +29,7 @@ from active_learning.components import active_criterion
 from active_learning.components import query_strategies
 from active_learning.components.active_criterion import VarianceBis
 from active_learning.components.sampling import latin_square
-from active_learning.benchmark.test import TestingClass
+from active_learning.benchmark.base import TestingClass
 
 name = "grammacy_lee_2009_rand"
 fun = functions.__dict__[name]

@@ -67,7 +67,7 @@ def analyse_1d(test):
 
 def plot_iter(test: "TestingClass"):
     import matplotlib.pyplot as plt
-    domain = np.linspace(test.bounds[0][0], test.bounds[0][1], 2000)
+    domain = np.linspace(test.__bounds[0][0], test.__bounds[0][1], 2000)
     iter_ = int(test.learner.x_input.index.max())
     n_row = int(np.sqrt(iter_))
     fig, axs = plt.subplots(iter_ // n_row, n_row, sharey=True, sharex=True,

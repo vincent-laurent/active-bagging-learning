@@ -40,10 +40,8 @@ def test_base_functionalities():
     active_learner = ActiveSRLearner(
         active_criterion,  # Active criterion yields a surface
         query_strategy,  # Given active criterion surface, execute query
-        X_train,  # Input data X
-        y_train,  # Input data y (target)
         bounds=bounds)
-
+    active_learner.fit(X_train, y_train)
     X_new = active_learner.query(3)
     assert len(X_new) == 3
     assert X_new.shape[1] == X_train.shape[1]
@@ -53,10 +51,9 @@ def test_base_functionalities():
     active_learner = ActiveSRLearner(
         active_criterion,
         query_strategy,
-        X_train,
-        y_train,
         bounds=bounds)
 
+    active_learner.fit(X_train, y_train)
     X_new = active_learner.query()
 
     assert len(X_new) == 1
@@ -69,10 +66,8 @@ def test_variance_criterion():
     active_learner = ActiveSRLearner(
         active_criterion,
         query_strategy,
-        X_train,
-        y_train,
         bounds=bounds)
-
+    active_learner.fit(X_train, y_train)
     X_new = active_learner.query(3)
 
     assert len(X_new) == 3
@@ -85,10 +80,8 @@ def test_variance_criterion_with_maximum():
     active_learner = ActiveSRLearner(
         active_criterion,
         query_strategy,
-        X_train,
-        y_train,
         bounds=bounds)
-
+    active_learner.fit(X_train, y_train)
     X_new = active_learner.query()
 
     assert len(X_new) == 1

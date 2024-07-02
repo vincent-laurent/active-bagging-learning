@@ -17,15 +17,12 @@ import pandas as pd
 
 from active_learning import base
 from active_learning.benchmark.utils import evaluate
-from active_learning.components.active_criterion import IActiveCriterion
-from active_learning.components.query_strategies import IQueryStrategy
 
 
 class TestingClass:
     def __init__(self, budget: int, budget_0: int, function: callable,
-                 active_criterion: IActiveCriterion,
-                 query_strategy: IQueryStrategy,
-                 x_sampler: callable, n_steps: int,
+                 x_sampler: callable, learner,
+                 n_steps: int,
                  bounds, name=None
                  ):
         self.f = function
@@ -33,16 +30,14 @@ class TestingClass:
         self.n_steps = n_steps
         self.budget_0 = budget_0
         self.x_sampler = x_sampler
-        self.active_criterion = active_criterion
-        self.query_strategy = query_strategy
         self.bounds = bounds
+        self.learner = learner
+
         self.parameters = dict(
             budget=budget,
             budget_0=budget_0,
             n_steps=n_steps,
             function_hash=hash(function) + hash(str(bounds)),
-            active_criterion=str(active_criterion),
-            query_strategy=str(query_strategy),
             x_sampler_hash=hash(x_sampler),
         )
         self.parameters["test_id"] = self.parameters["budget"] + \
@@ -52,6 +47,11 @@ class TestingClass:
             np.random.uniform()) if name is None else name
 
         self.metric = []
+        self.__check_args()
+
+    def __check_args(self):
+        assert hasattr(self.learner, "query")
+        assert callable(self.f)
 
     def run(self):
         x_train = self.x_sampler(self.budget_0)
@@ -139,3 +139,17 @@ class ModuleExperiment:
         self.cv_result_["date"] = pd.to_datetime(self.cv_result_["date"])
 
 
+def write_benchmark(data: pd.DataFrame, path="data/benchmark.csv", update=True):
+    import os
+
+    if update:
+        if not os.path.exists(path):
+            data.to_csv(path, mode='a', index=False)
+        else:
+            data.to_csv(path, mode='a', header=False, index=False)
+    else:
+        data.to_csv(path, index=False)
+
+
+def read_benchmark(path="data/benchmark.csv"):
+    return pd.read_csv(path)

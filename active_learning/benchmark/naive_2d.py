@@ -15,11 +15,11 @@ import numpy as np
 import pandas as pd
 from sklearn.ensemble import ExtraTreesRegressor
 
+from active_learning.benchmark import functions, base
+from active_learning.benchmark import utils
+from active_learning.components import latin_square
 from active_learning.components.active_criterion import ServiceVarianceEnsembleMethod
-from active_learning.components.query_strategies import ServiceQueryVariancePDF
-from active_learning.components.sampling import latin_square
-from active_learning.benchmark.test import TestingClass
-from active_learning.benchmark import functions, test
+from active_learning.components.query_strategies import ServiceQueryVariancePDF, ServiceUniform
 
 functions_ = list(functions.bounds.keys())
 
@@ -27,21 +27,6 @@ name = "grammacy_lee_2009_rand"
 fun = functions.__dict__[name]
 
 xtra_trees_b = ExtraTreesRegressor(bootstrap=True, n_estimators=50, max_samples=0.7)
-
-
-def run(name):
-    bounds = functions.bounds[fun]
-
-    def sampler(size): return pd.DataFrame(latin_square.scipy_lhs_sampler(size=size, x_limits=np.array(bounds)))
-
-    testing_bootstrap = TestingClass(
-        budget, n0, fun,
-        ServiceVarianceEnsembleMethod(estimator=estimator),
-        ServiceQueryVariancePDF(bounds, num_eval=200),
-        sampler, n_steps=n_step, bounds=bounds, name=name
-    )
-    testing_bootstrap.run()
-    testing_bootstrap.metric
 
 
 def plot_results(path="benchmark/results.csv", n0=100, function=name):
@@ -73,7 +58,7 @@ def plot_all_benchmark_function():
         bound = np.array(functions.bounds[f])
         if len(bound) == 2:
             ax_ = ax[i % 2, i // 2]
-            xx, yy, x, z = eval_surf_2d(f, bound, num=200)
+            xx, yy, x, z = utils.eval_surf_2d(f, bound, num=200)
 
             ax_.pcolormesh(xx, yy, z.reshape(len(xx), len(yy)),
                            cmap="RdBu")
@@ -141,48 +126,50 @@ def plot_benchmark_whole_analysis(data: pd.DataFrame) -> None:
         ncol=2)
 
 
-if __name__ == '__main__':
-    # from active_learning.data.functions import budget_parameters
+def run_2d_benchmark():
+    from active_learning.benchmark.functions import budget_parameters
+
+    estimator = xtra_trees_b
+
+    def get_sampler(bounds):
+        def sampler(size):
+            return pd.DataFrame(latin_square.scipy_lhs_sampler(size=size, x_limits=np.array(bounds)))
+
+        return sampler
+
+    active_testing_classes = [test.TestingClass(
+        budget_parameters[name]["budget"],
+        budget_parameters[name]["n0"],
+        budget_parameters[name]["fun"],
+        ServiceVarianceEnsembleMethod(estimator=estimator),
+        ServiceQueryVariancePDF(functions.bounds[budget_parameters[name]["fun"]], num_eval=200),
+        get_sampler(functions.bounds[budget_parameters[name]["fun"]]),
+        n_steps=budget_parameters[name]["n_step"],
+        bounds=functions.bounds[budget_parameters[name]["fun"]],
+        name=name
+    ) for name in list(budget_parameters.keys())
+    ]
     #
-    # estimator = xtra_trees_b
-    #
-    # def get_sampler(bounds):
-    #     def sampler(size):
-    #         return pd.DataFrame(latin_square.scipy_lhs_sampler(size=size, x_limits=np.array(bounds)))
-    #
-    #     return sampler
-    #
-    #
-    # active_testing_classes = [test.TestingClass(
-    #     budget_parameters[name]["budget"],
-    #     budget_parameters[name]["n0"],
-    #     budget_parameters[name]["fun"],
-    #     VarianceEnsembleMethod(estimator=estimator),
-    #     QueryVariancePDF(functions.bounds[budget_parameters[name]["fun"]], num_eval=200),
-    #     get_sampler(functions.bounds[budget_parameters[name]["fun"]]),
-    #     n_steps=budget_parameters[name]["n_step"],
-    #     bounds=functions.bounds[budget_parameters[name]["fun"]],
-    #     name=name
-    # ) for name in list(budget_parameters.keys())
-    # ]
-    #
-    # passive_testing_classes = [test.TestingClass(
-    #     budget_parameters[name]["budget"],
-    #     budget_parameters[name]["n0"],
-    #     budget_parameters[name]["fun"],
-    #     VarianceEnsembleMethod(estimator=estimator),
-    #     Uniform(functions.bounds[budget_parameters[name]["fun"]]),
-    #     get_sampler(functions.bounds[budget_parameters[name]["fun"]]),
-    #     n_steps=budget_parameters[name]["n_step"],
-    #     bounds=functions.bounds[budget_parameters[name]["fun"]],
-    #     name=name + "_passive"
-    # ) for name in list(budget_parameters.keys())
-    # ]
-    #
-    # experiment = test.Experiment([*active_testing_classes, *passive_testing_classes], n_experiment=50)
-    # experiment.run()
-    # data = experiment.cv_result_
-    # test.write_benchmark(data, path="data/benchmark_2d.csv")
+    passive_testing_classes = [test.TestingClass(
+        budget_parameters[name]["budget"],
+        budget_parameters[name]["n0"],
+        budget_parameters[name]["fun"],
+        ServiceVarianceEnsembleMethod(estimator=estimator),
+        ServiceUniform(functions.bounds[budget_parameters[name]["fun"]]),
+        get_sampler(functions.bounds[budget_parameters[name]["fun"]]),
+        n_steps=budget_parameters[name]["n_step"],
+        bounds=functions.bounds[budget_parameters[name]["fun"]],
+        name=name + "_passive"
+    ) for name in list(budget_parameters.keys())
+
+    ]
+    experiment = test.ModuleExperiment([*active_testing_classes, *passive_testing_classes], n_experiment=50)
+    experiment.run()
+    data = experiment.cv_result_
+    test.write_benchmark(data, path="data/benchmark_2d.csv")
+
+
+def get_benchmark():
     identifier = ["budget", "budget_0", "n_steps", "active_criterion", "query_strategy", "name"]
     data = test.read_benchmark(path="./examples/2d_benchmark/data/benchmark_2d.csv")
 
@@ -192,3 +179,7 @@ if __name__ == '__main__':
     data_unique = pd.merge(data, df_property[identifier], on=identifier)
     plot_benchmark_whole_analysis(data_unique)
     plt.savefig(".public/active_vs_passive.png", dpi=150)
+
+
+if __name__ == '__main__':
+    pass

@@ -16,11 +16,18 @@ import sklearn.model_selection
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
 
-from active_learning.benchmark.test import TestingClass
+from active_learning import ActiveSRLearner
+from active_learning.benchmark.base import TestingClass
 from active_learning.benchmark.utils import plot_iter
 from active_learning.components.active_criterion import ServiceGaussianProcessVariance
 from active_learning.components.active_criterion import ServiceVarianceCriterion
 from active_learning.components.query_strategies import ServiceQueryVariancePDF
+
+
+def GP_regression_std(regressor, X):
+    _, std = regressor.predict(X, return_std=True)
+    return np.argmax(std)
+
 
 RNG = np.random.default_rng(seed=0)
 
@@ -51,14 +58,19 @@ def make_1d_example():
     plt.rcParams["font.family"] = "ubuntu"
     plt.rcParams['axes.facecolor'] = "white"
 
+    learner = ActiveSRLearner(
+        active_criterion=ServiceVarianceCriterion(
+            krg, splitter=sklearn.model_selection.ShuffleSplit(
+                n_splits=2,
+
+                train_size=0.8)),
+        query_strategy=ServiceQueryVariancePDF(bounds, num_eval=2000)
+
+    )
     testing_bootstrap = TestingClass(
-        budget,
-        n0,
         unknown_function,
-        ServiceVarianceCriterion(krg, splitter=sklearn.model_selection.ShuffleSplit(
-            n_splits=2,
-            train_size=0.8)),
-        ServiceQueryVariancePDF(bounds, num_eval=2000),
+        budget,
+        n0, learner,
         sampler, steps, bounds=bounds
 
     )

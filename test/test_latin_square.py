@@ -11,24 +11,23 @@
 import numpy as np
 
 from active_learning.benchmark import functions
-
-x2d = np.array([0, 0]).reshape(1, -1)
-
-
-def test_call_benchmark_function():
-    functions.grammacy_lee_2009(x2d)
-    functions.marelli_2018(x2d)
-    functions.grammacy_lee_2009_rand(x2d)
-    functions.annie_sauer_2021(x2d)
-    functions.branin(x2d)
-    functions.branin_rand(x2d)
-    functions.himmelblau(x2d)
-    functions.himmelblau_rand(x2d)
-    functions.golden_price(x2d)
-    functions.golden_price_rand(x2d)
-    functions.synthetic_2d_1(x2d)
-    functions.synthetic_2d_2(x2d)
+from active_learning.components import latin_square
 
 
-def test_plot_benchamrk():
-    functions.plot_benchamrk_functions()
+def test_latin_square():
+    x = latin_square.scipy_lhs_sampler(100)
+    assert len(x) == 100
+    assert x.min() >= 0
+    assert x.max() <= 1
+
+    x = latin_square.scipy_lhs_sampler(100, dim=2)
+    assert len(x) == 100
+    assert x.min() >= 0
+    assert x.max() <= 1
+    assert x.shape == (100, 2)
+
+    x = latin_square.scipy_lhs_sampler(100, x_limits=np.array([[1, 2], [1, 2]]))
+    assert len(x) == 100
+    assert x.min() >= 1
+    assert x.max() <= 2
+    assert x.shape == (100, 2)

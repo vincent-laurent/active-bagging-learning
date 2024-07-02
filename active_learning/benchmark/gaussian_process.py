@@ -24,8 +24,8 @@ from active_learning.components.active_criterion import ServiceGaussianProcessVa
     VarianceBis
 from active_learning.components.query_strategies import QueryVariancePDF, \
     Uniform
-from active_learning.benchmark.test import Experiment
-from active_learning.benchmark.test import TestingClass, \
+from active_learning.benchmark.base import Experiment
+from active_learning.benchmark.base import TestingClass, \
     write_benchmark, read_benchmark, plot_benchmark
 
 SEED = 1234
