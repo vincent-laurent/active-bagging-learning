@@ -16,7 +16,7 @@ import pandas as pd
 from sklearn.ensemble import ExtraTreesRegressor
 
 from active_learning.components.active_criterion import ServiceVarianceEnsembleMethod
-from active_learning.components.query_strategies import QueryVariancePDF
+from active_learning.components.query_strategies import ServiceQueryVariancePDF
 from active_learning.components.sampling import latin_square
 from active_learning.benchmark.test import TestingClass
 from active_learning.benchmark import functions, test
@@ -37,7 +37,7 @@ def run(name):
     testing_bootstrap = TestingClass(
         budget, n0, fun,
         ServiceVarianceEnsembleMethod(estimator=estimator),
-        QueryVariancePDF(bounds, num_eval=200),
+        ServiceQueryVariancePDF(bounds, num_eval=200),
         sampler, n_steps=n_step, bounds=bounds, name=name
     )
     testing_bootstrap.run()
