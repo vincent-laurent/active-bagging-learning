@@ -16,7 +16,7 @@ import sklearn.model_selection
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
 
-from active_learning import ActiveSRLearner
+from active_learning import ActiveSurfaceLearner
 from active_learning.benchmark.base import TestingClass
 from active_learning.benchmark.utils import plot_iter
 from active_learning.components.active_criterion import ServiceGaussianProcessVariance
@@ -58,20 +58,21 @@ def make_1d_example():
     plt.rcParams["font.family"] = "ubuntu"
     plt.rcParams['axes.facecolor'] = "white"
 
-    learner = ActiveSRLearner(
+    learner_bagging = ActiveSurfaceLearner(
         active_criterion=ServiceVarianceCriterion(
             krg, splitter=sklearn.model_selection.ShuffleSplit(
                 n_splits=2,
-
                 train_size=0.8)),
-        query_strategy=ServiceQueryVariancePDF(bounds, num_eval=2000)
+        query_strategy=ServiceQueryVariancePDF(bounds, num_eval=2000),
+        bounds=bounds
 
     )
+
     testing_bootstrap = TestingClass(
-        unknown_function,
-        budget,
-        n0, learner,
-        sampler, steps, bounds=bounds
+        function=unknown_function,
+        budget=budget,
+        budget_0=n0, learner=learner_bagging,
+        x_sampler=sampler, n_steps=steps, bounds=bounds
 
     )
 

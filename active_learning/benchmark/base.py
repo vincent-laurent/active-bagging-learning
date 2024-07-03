@@ -15,7 +15,6 @@ from copy import deepcopy
 import numpy as np
 import pandas as pd
 
-from active_learning import base
 from active_learning.benchmark.utils import evaluate
 
 
@@ -32,6 +31,7 @@ class TestingClass:
         self.x_sampler = x_sampler
         self.bounds = bounds
         self.learner = learner
+        self.iter = 0
 
         self.parameters = dict(
             budget=budget,
@@ -54,13 +54,10 @@ class TestingClass:
         assert callable(self.f)
 
     def run(self):
-        x_train = self.x_sampler(self.budget_0)
-        self.learner = base.ActiveSRLearner(
-            self.active_criterion,
-            self.query_strategy,
-            x_train,
-            pd.DataFrame(self.f(x_train)),
-            self.bounds)
+        self.x_input = self.x_sampler(self.budget_0)
+        self.y_input = self.f(self.x_input)
+        self.learner.fit(self.x_input ,
+                         pd.DataFrame(self.y_input))
 
         nb_sample_cumul = np.linspace(self.budget_0, self.budget,
                                       num=self.n_steps, dtype=int)
@@ -70,13 +67,21 @@ class TestingClass:
             i = self.learner.iter
             x_new = self.learner.query(n_points)
             y_new = pd.DataFrame(self.f(x_new))
-            self.learner.add_labels(x_new, y_new)
+            self.add_labels(x_new, y_new)
 
             # EVALUATE STRATEGY
             self.metric.append(evaluate(
                 self.f,
                 self.learner.result[i]["surface"],
                 self.bounds, num_mc=100000))
+
+    def add_labels(self, x: pd.DataFrame, y: pd.DataFrame):
+        self.iter += 1
+        x.index = self.iter * np.ones(len(x))
+        y.index = self.iter * np.ones(len(x))
+        self.x_input = pd.concat((x, self.x_input), axis=0)
+        self.y_input = pd.concat((y, self.y_input), axis=0)
+        self.budget = len(self.x_input)
 
     def plot_error_vs_criterion(self, n=1000):
         import matplotlib.pyplot as plt

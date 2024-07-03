@@ -9,16 +9,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from copy import deepcopy
-
-import numpy as np
 import pandas as pd
 
 from active_learning.components.active_criterion import IActiveCriterion
 from active_learning.components.query_strategies import IQueryStrategy
 
 
-class ActiveSRLearner:
+class ActiveSurfaceLearner:
 
     def __init__(
             self,
@@ -26,37 +23,38 @@ class ActiveSRLearner:
             query_strategy: IQueryStrategy,
             bounds=None,
     ):
-        self.active_criterion = active_criterion
-        self.query_strategy = query_strategy
+        self.__active_criterion = active_criterion
+        self.__query_strategy = query_strategy
         self.__bounds = bounds
         self.result = {}
-        self.iter = 0
 
-    def fit(self, X, y):
+    def fit(self, X: pd.DataFrame, y):
         self.active_criterion.fit(X, y)
-        self.x_input.index = 0 * np.ones(len(X))
-        self.x_new = pd.DataFrame()
+        self.__columns = X.columns
 
     def query(self, *args):
         self.query_strategy.set_bounds(self.__bounds)
         self.query_strategy.set_active_function(self.active_criterion.__call__)
-        self.x_new = pd.DataFrame(self.query_strategy.query(*args), columns=self.x_input.columns)
-        self.save()
+        x_new = pd.DataFrame(self.query_strategy.query(*args), columns=self.__columns)
 
-        return self.x_new
+        return x_new
 
-    def add_labels(self, x: pd.DataFrame, y: pd.DataFrame):
-        self.iter += 1
-        x.index = self.iter * np.ones(len(x))
-        y.index = self.iter * np.ones(len(x))
-        self.x_input = pd.concat((x, self.x_input), axis=0)
-        self.y_input = pd.concat((y, self.y_input), axis=0)
-        self.budget = len(self.x_input)
+    # def save(self):
+    #     self.result[self.iter] = dict(
+    #         surface=deepcopy(self.active_criterion.function),
+    #         active_criterion=deepcopy(self.active_criterion),
+    #         budget=int(self.budget),
+    #         data=self.x_input
+    #     )
 
-    def save(self):
-        self.result[self.iter] = dict(
-            surface=deepcopy(self.active_criterion.function),
-            active_criterion=deepcopy(self.active_criterion),
-            budget=int(self.budget),
-            data=self.x_input
-        )
+    @property
+    def active_criterion(self) -> IActiveCriterion:
+        return self.__active_criterion
+
+    @property
+    def query_strategy(self) -> IQueryStrategy:
+        return self.__query_strategy
+
+    @property
+    def bounds(self):
+        return self.__bounds

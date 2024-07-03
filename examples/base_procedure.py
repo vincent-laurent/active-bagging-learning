@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from sklearn.ensemble import ExtraTreesRegressor
 
-from active_learning import ActiveSRLearner
+from active_learning import ActiveSurfaceLearner
 from active_learning.benchmark import functions
 from active_learning.components.active_criterion import ServiceVarianceEnsembleMethod
 from active_learning.components.query_strategies import ServiceQueryVariancePDF
@@ -27,7 +27,7 @@ active_criterion = ServiceVarianceEnsembleMethod(
 query_strategy = ServiceQueryVariancePDF(bounds, num_eval=int(20000))
 
 # QUERY NEW POINTS
-active_learner = ActiveSRLearner(
+active_learner = ActiveSurfaceLearner(
     active_criterion,
     query_strategy,
     X_train,

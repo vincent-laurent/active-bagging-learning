@@ -35,35 +35,37 @@ import numpy as np
 import pandas as pd
 from sklearn.ensemble import ExtraTreesRegressor
 
-from active_learning import ActiveSRLearner
+from active_learning import ActiveSurfaceLearner
 from active_learning.components.active_criterion import ServiceVarianceEnsembleMethod
 from active_learning.components.query_strategies import ServiceQueryVariancePDF
 from active_learning.benchmark import functions
 
-fun = functions.grammacy_lee_2009                  # The function we want to learn
-bounds = np.array(functions.bounds[fun])           # [x1 bounds, x2 bounds]
+fun = functions.grammacy_lee_2009  # The function we want to learn
+bounds = np.array(functions.bounds[fun])  # [x1 bounds, x2 bounds]
 n = 50
 X_train = pd.DataFrame(
     {'x1': (bounds[0, 0] - bounds[0, 1]) * np.random.rand(n) + bounds[0, 1],
      'x2': (bounds[1, 0] - bounds[1, 1]) * np.random.rand(n) + bounds[1, 1],
-     })                                             # Initiate distribution
+     })  # Initiate distribution
 y_train = -fun(X_train)
 
-active_criterion = ServiceVarianceEnsembleMethod(           # Parameters to be used to estimate the surface response
-        estimator=ExtraTreesRegressor(              # Base estimator for the surface
-            max_features=0.8, bootstrap=True)
+active_criterion = ServiceVarianceEnsembleMethod(  # Parameters to be used to estimate the surface response
+    estimator=ExtraTreesRegressor(  # Base estimator for the surface
+        max_features=0.8, bootstrap=True)
 )
 query_strategy = ServiceQueryVariancePDF(bounds, num_eval=int(20000))
 
 # QUERY NEW POINTS
-active_learner = ActiveSRLearner(
-    active_criterion,                               # Active criterion yields a surface
-    query_strategy,                                 # Given active criterion surface, execute query 
-    X_train,                                        # Input data X
-    y_train,                                        # Input data y (target)
+active_learner = ActiveSurfaceLearner(
+    active_criterion,               # Active criterion yields a surface
+    query_strategy,                 # Given active criterion surface, execute query 
     bounds=bounds)
 
-X_new = active_learner.query(3)                     # Request 3 points
+active_learner.fit(    
+    X_train,                        # Input data X
+    y_train)                        # Input data y (target))
+    
+X_new = active_learner.query(3)     # Request 3 points
 ```
 To use the approach, one has to dispose of
 

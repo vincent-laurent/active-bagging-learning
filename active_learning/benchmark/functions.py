@@ -205,5 +205,4 @@ def plot_benchamrk_functions():
     cbar_ax = fig.add_axes([0.91, 0.11, 0.01, 0.77])
     fig.colorbar(im, cax=cbar_ax, ticks=[-2, -0.32, 1.5])
     cbar_ax.set_yticklabels(['low \nvalues', '0', 'high \nvalues'])  #
-    plot.show()
 
