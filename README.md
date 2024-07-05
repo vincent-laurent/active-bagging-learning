@@ -36,7 +36,7 @@ import pandas as pd
 from sklearn.ensemble import ExtraTreesRegressor
 
 from active_learning import ActiveSurfaceLearner
-from active_learning.components.active_criterion import ServiceVarianceEnsembleMethod
+from active_learning.components.active_criterion import VarianceEnsembleMethod
 from active_learning.components.query_strategies import ServiceQueryVariancePDF
 from active_learning.benchmark import functions
 
@@ -49,7 +49,7 @@ X_train = pd.DataFrame(
      })  # Initiate distribution
 y_train = -fun(X_train)
 
-active_criterion = ServiceVarianceEnsembleMethod(  # Parameters to be used to estimate the surface response
+active_criterion = VarianceEnsembleMethod(  # Parameters to be used to estimate the surface response
     estimator=ExtraTreesRegressor(  # Base estimator for the surface
         max_features=0.8, bootstrap=True)
 )
@@ -57,15 +57,15 @@ query_strategy = ServiceQueryVariancePDF(bounds, num_eval=int(20000))
 
 # QUERY NEW POINTS
 active_learner = ActiveSurfaceLearner(
-    active_criterion,               # Active criterion yields a surface
-    query_strategy,                 # Given active criterion surface, execute query 
+    active_criterion,  # Active criterion yields a surface
+    query_strategy,  # Given active criterion surface, execute query 
     bounds=bounds)
 
-active_learner.fit(    
-    X_train,                        # Input data X
-    y_train)                        # Input data y (target))
-    
-X_new = active_learner.query(3)     # Request 3 points
+active_learner.fit(
+    X_train,  # Input data X
+    y_train)  # Input data y (target))
+
+X_new = active_learner.query(3)  # Request 3 points
 ```
 To use the approach, one has to dispose of
 

@@ -18,7 +18,7 @@ from sklearn.ensemble import ExtraTreesRegressor
 from active_learning.benchmark import functions, base
 from active_learning.benchmark import utils
 from active_learning.components import latin_square
-from active_learning.components.active_criterion import ServiceVarianceEnsembleMethod
+from active_learning.components.active_criterion import VarianceEnsembleMethod
 from active_learning.components.query_strategies import ServiceQueryVariancePDF, ServiceUniform
 
 functions_ = list(functions.bounds.keys())
@@ -141,7 +141,7 @@ def run_2d_benchmark():
         budget_parameters[name]["budget"],
         budget_parameters[name]["n0"],
         budget_parameters[name]["fun"],
-        ServiceVarianceEnsembleMethod(estimator=estimator),
+        VarianceEnsembleMethod(estimator=estimator),
         ServiceQueryVariancePDF(functions.bounds[budget_parameters[name]["fun"]], num_eval=200),
         get_sampler(functions.bounds[budget_parameters[name]["fun"]]),
         n_steps=budget_parameters[name]["n_step"],
@@ -154,7 +154,7 @@ def run_2d_benchmark():
         budget_parameters[name]["budget"],
         budget_parameters[name]["n0"],
         budget_parameters[name]["fun"],
-        ServiceVarianceEnsembleMethod(estimator=estimator),
+        VarianceEnsembleMethod(estimator=estimator),
         ServiceUniform(functions.bounds[budget_parameters[name]["fun"]]),
         get_sampler(functions.bounds[budget_parameters[name]["fun"]]),
         n_steps=budget_parameters[name]["n_step"],

@@ -52,7 +52,7 @@ class IActiveCriterion(ABC, RegressorMixin):
         return X
 
 
-class ServiceVarianceCriterion(IActiveCriterion):
+class VarianceCriterion(IActiveCriterion):
     def __init__(self,
                  estimator,
                  splitter: Union[BaseCrossValidator, ShuffleSplit]):
@@ -80,7 +80,7 @@ class ServiceVarianceCriterion(IActiveCriterion):
         return res / len(self.models)
 
 
-class ServiceVarianceEnsembleMethod(IActiveCriterion):
+class VarianceEnsembleMethod(IActiveCriterion):
     def __init__(self,
                  estimator: BaseEnsemble,
                  ):
@@ -103,7 +103,7 @@ class ServiceVarianceEnsembleMethod(IActiveCriterion):
         self.model_.fit(X, y)
 
 
-class ServiceGaussianProcessVariance(IActiveCriterion):
+class GaussianProcessVariance(IActiveCriterion):
     def __init__(self,
                  kernel,
                  ):

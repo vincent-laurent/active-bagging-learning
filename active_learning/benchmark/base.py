@@ -16,13 +16,14 @@ import numpy as np
 import pandas as pd
 
 from active_learning.benchmark.utils import evaluate
+from abc import ABC, abstractmethod
 
 
-class TestingClass:
+class ITestingClass(ABC):
     def __init__(self, budget: int, budget_0: int, function: callable,
                  x_sampler: callable, learner,
                  n_steps: int,
-                 bounds, name=None
+                 bounds, name=None, estimator=None,
                  ):
         self.f = function
         self.budget = budget
@@ -32,85 +33,79 @@ class TestingClass:
         self.bounds = bounds
         self.learner = learner
         self.iter = 0
-
-        self.parameters = dict(
-            budget=budget,
-            budget_0=budget_0,
-            n_steps=n_steps,
-            function_hash=hash(function) + hash(str(bounds)),
-            x_sampler_hash=hash(x_sampler),
-        )
-        self.parameters["test_id"] = self.parameters["budget"] + \
-                                     self.parameters["function_hash"] + \
-                                     self.parameters["n_steps"]
-        self.parameters["name"] = hash(
-            np.random.uniform()) if name is None else name
+        self.estimator = estimator
+        self.name = name
 
         self.metric = []
         self.__check_args()
+        self.result = {}
+        self.x_input = self.x_sampler(self.budget_0)
+        self.y_input = self.f(self.x_input)
+
+        self.indexes = np.ones(len(self.x_input))
+        self._samples = np.linspace(self.budget_0, self.budget,
+                                    num=self.n_steps, dtype=int)
+        self._samples = np.concatenate(
+            ([self._samples[0]], np.diff(self._samples)))
+
+    @abstractmethod
+    def run(self):
+        ...
 
     def __check_args(self):
         assert hasattr(self.learner, "query")
         assert callable(self.f)
 
-    def run(self):
-        self.x_input = self.x_sampler(self.budget_0)
-        self.y_input = self.f(self.x_input)
-        self.learner.fit(self.x_input ,
-                         pd.DataFrame(self.y_input))
-
-        nb_sample_cumul = np.linspace(self.budget_0, self.budget,
-                                      num=self.n_steps, dtype=int)
-        nb_sample = np.concatenate(
-            ([nb_sample_cumul[0]], np.diff(nb_sample_cumul)))
-        for n_points in nb_sample[1:]:
-            i = self.learner.iter
-            x_new = self.learner.query(n_points)
-            y_new = pd.DataFrame(self.f(x_new))
-            self.add_labels(x_new, y_new)
-
-            # EVALUATE STRATEGY
-            self.metric.append(evaluate(
-                self.f,
-                self.learner.result[i]["surface"],
-                self.bounds, num_mc=100000))
-
     def add_labels(self, x: pd.DataFrame, y: pd.DataFrame):
         self.iter += 1
-        x.index = self.iter * np.ones(len(x))
-        y.index = self.iter * np.ones(len(x))
+        self.indexes = np.concatenate((self.indexes, self.iter * np.ones(len(x))))
         self.x_input = pd.concat((x, self.x_input), axis=0)
         self.y_input = pd.concat((y, self.y_input), axis=0)
-        self.budget = len(self.x_input)
 
-    def plot_error_vs_criterion(self, n=1000):
-        import matplotlib.pyplot as plt
-        import seaborn as sns
-        x = self.x_large_sample.sample(n)
-        for i in self.functions.keys():
-            error = np.abs(np.ravel(self.f(x)) - self.functions[i](x)) ** 2
-            crit_ = self.learner.active_criterion(x)
-            sns.kdeplot(x=error, y=crit_,
-                        c=plt.get_cmap("rainbow")(i / len(self.functions)),
-                        log_scale=(True, True),
-                        linewidth=0.1)
-        plt.xlabel("$L_2$ error")
-        plt.ylabel("Estimated variance")
+    @property
+    def parameters(self):
+        ret = dict(
+            budget=self.budget,
+            budget_0=self.budget_0,
+            n_steps=self.n_steps,
+            function_hash=hash(self.f) + hash(str(self.bounds)),
+            x_sampler_hash=hash(self.x_sampler),
+        )
+        ret["test_id"] = ret["budget"] + ret["function_hash"] + ret["n_steps"]
+        ret["name"] = hash(
+            np.random.uniform()) if self.name is None else self.name
+        return ret
 
-    def plot_error_vs_criterion_pointwise(self, num_mc=10000):
-        import matplotlib.pyplot as plt
-        for i_, i in enumerate(self.learner.result.keys()):
-            res = self.metric[i_]
-            variance = integrate(self.criterion[i], self.bounds, num_mc)
-            plt.loglog([res], [variance],
-                       c=plt.get_cmap("rainbow")(i / len(self.functions)),
-                       marker="o", lw=0)
-        plt.xlabel("$L_2$ error")
-        plt.ylabel("Estimated variance")
+
+class ServiceTestingClassAL(ITestingClass):
+
+    def run(self):
+        self.learner.fit(self.x_input,
+                         pd.DataFrame(self.y_input))
+
+        self.save()
+        for n_points in self._samples[1:]:
+            x_new = self.learner.query(n_points)
+            y_new = pd.DataFrame(self.f(x_new))
+            self.learner = deepcopy(self.learner)
+            self.learner.fit(self.x_input, self.y_input)
+            self.add_labels(x_new, y_new)
+            self.save()
+
+    def save(self):
+        self.metric.append(evaluate(
+            self.f,
+            self.learner.surface,
+            self.bounds, num_mc=100000))
+        self.result[self.iter] = dict(
+            learner=deepcopy(self.learner),
+            budget=int(len(self.x_input)),
+            data=deepcopy(self.x_input)
+        )
 
 
 class ModuleExperiment:
-    def __init__(self, test_list: typing.List[TestingClass], n_experiment=10,
+    def __init__(self, test_list: typing.List[ITestingClass], n_experiment=10,
                  save=False):
         self.test_list = test_list
         self.results = {}
@@ -133,7 +128,7 @@ class ModuleExperiment:
                 test_.run()
                 res = pd.DataFrame(columns=self._cv_result.columns)
                 res["L2-norm"] = test_.metric
-                res["num_sample"] = pd.DataFrame(test_.learner.result).loc[
+                res["num_sample"] = pd.DataFrame(test_.result).loc[
                     "budget"].astype(float).values
                 res["date"] = datetime.today()
                 for c in test.parameters.keys():

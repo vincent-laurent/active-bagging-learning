@@ -63,37 +63,37 @@ def get_method_for_benchmark(name):
         crit = query_strategies.ServiceReject(num_eval=100)
 
     elif name == "branin":
-        est = active_criterion.ServiceVarianceEnsembleMethod(
+        est = active_criterion.VarianceEnsembleMethod(
             estimator=ensemble.ExtraTreesRegressor(bootstrap=True))
         crit = query_strategies.ServiceQueryVariancePDF(num_eval=1000)
 
     elif name == "branin_rand":
-        est = active_criterion.ServiceVarianceEnsembleMethod(
+        est = active_criterion.VarianceEnsembleMethod(
             estimator=ensemble.ExtraTreesRegressor(bootstrap=True))
         crit = query_strategies.ServiceQueryVariancePDF(num_eval=1000)
     elif name == "himmelblau":
-        est = active_criterion.ServiceVarianceEnsembleMethod(
+        est = active_criterion.VarianceEnsembleMethod(
             estimator=ensemble.ExtraTreesRegressor(bootstrap=True))
         crit = query_strategies.ServiceQueryVariancePDF(num_eval=1000)
 
     elif name == "himmelblau_rand":
-        est = active_criterion.ServiceVarianceEnsembleMethod(
+        est = active_criterion.VarianceEnsembleMethod(
             estimator=ensemble.ExtraTreesRegressor(bootstrap=True))
         crit = query_strategies.ServiceQueryVariancePDF(num_eval=1000)
 
     elif name == "synthetic_2d_1":
-        est = active_criterion.ServiceVarianceEnsembleMethod(
+        est = active_criterion.VarianceEnsembleMethod(
             estimator=ensemble.ExtraTreesRegressor(bootstrap=True))
         crit = query_strategies.ServiceQueryVariancePDF(num_eval=1000)
 
     elif name == "synthetic_2d_2":
-        est = active_criterion.ServiceVarianceEnsembleMethod(
+        est = active_criterion.VarianceEnsembleMethod(
             estimator=ensemble.ExtraTreesRegressor(bootstrap=True,
                                                    max_samples=0.9))
         crit = query_strategies.ServiceQueryVariancePDF(num_eval=1000)
 
     else:
-        est = active_criterion.ServiceVarianceEnsembleMethod(
+        est = active_criterion.VarianceEnsembleMethod(
             estimator=ensemble.ServiceExtraTreesRegressor(bootstrap=True,
                                                    max_samples=0.9,
                                                    max_features=1))

@@ -12,6 +12,7 @@
 import numpy as np
 import pandas as pd
 
+import types
 
 def integrate(f: callable, bounds: iter, num_mc=int(1E6)):
     sampling = np.random.uniform(size=num_mc * len(bounds)).reshape(
@@ -67,25 +68,28 @@ def analyse_1d(test):
 
 def plot_iter(test: "TestingClass"):
     import matplotlib.pyplot as plt
-    domain = np.linspace(test.__bounds[0][0], test.__bounds[0][1], 2000)
-    iter_ = int(test.learner.x_input.index.max())
+    domain = np.linspace(test.bounds[0][0], test.bounds[0][1], 2000)
+    iter_ = int(test.indexes.max())
     n_row = int(np.sqrt(iter_))
     fig, axs = plt.subplots(iter_ // n_row, n_row, sharey=True, sharex=True,
                             figsize=(8, 8), dpi=200)
 
-    test.learner.x_input.index = test.learner.x_input.index.astype(int)
+    test.x_input.index = test.x_input.index.astype(int)
     for iter, ax in enumerate(axs.ravel()):
-        res = test.learner.result[iter]
-        active_criterion = res["active_criterion"]
+
+        result_iter = test.result[iter]
+        learner = result_iter["learner"]
+        active_criterion = learner.active_criterion
+
         error = active_criterion(domain.reshape(-1, 1))
-        prediction = res["surface"](domain.reshape(-1, 1))
+        prediction = learner.surface(domain.reshape(-1, 1))
         ax.plot(domain, prediction, color="b", label="iter={}".format(iter),
                 zorder=5)
         ax.plot(domain, test.f(domain), color="grey", linestyle="--", zorder=0)
         ax.fill_between(domain.ravel(), prediction - error / 2,
                         prediction + error / 2, color="b", alpha=0.2)
-        training_dataset = test.learner.x_input.loc[range(iter + 1)]
-        new_samples = test.learner.x_input.loc[iter + 1]
+        training_dataset = test.x_input.loc[range(iter + 1)]
+        new_samples = test.x_input.loc[iter + 1]
 
         if hasattr(active_criterion, "models"):
             for m in active_criterion.models:
@@ -129,3 +133,4 @@ def plot_benchmark(data: pd.DataFrame, cmap="rainbow_r"):
         color = plt.get_cmap(cmap)(i / (len(names)))
         sns.lineplot(data=data_, x="num_sample", y="L2-norm", label=n,
                      color=color)
+

@@ -26,26 +26,16 @@ class ActiveSurfaceLearner:
         self.__active_criterion = active_criterion
         self.__query_strategy = query_strategy
         self.__bounds = bounds
-        self.result = {}
 
     def fit(self, X: pd.DataFrame, y):
         self.active_criterion.fit(X, y)
         self.__columns = X.columns
 
-    def query(self, *args):
+    def query(self, *args) -> pd.DataFrame:
         self.query_strategy.set_bounds(self.__bounds)
         self.query_strategy.set_active_function(self.active_criterion.__call__)
         x_new = pd.DataFrame(self.query_strategy.query(*args), columns=self.__columns)
-
         return x_new
-
-    # def save(self):
-    #     self.result[self.iter] = dict(
-    #         surface=deepcopy(self.active_criterion.function),
-    #         active_criterion=deepcopy(self.active_criterion),
-    #         budget=int(self.budget),
-    #         data=self.x_input
-    #     )
 
     @property
     def active_criterion(self) -> IActiveCriterion:
@@ -56,5 +46,9 @@ class ActiveSurfaceLearner:
         return self.__query_strategy
 
     @property
-    def bounds(self):
+    def surface(self) -> callable:
+        return self.__active_criterion.function
+
+    @property
+    def bounds(self) -> iter:
         return self.__bounds
