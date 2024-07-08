@@ -18,7 +18,7 @@ from sklearn.gaussian_process.kernels import RBF
 
 from active_learning import ActiveSurfaceLearner
 from active_learning.benchmark import functions, naive_1d
-from active_learning.benchmark.base import TestingClass
+from active_learning.benchmark.base import ServiceTestingClassAL
 from active_learning.components.active_criterion import VarianceCriterion
 from active_learning.components.query_strategies import ServiceQueryVariancePDF
 
@@ -67,7 +67,6 @@ def test_benchmark_1d():
     budget = 20
     steps = 8
     plt.style.use("bmh")
-    plt.rcParams["font.family"] = "ubuntu"
     plt.rcParams['axes.facecolor'] = "white"
 
     learner_bagging = ActiveSurfaceLearner(
@@ -80,7 +79,7 @@ def test_benchmark_1d():
 
     )
 
-    testing_bootstrap = TestingClass(
+    testing_bootstrap = ServiceTestingClassAL(
         function=unknown_function,
         budget=budget,
         budget_0=n0, learner=learner_bagging,

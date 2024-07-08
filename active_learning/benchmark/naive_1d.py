@@ -20,11 +20,11 @@ from sklearn.gaussian_process.kernels import RBF
 
 from active_learning import ActiveSurfaceLearner
 from active_learning.benchmark.base import ServiceTestingClassAL, ModuleExperiment
-from active_learning.benchmark.utils import plot_iter
+from active_learning.benchmark.utils import plot_iterations_1d
 from active_learning.components.active_criterion import GaussianProcessVariance
 from active_learning.components.active_criterion import VarianceCriterion
 from active_learning.components.query_strategies import ServiceQueryVariancePDF
-
+from sklearn.kernel_ridge import KernelRidge
 
 def GP_regression_std(regressor, X):
     _, std = regressor.predict(X, return_std=True)
@@ -54,15 +54,14 @@ krg = GaussianProcessRegressor(kernel=kernel)
 # ======================================================================================
 n0 = 10
 budget = 20
-steps = 8
+steps = 10
 plt.style.use("bmh")
-plt.rcParams["font.family"] = "ubuntu"
 plt.rcParams['axes.facecolor'] = "white"
 
 learner_bagging = ActiveSurfaceLearner(
     active_criterion=VarianceCriterion(
         krg, splitter=sklearn.model_selection.ShuffleSplit(
-            n_splits=10,
+            n_splits=5,
             train_size=0.9)),
     query_strategy=ServiceQueryVariancePDF(bounds, num_eval=2000),
     bounds=bounds
@@ -92,13 +91,13 @@ testing = ServiceTestingClassAL(
 def make_1d_example(save=False):
     testing_bootstrap.run()
 
-    plot_iter(testing_bootstrap)
+    plot_iterations_1d(testing_bootstrap)
     plt.tight_layout()
     if save:
         plt.savefig(".public//example_krg.png", dpi=300)
 
     testing.run()
-    plot_iter(testing)
+    plot_iterations_1d(testing)
 
     plt.tight_layout()
     if save:
