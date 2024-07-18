@@ -41,7 +41,7 @@ def sampler(n):
     return pd.DataFrame(x0)
 
 
-kernel = 1 * RBF(0.01)
+kernel = 1 * RBF(0.1)
 krg = GaussianProcessRegressor(kernel=kernel)
 
 
