@@ -15,21 +15,18 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import sklearn.model_selection
+from modAL.models import ActiveLearner
+from modAL.uncertainty import entropy_sampling
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
 
 from active_learning import ActiveSurfaceLearner
-from active_learning.benchmark.base import ServiceTestingClassAL, ModuleExperiment
+from active_learning.benchmark.base import ServiceTestingClassAL, ModuleExperiment, ServiceTestingClassModAL
 from active_learning.benchmark.utils import plot_iterations_1d
 from active_learning.components.active_criterion import GaussianProcessVariance
 from active_learning.components.active_criterion import VarianceCriterion
 from active_learning.components.query_strategies import ServiceQueryVariancePDF
-from sklearn.kernel_ridge import KernelRidge
-
-def GP_regression_std(regressor, X):
-    _, std = regressor.predict(X, return_std=True)
-    return np.argmax(std)
-
 
 RNG = np.random.default_rng(seed=0)
 
@@ -47,16 +44,14 @@ def sampler(n):
 
 kernel = 1 * RBF(0.1)
 krg = GaussianProcessRegressor(kernel=kernel)
-
-# ======================================================================================
-#
-#                           Gaussian
-# ======================================================================================
 n0 = 10
 budget = 20
 steps = 10
 plt.style.use("bmh")
 plt.rcParams['axes.facecolor'] = "white"
+
+# Setup learners
+# ==============
 
 learner_bagging = ActiveSurfaceLearner(
     active_criterion=VarianceCriterion(
@@ -71,6 +66,14 @@ learner_gaussian = ActiveSurfaceLearner(
     active_criterion=GaussianProcessVariance(kernel=kernel),
     query_strategy=ServiceQueryVariancePDF(bounds, num_eval=2000),
     bounds=bounds)
+
+modal_learner = ActiveLearner(
+    estimator=krg,
+    query_strategy=entropy_sampling,
+)
+
+# Setup testing procedure
+# =======================
 
 testing_bootstrap = ServiceTestingClassAL(
     function=unknown_function,
@@ -87,6 +90,13 @@ testing = ServiceTestingClassAL(
 
 )
 
+testing_modal = ServiceTestingClassModAL(
+    function=unknown_function,
+    budget=budget,
+    budget_0=n0, learner=modal_learner,
+    x_sampler=sampler, n_steps=steps, bounds=bounds
+)
+
 
 def make_1d_example(save=False):
     testing_bootstrap.run()
@@ -98,6 +108,9 @@ def make_1d_example(save=False):
 
     testing.run()
     plot_iterations_1d(testing)
+
+    testing_modal.run()
+    plot_iterations_1d(testing_modal)
 
     plt.tight_layout()
     if save:
@@ -117,7 +130,12 @@ def make_1d_example(save=False):
 
 
 def experiment_1d():
-    experiment = ModuleExperiment([deepcopy(testing), deepcopy(testing_bootstrap)], 2)
+    experiment = ModuleExperiment([
+        deepcopy(testing),
+        deepcopy(testing_bootstrap),
+        deepcopy(testing_modal)
+
+    ], 2)
     experiment.run()
 
 

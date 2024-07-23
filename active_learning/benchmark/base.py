@@ -80,8 +80,9 @@ class ITestingClass(ABC):
 class ServiceTestingClassAL(ITestingClass):
 
     def run(self):
-        self.learner.fit(self.x_input,
-                         pd.DataFrame(self.y_input))
+        self.learner.fit(
+            self.x_input,
+            pd.DataFrame(self.y_input))
 
         self.save()
         for n_points in self._samples[1:]:
@@ -96,6 +97,33 @@ class ServiceTestingClassAL(ITestingClass):
         self.metric.append(evaluate(
             self.f,
             self.learner.surface,
+            self.bounds, num_mc=100000))
+        self.result[self.iter] = dict(
+            learner=deepcopy(self.learner),
+            budget=int(len(self.x_input)),
+            data=deepcopy(self.x_input)
+        )
+
+
+class ServiceTestingClassModAL(ITestingClass):
+
+    def run(self):
+        self.learner.teach(self.x_input,
+                         pd.DataFrame(self.y_input))
+
+        self.save()
+        for n_points in self._samples[1:]:
+            x_new = self.learner.query(self.x_sampler(n_points))
+            y_new = pd.DataFrame(self.f(x_new))
+            self.learner = deepcopy(self.learner)
+            self.learner.fit(self.x_input, self.y_input)
+            self.add_labels(x_new, y_new)
+            self.save()
+
+    def save(self):
+        self.metric.append(evaluate(
+            self.f,
+            self.learner.predict,
             self.bounds, num_mc=100000))
         self.result[self.iter] = dict(
             learner=deepcopy(self.learner),
