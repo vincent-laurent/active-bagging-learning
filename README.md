@@ -2,7 +2,7 @@
 # Active  Strategy for surface response estimation
 
 ![cov](https://github.com/eurobios-mews-labs/active-bagging-learning/blob/coverage-badge/coverage.svg)
-
+[![Maintenance](https://img.shields.io/badge/maintained%3F-yes-green.svg)](https://GitHub.com/eurobios-mews-labs/active-bagging-learning/graphs/commit-activity)
 ## Installation
 
 ```shell
