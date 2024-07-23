@@ -16,7 +16,7 @@ import numpy as np
 import pandas as pd
 import sklearn.model_selection
 from modAL.models import ActiveLearner
-from modAL.uncertainty import entropy_sampling
+from modAL.acquisition import max_EI
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
@@ -31,6 +31,11 @@ from active_learning.components.query_strategies import ServiceQueryVariancePDF
 RNG = np.random.default_rng(seed=0)
 
 bounds = [[0, 1]]
+
+def GP_regression_std(regressor, X):
+    _, std = regressor.predict(X, return_std=True)
+    query_idx = np.argmax(std)
+    return query_idx, X[query_idx]
 
 
 def unknown_function(x):
@@ -69,7 +74,7 @@ learner_gaussian = ActiveSurfaceLearner(
 
 modal_learner = ActiveLearner(
     estimator=krg,
-    query_strategy=entropy_sampling,
+    query_strategy=GP_regression_std,
 )
 
 # Setup testing procedure
@@ -110,7 +115,6 @@ def make_1d_example(save=False):
     plot_iterations_1d(testing)
 
     testing_modal.run()
-    plot_iterations_1d(testing_modal)
 
     plt.tight_layout()
     if save:
@@ -118,14 +122,16 @@ def make_1d_example(save=False):
 
     err1 = pd.DataFrame(testing_bootstrap.metric)
     err2 = pd.DataFrame(testing.metric)
+    err3 = pd.DataFrame(testing_modal.metric)
 
-    budgets = pd.DataFrame(testing.result).loc["budget"]
 
-    plt.figure(dpi=300)
-    plt.plot(budgets, err1.values, c="r", label="bootstrap")
-    plt.plot(budgets, err2.values, label="regular")
-    plt.legend()
     if save:
+        plt.figure(dpi=300)
+        plt.plot(pd.DataFrame(testing_bootstrap.result).loc["budget"].loc[err1.index], err1.values, c="C0",
+                 label="bootstrap")
+        plt.plot(pd.DataFrame(testing.result).loc["budget"].loc[err2.index], err2.values, c="C1", label="regular")
+        plt.plot(pd.DataFrame(testing_modal.result).loc["budget"].loc[err3.index], err3.values, c="C2", label="modAL")
+        plt.legend()
         plt.savefig(".public/example_krg_3")
 
 

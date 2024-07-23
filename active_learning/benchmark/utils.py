@@ -75,7 +75,6 @@ def plot_iterations_1d(test):
     fig, axs = plt.subplots(iter_ // n_row, n_row, sharey=True, sharex=True,
                             figsize=(8, 8), dpi=200)
 
-
     for iter, ax in enumerate(axs.ravel()):
 
         result_iter = test.result[iter]

@@ -113,7 +113,7 @@ class ServiceTestingClassModAL(ITestingClass):
 
         self.save()
         for n_points in self._samples[1:]:
-            x_new = self.learner.query(self.x_sampler(n_points))
+            _, x_new = self.learner.query(self.x_sampler(n_points))
             y_new = pd.DataFrame(self.f(x_new))
             self.learner = deepcopy(self.learner)
             self.learner.fit(self.x_input, self.y_input)
