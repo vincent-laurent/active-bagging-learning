@@ -1,5 +1,5 @@
 [![cov](https://eurobios-mews-labs.github.io/active-bagging-learning/badges/coverage.svg)](https://github.com/eurobios-mews-labs.github.io/active-bagging-learning/actions)
-[![License](https://img.shields.io/badge/license-apache_2.0-darkviolet.svg)]( https://github.com/eurobios-mews-labs/active-bagging-learning/blob/master/LICENSE)
+[![License](https://img.shields.io/badge/license-apache_2.0-blue.svg)]( https://github.com/eurobios-mews-labs/active-bagging-learning/blob/master/LICENSE)
 # Active  Strategy for surface response estimation
 This library proposes a plug-in approach to active learning utilizing bagging techniques.
 Bagging, or bootstrap aggregating, is an ensemble learning method designed to improve

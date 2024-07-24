@@ -50,5 +50,9 @@ class ActiveSurfaceLearner:
         return self.__active_criterion.function
 
     @property
+    def predict(self) -> callable:
+        return self.__active_criterion.function
+
+    @property
     def bounds(self) -> iter:
         return self.__bounds

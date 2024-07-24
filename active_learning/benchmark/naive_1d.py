@@ -120,17 +120,15 @@ def make_1d_example(save=False):
     if save:
         plt.savefig(".public/example_krg_2")
 
-    err1 = pd.DataFrame(testing_bootstrap.metric)
-    err2 = pd.DataFrame(testing.metric)
-    err3 = pd.DataFrame(testing_modal.metric)
-
+    err1 = pd.DataFrame(testing_bootstrap.result).T[["budget", "l2"]]
+    err2 = pd.DataFrame(testing.result).T[["budget", "l2"]]
+    err3 = pd.DataFrame(testing_modal.result).T[["budget", "l2"]]
 
     if save:
         plt.figure(dpi=300)
-        plt.plot(pd.DataFrame(testing_bootstrap.result).loc["budget"].loc[err1.index], err1.values, c="C0",
-                 label="bootstrap")
-        plt.plot(pd.DataFrame(testing.result).loc["budget"].loc[err2.index], err2.values, c="C1", label="regular")
-        plt.plot(pd.DataFrame(testing_modal.result).loc["budget"].loc[err3.index], err3.values, c="C2", label="modAL")
+        plt.plot(err1["budget"], err1["l2"], c="C0", label="bootstrap")
+        plt.plot(err2["budget"], err2["l2"], c="C1", label="regular")
+        plt.plot(err3["budget"], err3["l2"], c="C2", label="modAL")
         plt.legend()
         plt.savefig(".public/example_krg_3")
 

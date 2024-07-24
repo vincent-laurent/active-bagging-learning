@@ -10,13 +10,13 @@
 # limitations under the License.
 
 import typing
+from abc import ABC, abstractmethod
 from copy import deepcopy
 
 import numpy as np
 import pandas as pd
 
 from active_learning.benchmark.utils import evaluate
-from abc import ABC, abstractmethod
 
 
 class ITestingClass(ABC):
@@ -76,6 +76,19 @@ class ITestingClass(ABC):
             np.random.uniform()) if self.name is None else self.name
         return ret
 
+    def save(self):
+        m = evaluate(
+            self.f,
+            self.learner.predict,
+            self.bounds, num_mc=100000)
+        self.metric.append(m)
+        self.result[self.iter] = dict(
+            learner=deepcopy(self.learner),
+            budget=int(len(self.x_input)),
+            data=deepcopy(self.x_input),
+            l2=m,
+        )
+
 
 class ServiceTestingClassAL(ITestingClass):
 
@@ -93,43 +106,21 @@ class ServiceTestingClassAL(ITestingClass):
             self.add_labels(x_new, y_new)
             self.save()
 
-    def save(self):
-        self.metric.append(evaluate(
-            self.f,
-            self.learner.surface,
-            self.bounds, num_mc=100000))
-        self.result[self.iter] = dict(
-            learner=deepcopy(self.learner),
-            budget=int(len(self.x_input)),
-            data=deepcopy(self.x_input)
-        )
-
 
 class ServiceTestingClassModAL(ITestingClass):
 
     def run(self):
         self.learner.teach(self.x_input,
-                         pd.DataFrame(self.y_input))
+                           pd.DataFrame(self.y_input))
 
         self.save()
         for n_points in self._samples[1:]:
-            _, x_new = self.learner.query(self.x_sampler(n_points))
+            _, x_new = self.learner.query(self.x_sampler(int(n_points)))
             y_new = pd.DataFrame(self.f(x_new))
             self.learner = deepcopy(self.learner)
             self.learner.fit(self.x_input, self.y_input)
             self.add_labels(x_new, y_new)
             self.save()
-
-    def save(self):
-        self.metric.append(evaluate(
-            self.f,
-            self.learner.predict,
-            self.bounds, num_mc=100000))
-        self.result[self.iter] = dict(
-            learner=deepcopy(self.learner),
-            budget=int(len(self.x_input)),
-            data=deepcopy(self.x_input)
-        )
 
 
 class ModuleExperiment:
