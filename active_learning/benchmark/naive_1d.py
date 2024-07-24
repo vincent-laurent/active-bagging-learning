@@ -23,14 +23,13 @@ from sklearn.gaussian_process.kernels import RBF
 
 from active_learning import ActiveSurfaceLearner
 from active_learning.benchmark.base import ServiceTestingClassAL, ModuleExperiment, ServiceTestingClassModAL
-from active_learning.benchmark.utils import plot_iterations_1d
+from active_learning.benchmark import utils
 from active_learning.components.active_criterion import GaussianProcessVariance
 from active_learning.components.active_criterion import VarianceCriterion
 from active_learning.components.query_strategies import ServiceQueryVariancePDF
 
-RNG = np.random.default_rng(seed=0)
-
 bounds = [[0, 1]]
+
 
 def GP_regression_std(regressor, X):
     _, std = regressor.predict(X, return_std=True)
@@ -60,9 +59,7 @@ plt.rcParams['axes.facecolor'] = "white"
 
 learner_bagging = ActiveSurfaceLearner(
     active_criterion=VarianceCriterion(
-        krg, splitter=sklearn.model_selection.ShuffleSplit(
-            n_splits=5,
-            train_size=0.9)),
+        krg, splitter=sklearn.model_selection.ShuffleSplit(n_splits=5, train_size=0.9)),
     query_strategy=ServiceQueryVariancePDF(bounds, num_eval=2000),
     bounds=bounds
 
@@ -83,13 +80,15 @@ modal_learner = ActiveLearner(
 testing_bootstrap = ServiceTestingClassAL(
     function=unknown_function,
     budget=budget,
+    name="bagging",
     budget_0=n0, learner=learner_bagging,
     x_sampler=sampler, n_steps=steps, bounds=bounds
 
 )
-testing = ServiceTestingClassAL(
+testing_gaussian = ServiceTestingClassAL(
     function=unknown_function,
     budget=budget,
+    name="gaussian",
     budget_0=n0, learner=learner_gaussian,
     x_sampler=sampler, n_steps=steps, bounds=bounds
 
@@ -98,6 +97,7 @@ testing = ServiceTestingClassAL(
 testing_modal = ServiceTestingClassModAL(
     function=unknown_function,
     budget=budget,
+    name="gaussian_modal",
     budget_0=n0, learner=modal_learner,
     x_sampler=sampler, n_steps=steps, bounds=bounds
 )
@@ -106,22 +106,26 @@ testing_modal = ServiceTestingClassModAL(
 def make_1d_example(save=False):
     testing_bootstrap.run()
 
-    plot_iterations_1d(testing_bootstrap)
+    utils.plot_iterations_1d(testing_bootstrap)
     plt.tight_layout()
     if save:
-        plt.savefig(".public//example_krg.png", dpi=300)
+        plt.savefig(".public/example_krg", dpi=300)
 
-    testing.run()
-    plot_iterations_1d(testing)
+    testing_gaussian.run()
+    utils.plot_iterations_1d(testing_gaussian)
+
+    if save:
+        plt.savefig(".public/example_krg")
 
     testing_modal.run()
+    utils.plot_iterations_1d(testing_modal)
 
     plt.tight_layout()
     if save:
-        plt.savefig(".public/example_krg_2")
+        plt.savefig(".public/example_krg_modal")
 
     err1 = pd.DataFrame(testing_bootstrap.result).T[["budget", "l2"]]
-    err2 = pd.DataFrame(testing.result).T[["budget", "l2"]]
+    err2 = pd.DataFrame(testing_gaussian.result).T[["budget", "l2"]]
     err3 = pd.DataFrame(testing_modal.result).T[["budget", "l2"]]
 
     if save:
@@ -135,13 +139,21 @@ def make_1d_example(save=False):
 
 def experiment_1d():
     experiment = ModuleExperiment([
-        deepcopy(testing),
+        deepcopy(testing_gaussian),
         deepcopy(testing_bootstrap),
         deepcopy(testing_modal)
 
-    ], 2)
+    ], 100)
     experiment.run()
+    utils.write_benchmark(data=experiment.cv_result_, path="data/1D_gaussian_vector.csv", update=False)
 
+
+import seaborn as sns
+
+data = utils.read_benchmark("data/1D_gaussian_vector.csv")
+plt.figure(dpi=300)
+sns.lineplot(data=data, x="num_sample", hue="name", y="L2-norm", ax=plt.gca())
 
 if __name__ == '__main__':
-    make_1d_example(save=True)
+    plt.ion()
+    # make_1d_example(save=True)

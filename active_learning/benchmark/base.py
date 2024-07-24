@@ -23,7 +23,8 @@ class ITestingClass(ABC):
     def __init__(self, budget: int, budget_0: int, function: callable,
                  x_sampler: callable, learner,
                  n_steps: int,
-                 bounds, name=None, estimator=None,
+                 bounds, name=None,
+                 estimator=None,
                  ):
         self.f = function
         self.budget = budget
@@ -101,25 +102,28 @@ class ServiceTestingClassAL(ITestingClass):
         for n_points in self._samples[1:]:
             x_new = self.learner.query(n_points)
             y_new = pd.DataFrame(self.f(x_new))
+
             self.learner = deepcopy(self.learner)
-            self.learner.fit(self.x_input, self.y_input)
             self.add_labels(x_new, y_new)
+            self.learner.fit(self.x_input, self.y_input)
             self.save()
 
 
 class ServiceTestingClassModAL(ITestingClass):
 
     def run(self):
-        self.learner.teach(self.x_input,
-                           pd.DataFrame(self.y_input))
+        self.learner.teach(self.x_input.values,
+                           pd.DataFrame(self.y_input).values)
 
         self.save()
         for n_points in self._samples[1:]:
-            _, x_new = self.learner.query(self.x_sampler(int(n_points)))
+
+            x_new = pd.DataFrame(
+                np.array([self.learner.query(self.x_sampler(200).values)[1] for _ in range(n_points)]))
             y_new = pd.DataFrame(self.f(x_new))
             self.learner = deepcopy(self.learner)
-            self.learner.fit(self.x_input, self.y_input)
             self.add_labels(x_new, y_new)
+            self.learner.fit(self.x_input.values, self.y_input.values)
             self.save()
 
 
@@ -146,7 +150,8 @@ class ModuleExperiment:
                 test_ = deepcopy(test)
                 test_.run()
                 res = pd.DataFrame(columns=self._cv_result.columns)
-                res["L2-norm"] = test_.metric
+                res["L2-norm"] = pd.DataFrame(test_.result).loc[
+                    "l2"].astype(float).values
                 res["num_sample"] = pd.DataFrame(test_.result).loc[
                     "budget"].astype(float).values
                 res["date"] = datetime.today()

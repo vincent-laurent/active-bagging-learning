@@ -76,55 +76,6 @@ def clear_benchmark_data(path="benchmark/results.csv", function=name):
     df.drop(df_select.index).to_csv(path)
 
 
-def plot_benchmark_whole_analysis(data: pd.DataFrame) -> None:
-    import matplotlib
-    import seaborn as sns
-    matplotlib.rcParams.update({'font.size': 6})
-    functions__ = data["name"].str.replace("_passive", "").drop_duplicates()
-    fig, ax = plot.subplots(ncols=len(functions__) // 2 + len(functions__) % 2,
-                            nrows=2, figsize=(len(functions_) * 0.7, 3.5), dpi=200)
-    if ax.shape.__len__() == 1:
-        ax = ax.reshape(-1, 1)
-    for i, f in enumerate(functions__):
-        print(f)
-        ax_ = ax[i % 2, i // 2]
-        bbox_props = dict(boxstyle="rarrow,pad=0.3", fc="cyan", ec="b", lw=2)
-        plot.sca(ax_)
-        data_temp = data[data["name"] == f].copy()
-        data_temp_p = data[data["name"] == f + "_passive"].copy()
-        data_temp["name"] = "active"
-        data_temp_p["name"] = "passive"
-        data_plot = pd.concat((data_temp, data_temp_p))
-        names = data_plot["name"].drop_duplicates().values
-
-        for j, n in enumerate(names):
-            data_ = data_plot[data_plot["name"] == n]
-            color = plot.get_cmap("crest")(j / (len(names)))
-            if i > 0:
-                label = '_nolegend_'
-            else:
-                label = n
-            sns.lineplot(data=data_, x="num_sample", y="L2-norm", label=label, color=color)
-        ax_.annotate(f, xy=(1, 0.8), xycoords='axes fraction',
-                     xytext=(1, 20), textcoords='offset pixels',
-                     horizontalalignment='right',
-                     verticalalignment='bottom',
-                     bbox=dict(boxstyle="round", fc="white", lw=0.4))
-        ax_.legend().set_visible(False)
-        ax_.set_ylabel("$L_2$ error") if i // 2 == 0 else ax_.set_ylabel("")
-        plot.yticks(c="w")
-        plot.xlabel("")
-        ax_.axes.yaxis.set_ticklabels([])
-        ax_.grid()
-        if len(functions__) % 2 == 1:
-            ax[(i + 1) % 2, (i + 1) // 2].axes.remove()
-
-    fig.legend(
-        bbox_to_anchor=(0.6, 0.98),
-        # loc='lower left',
-        # mode="expand",
-        ncol=2)
-
 
 def run_2d_benchmark():
     from active_learning.benchmark.functions import budget_parameters
