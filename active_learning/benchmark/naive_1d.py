@@ -143,13 +143,13 @@ def experiment_1d():
         deepcopy(testing_bootstrap),
         deepcopy(testing_modal)
 
-    ], 100)
+    ], 10)
     experiment.run()
     utils.write_benchmark(data=experiment.cv_result_, path="data/1D_gaussian_vector.csv", update=False)
 
 
 import seaborn as sns
-
+experiment_1d()
 data = utils.read_benchmark("data/1D_gaussian_vector.csv")
 plt.figure(dpi=300)
 sns.lineplot(data=data, x="num_sample", hue="name", y="L2-norm", ax=plt.gca())

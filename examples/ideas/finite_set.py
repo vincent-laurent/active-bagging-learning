@@ -23,8 +23,7 @@ from active_learning.components.utils import get_variance_function
 from active_learning.components.query_strategies import indices_of_random_sampling_in_finite_set
 
 
-SEED = 0
-RNG = np.random.default_rng(seed=SEED)
+
 
 
 def precompute_dataset(nb_samples):
@@ -32,8 +31,8 @@ def precompute_dataset(nb_samples):
     bounds = np.array(functions.bounds[function])
 
     dataset = pd.DataFrame({
-        'x1': RNG.uniform(low=bounds[0, 0], high=bounds[0, 1], size=nb_samples),
-        'x2': RNG.uniform(low=bounds[1, 0], high=bounds[1, 1], size=nb_samples),
+        'x1': np.uniform(low=bounds[0, 0], high=bounds[0, 1], size=nb_samples),
+        'x2': np.uniform(low=bounds[1, 0], high=bounds[1, 1], size=nb_samples),
         })
     dataset["y"] = function(dataset)
     return dataset

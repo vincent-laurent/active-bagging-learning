@@ -28,8 +28,6 @@ from active_learning.benchmark.base import Experiment
 from active_learning.benchmark.base import TestingClass, \
     write_benchmark, read_benchmark, plot_benchmark
 
-SEED = 1234
-RNG = np.random.default_rng(seed=SEED)
 
 bounds = [[0, 1]]
 

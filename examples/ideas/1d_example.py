@@ -15,8 +15,7 @@ from sklearn.ensemble import BaggingRegressor
 from active_learning.components.utils import get_variance_function
 from active_learning.components.query_strategies import random_sampling_in_domain
 
-SEED = 1234
-RNG = np.random.default_rng(seed=SEED)
+
 matplotlib.use("Qt5Agg")
 
 
@@ -27,7 +26,7 @@ def unknown_function(x):
 bounds = (np.array([0.0]), np.array([1.0]))
 nb_initial_samples = 5
 
-x = RNG.uniform(low=0, high=1, size=(nb_initial_samples, 1))
+x = np.uniform(low=0, high=1, size=(nb_initial_samples, 1))
 y = unknown_function(x)
 training_dataset = np.hstack([x, y])  # In this example, the training examples are stored in a numpy array.
 
