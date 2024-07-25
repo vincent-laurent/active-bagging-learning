@@ -45,13 +45,31 @@ class IQueryStrategy(ABC, BaseEstimator):
         return self.__active_function
 
     def __add__(self, other):
-        return CompositeStrategy(self.bounds, [self], [1]) + CompositeStrategy(self.bounds, [other], [1])
+        l, r = isinstance(self, CompositeStrategy), isinstance(other, CompositeStrategy)
+        if isinstance(self, CompositeStrategy) and isinstance(other, CompositeStrategy):
+            if len(self.strategy_list) == 1:
+                return CompositeStrategy(self.bounds,
+                                         [*self.strategy_list, *other.strategy_list],
+                                         [*self.strategy_weights, *other.strategy_weights])
+            return CompositeStrategy(
+                self.bounds, self.strategy_list, self.strategy_weights) + CompositeStrategy(
+                self.bounds, other.strategy_list, other.strategy_weights)
+        elif isinstance(self, CompositeStrategy) and not r:
+            return CompositeStrategy(self.bounds,
+                                     [*self.strategy_list, other],
+                                     [*self.strategy_weights, 1])
+        elif isinstance(other, CompositeStrategy) and not l:
+            return CompositeStrategy(self.bounds,
+                                     [self, *other.strategy_list],
+                                     [1, *other.strategy_weights])
+        else:
+            return CompositeStrategy(self.bounds, [self, other], [1, 1])
 
     def __mul__(self, other):
         return CompositeStrategy(self.bounds, [self], [other])
 
     def __rmul__(self, other):
-        return CompositeStrategy(self.bounds, [self], [other])
+        return self.__mul__(other)
 
 
 class CompositeStrategy(IQueryStrategy):
@@ -61,22 +79,13 @@ class CompositeStrategy(IQueryStrategy):
         self.strategy_weights = strategy_weights
 
     def query(self, *args):
-        x = self.strategy_list[0].query(*args)
-        pass
-
-    def __mul__(self, other):
-        return CompositeStrategy(
-            self.bounds,
-            strategy_list=[*self.strategy_list, *other.strategy_list],
-            strategy_weights=[*self.strategy_weights, *other.strategy_weights]
-        )
-
-    def __add__(self, other):
-        return CompositeStrategy(
-            self.bounds,
-            strategy_list=[*self.strategy_list, *other.strategy_list],
-            strategy_weights=[*self.strategy_weights, *other.strategy_weights]
-        )
+        if len(args) != 0 and isinstance(args[0], int):
+            x = np.array([np.random.choice(self.strategy_list, p=np.array(self.strategy_weights)).query(1)
+                          for _ in range(args[0])])[:, :, 0]
+        else:
+            select = np.random.choice(self.strategy_list, p=np.array(self.strategy_weights))
+            x = select.query(*args)
+        return x
 
 
 class ServiceQueryMax(IQueryStrategy):
@@ -136,7 +145,3 @@ class ServiceUniform(IQueryStrategy):
         candidates = utils.scipy_lhs_sampler(x_limits=np.array(self.bounds), size=size)
         return candidates
 
-
-if __name__ == '__main__':
-    strategy = ServiceUniform(bounds=[[0, 1]]) + 0.1 * ServiceUniform(bounds=[[0, 1]])
-    strategy.query(2)
