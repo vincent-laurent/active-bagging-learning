@@ -44,6 +44,40 @@ class IQueryStrategy(ABC, BaseEstimator):
     def active_function(self):
         return self.__active_function
 
+    def __add__(self, other):
+        return CompositeStrategy(self.bounds, [self], [1]) + CompositeStrategy(self.bounds, [other], [1])
+
+    def __mul__(self, other):
+        return CompositeStrategy(self.bounds, [self], [other])
+
+    def __rmul__(self, other):
+        return CompositeStrategy(self.bounds, [self], [other])
+
+
+class CompositeStrategy(IQueryStrategy):
+    def __init__(self, bounds, strategy_list: list[IQueryStrategy], strategy_weights: list[float]):
+        super().__init__(bounds)
+        self.strategy_list = strategy_list
+        self.strategy_weights = strategy_weights
+
+    def query(self, *args):
+        x = self.strategy_list[0].query(*args)
+        pass
+
+    def __mul__(self, other):
+        return CompositeStrategy(
+            self.bounds,
+            strategy_list=[*self.strategy_list, *other.strategy_list],
+            strategy_weights=[*self.strategy_weights, *other.strategy_weights]
+        )
+
+    def __add__(self, other):
+        return CompositeStrategy(
+            self.bounds,
+            strategy_list=[*self.strategy_list, *other.strategy_list],
+            strategy_weights=[*self.strategy_weights, *other.strategy_weights]
+        )
+
 
 class ServiceQueryMax(IQueryStrategy):
     def __init__(self, x0, bounds=None, xtol=0.001, maxiter=40, disp=True):
@@ -101,3 +135,8 @@ class ServiceUniform(IQueryStrategy):
     def query(self, size):
         candidates = utils.scipy_lhs_sampler(x_limits=np.array(self.bounds), size=size)
         return candidates
+
+
+if __name__ == '__main__':
+    strategy = ServiceUniform(bounds=[[0, 1]]) + 0.1 * ServiceUniform(bounds=[[0, 1]])
+    strategy.query(2)

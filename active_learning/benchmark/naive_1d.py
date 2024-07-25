@@ -16,8 +16,6 @@ import numpy as np
 import pandas as pd
 import sklearn.model_selection
 from modAL.models import ActiveLearner
-from modAL.acquisition import max_EI
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
 
@@ -26,12 +24,15 @@ from active_learning.benchmark.base import ServiceTestingClassAL, ModuleExperime
 from active_learning.benchmark import utils
 from active_learning.components.active_criterion import GaussianProcessVariance
 from active_learning.components.active_criterion import VarianceCriterion
-from active_learning.components.query_strategies import ServiceQueryVariancePDF
-
+from active_learning.components.query_strategies import ServiceQueryVariancePDF, ServiceUniform
+try:
+    plt.style.use("./.matplotlibrc")
+except ValueError:
+    pass
 bounds = [[0, 1]]
 
 
-def GP_regression_std(regressor, X):
+def gp_regression_std(regressor, X):
     _, std = regressor.predict(X, return_std=True)
     query_idx = np.argmax(std)
     return query_idx, X[query_idx]
@@ -49,10 +50,8 @@ def sampler(n):
 kernel = 1 * RBF(0.1)
 krg = GaussianProcessRegressor(kernel=kernel)
 n0 = 10
-budget = 20
-steps = 10
-plt.style.use("bmh")
-plt.rcParams['axes.facecolor'] = "white"
+budget = 25
+steps = 15
 
 # Setup learners
 # ==============
@@ -69,9 +68,15 @@ learner_gaussian = ActiveSurfaceLearner(
     query_strategy=ServiceQueryVariancePDF(bounds, num_eval=2000),
     bounds=bounds)
 
+learner_uniform = ActiveSurfaceLearner(
+    active_criterion=GaussianProcessVariance(kernel=kernel),
+    query_strategy=ServiceUniform(bounds),
+    bounds=bounds)
+
+
 modal_learner = ActiveLearner(
     estimator=krg,
-    query_strategy=GP_regression_std,
+    query_strategy=gp_regression_std,
 )
 
 # Setup testing procedure
@@ -80,7 +85,7 @@ modal_learner = ActiveLearner(
 testing_bootstrap = ServiceTestingClassAL(
     function=unknown_function,
     budget=budget,
-    name="bagging",
+    name="bagging uncertainty",
     budget_0=n0, learner=learner_bagging,
     x_sampler=sampler, n_steps=steps, bounds=bounds
 
@@ -88,7 +93,7 @@ testing_bootstrap = ServiceTestingClassAL(
 testing_gaussian = ServiceTestingClassAL(
     function=unknown_function,
     budget=budget,
-    name="gaussian",
+    name="gaussian uncertainty",
     budget_0=n0, learner=learner_gaussian,
     x_sampler=sampler, n_steps=steps, bounds=bounds
 
@@ -97,8 +102,17 @@ testing_gaussian = ServiceTestingClassAL(
 testing_modal = ServiceTestingClassModAL(
     function=unknown_function,
     budget=budget,
-    name="gaussian_modal",
+    name="gaussian uncertainty (modal)",
     budget_0=n0, learner=modal_learner,
+    x_sampler=sampler, n_steps=steps, bounds=bounds
+)
+
+
+testing_uniform = ServiceTestingClassAL(
+    function=unknown_function,
+    budget=budget,
+    name="uniform (passive)",
+    budget_0=n0, learner=learner_uniform,
     x_sampler=sampler, n_steps=steps, bounds=bounds
 )
 
@@ -141,18 +155,23 @@ def experiment_1d():
     experiment = ModuleExperiment([
         deepcopy(testing_gaussian),
         deepcopy(testing_bootstrap),
-        deepcopy(testing_modal)
+        deepcopy(testing_modal),
+        deepcopy(testing_uniform)
 
-    ], 10)
+    ], 100)
     experiment.run()
     utils.write_benchmark(data=experiment.cv_result_, path="data/1D_gaussian_vector.csv", update=False)
 
 
 import seaborn as sns
-experiment_1d()
+# experiment_1d()
 data = utils.read_benchmark("data/1D_gaussian_vector.csv")
 plt.figure(dpi=300)
 sns.lineplot(data=data, x="num_sample", hue="name", y="L2-norm", ax=plt.gca())
+plt.xlabel("Sample size")
+plt.ylabel("$L_2$ error")
+plt.tight_layout()
+plt.savefig(".public/example_1D.png")
 
 if __name__ == '__main__':
     plt.ion()

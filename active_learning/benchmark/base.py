@@ -40,6 +40,8 @@ class ITestingClass(ABC):
         self.metric = []
         self.__check_args()
         self.result = {}
+
+    def _start(self):
         self.x_input = self.x_sampler(self.budget_0)
         self.y_input = self.f(self.x_input)
 
@@ -94,6 +96,7 @@ class ITestingClass(ABC):
 class ServiceTestingClassAL(ITestingClass):
 
     def run(self):
+        self._start()
         self.learner.fit(
             self.x_input,
             pd.DataFrame(self.y_input))
@@ -112,6 +115,7 @@ class ServiceTestingClassAL(ITestingClass):
 class ServiceTestingClassModAL(ITestingClass):
 
     def run(self):
+        self._start()
         self.learner.teach(self.x_input.values,
                            pd.DataFrame(self.y_input).values)
 

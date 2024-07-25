@@ -26,8 +26,7 @@ X_train = pd.DataFrame(
      })  # Initiate distribution
 y_train = -fun(X_train)
 
-SEED = 1234
-RNG = np.random.default_rng(seed=SEED)
+
 
 bounds = [[0, 1]]
 
@@ -46,6 +45,8 @@ krg = GaussianProcessRegressor(kernel=kernel)
 
 
 def test_active_criterion():
+    SEED = 1234
+    RNG = np.random.default_rng(seed=SEED)
     svc = VarianceCriterion(krg, ShuffleSplit())
     svc.fit(X_train, y_train)
 

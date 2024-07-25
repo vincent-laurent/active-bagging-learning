@@ -54,7 +54,7 @@ for iter, ax in enumerate(axs.ravel()):
 
     # ADDING NEW SAMPLES TO THE DATABASE
     new_samples = random_sampling_in_domain(get_variance_function(model.estimators_), bounds=bounds, nb_samples=3,
-                                            rng=RNG)
+                                            )
     new_outputs = unknown_function(new_samples)
     training_dataset = np.vstack([training_dataset, np.hstack([new_samples, new_outputs])])
 
