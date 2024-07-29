@@ -27,7 +27,7 @@ from active_learning.components.active_criterion import VarianceCriterion
 from active_learning.components.query_strategies import ServiceQueryVariancePDF, ServiceUniform
 try:
     plt.style.use("./.matplotlibrc")
-except ValueError:
+except (ValueError, OSError):
     pass
 bounds = [[0, 1]]
 
@@ -163,16 +163,15 @@ def experiment_1d():
     utils.write_benchmark(data=experiment.cv_result_, path="data/1D_gaussian_vector.csv", update=False)
 
 
-import seaborn as sns
-# experiment_1d()
-data = utils.read_benchmark("data/1D_gaussian_vector.csv")
-plt.figure(dpi=300)
-sns.lineplot(data=data, x="num_sample", hue="name", y="L2-norm", ax=plt.gca())
-plt.xlabel("Sample size")
-plt.ylabel("$L_2$ error")
-plt.tight_layout()
-plt.savefig(".public/example_1D.png")
 
 if __name__ == '__main__':
-    plt.ion()
-    # make_1d_example(save=True)
+    import seaborn as sns
+
+    # experiment_1d()
+    data = utils.read_benchmark("data/1D_gaussian_vector.csv")
+    plt.figure(dpi=300)
+    sns.lineplot(data=data, x="num_sample", hue="name", y="L2-norm", ax=plt.gca())
+    plt.xlabel("Sample size")
+    plt.ylabel("$L_2$ error")
+    plt.tight_layout()
+    plt.savefig(".public/example_1D.png")

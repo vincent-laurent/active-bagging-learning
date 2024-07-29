@@ -132,8 +132,8 @@ def plot_iterations_1d(test):
         prediction = learner.predict(domain.reshape(-1, 1))
         ax.plot(domain, prediction, color="b", label="iter={}".format(iter), zorder=5)
         ax.plot(domain, test.f(domain), color="grey", linestyle="--", zorder=0)
-        training_dataset = test.x_input.loc[range(iter + 1)]
-        new_samples = test.x_input.loc[iter + 1]
+        training_dataset = test.x_input.loc[test.indexes <= iter + 1]
+        new_samples = test.x_input.loc[test.indexes == iter + 2]
 
         if hasattr(learner, 'active_criterion'):
             uncertainty = learner.active_criterion(domain.reshape(-1, 1))
