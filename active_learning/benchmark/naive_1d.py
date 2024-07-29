@@ -17,14 +17,15 @@ import pandas as pd
 import sklearn.model_selection
 from modAL.models import ActiveLearner
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF
+from sklearn.gaussian_process.kernels import RBF, WhiteKernel, ConstantKernel
 
 from active_learning import ActiveSurfaceLearner
-from active_learning.benchmark.base import ServiceTestingClassAL, ModuleExperiment, ServiceTestingClassModAL
 from active_learning.benchmark import utils
+from active_learning.benchmark.base import ServiceTestingClassAL, ModuleExperiment, ServiceTestingClassModAL
 from active_learning.components.active_criterion import GaussianProcessVariance
 from active_learning.components.active_criterion import VarianceCriterion
 from active_learning.components.query_strategies import ServiceQueryVariancePDF, ServiceUniform
+
 try:
     plt.style.use("./.matplotlibrc")
 except (ValueError, OSError):
@@ -47,8 +48,8 @@ def sampler(n):
     return pd.DataFrame(x0)
 
 
-kernel = 1 * RBF(0.1)
-krg = GaussianProcessRegressor(kernel=kernel)
+kernel = 1 * RBF(0.2, length_scale_bounds=(5e-2, 1e1))
+krg = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=5)
 n0 = 10
 budget = 25
 steps = 15
@@ -58,7 +59,7 @@ steps = 15
 
 learner_bagging = ActiveSurfaceLearner(
     active_criterion=VarianceCriterion(
-        krg, splitter=sklearn.model_selection.ShuffleSplit(n_splits=5, train_size=0.9)),
+        krg, splitter=sklearn.model_selection.ShuffleSplit(n_splits=3, train_size=0.9)),
     query_strategy=ServiceQueryVariancePDF(bounds, num_eval=2000),
     bounds=bounds
 
@@ -72,7 +73,6 @@ learner_uniform = ActiveSurfaceLearner(
     active_criterion=GaussianProcessVariance(kernel=kernel),
     query_strategy=ServiceUniform(bounds),
     bounds=bounds)
-
 
 modal_learner = ActiveLearner(
     estimator=krg,
@@ -107,7 +107,6 @@ testing_modal = ServiceTestingClassModAL(
     x_sampler=sampler, n_steps=steps, bounds=bounds
 )
 
-
 testing_uniform = ServiceTestingClassAL(
     function=unknown_function,
     budget=budget,
@@ -120,19 +119,19 @@ testing_uniform = ServiceTestingClassAL(
 def make_1d_example(save=False):
     testing_bootstrap.run()
 
-    utils.plot_iterations_1d(testing_bootstrap)
+    utils.plot_iterations_1d(testing_bootstrap, iteration_max=4, color="C0")
     plt.tight_layout()
     if save:
-        plt.savefig(".public/example_krg", dpi=300)
+        plt.savefig(".public/example_krg_bootsrap", dpi=300)
 
     testing_gaussian.run()
-    utils.plot_iterations_1d(testing_gaussian)
+    utils.plot_iterations_1d(testing_gaussian, iteration_max=4, color="C1")
 
     if save:
-        plt.savefig(".public/example_krg")
+        plt.savefig(".public/example_krg_gaussian")
 
     testing_modal.run()
-    utils.plot_iterations_1d(testing_modal)
+    utils.plot_iterations_1d(testing_modal, iteration_max=4, color="C2")
 
     plt.tight_layout()
     if save:
@@ -163,7 +162,6 @@ def experiment_1d():
     utils.write_benchmark(data=experiment.cv_result_, path="data/1D_gaussian_vector.csv", update=False)
 
 
-
 if __name__ == '__main__':
     import seaborn as sns
 
@@ -175,3 +173,5 @@ if __name__ == '__main__':
     plt.ylabel("$L_2$ error")
     plt.tight_layout()
     plt.savefig(".public/example_1D.png")
+
+    make_1d_example(True)

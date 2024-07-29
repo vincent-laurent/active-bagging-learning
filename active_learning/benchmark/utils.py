@@ -21,13 +21,12 @@ def plot_benchmark_whole_analysis(data: pd.DataFrame, n_functions) -> None:
     matplotlib.rcParams.update({'font.size': 6})
     functions__ = data["function_hash"].astype(str).str.replace("_passive", "").drop_duplicates()
     fig, ax = plt.subplots(ncols=len(functions__) // 2 + len(functions__) % 2,
-                           nrows=2, figsize=(n_functions * 0.7, 3.5), dpi=200)
+                           nrows=2, figsize=(n_functions * 0.7, 3.5))
     if ax.shape.__len__() == 1:
         ax = ax.reshape(-1, 1)
     for i, f in enumerate(functions__):
         print(f)
         ax_ = ax[i % 2, i // 2]
-        bbox_props = dict(boxstyle="rarrow,pad=0.3", fc="cyan", ec="b", lw=2)
         plt.sca(ax_)
         data_temp = data[data["name"] == f].copy()
         data_temp_p = data[data["name"] == f + "_passive"].copy()
@@ -117,28 +116,29 @@ def analyse_1d(test):
     sns.histplot(test.learner.x_input, bins=50)
 
 
-def plot_iterations_1d(test):
+def plot_iterations_1d(test, iteration_max=None, color="b"):
     domain = np.linspace(test.bounds[0][0], test.bounds[0][1], 2000)
-    iter_ = int(test.indexes.max())
-    n_row = int(np.sqrt(iter_))
-    fig, axs = plt.subplots(iter_ // n_row, n_row, sharey=True, sharex=True,
-                            figsize=(8, 8), dpi=200)
+    if iteration_max is None:
+        iteration_max = int(test.indexes.max())
+    n_row = int(np.sqrt(iteration_max))
+    fig, axs = plt.subplots(iteration_max // n_row, n_row, sharey=True, sharex=True,
+                            figsize=(7, 7), dpi=200)
 
-    for iter, ax in enumerate(axs.ravel()):
+    for iteration, ax in enumerate(axs.ravel()):
 
-        result_iter = test.result[iter]
+        result_iter = test.result[iteration + 1]
         learner = result_iter["learner"]
 
         prediction = learner.predict(domain.reshape(-1, 1))
-        ax.plot(domain, prediction, color="b", label="iter={}".format(iter), zorder=5)
+        ax.plot(domain, prediction, color=color, label="iter={}".format(iteration), zorder=5)
         ax.plot(domain, test.f(domain), color="grey", linestyle="--", zorder=0)
-        training_dataset = test.x_input.loc[test.indexes <= iter + 1]
-        new_samples = test.x_input.loc[test.indexes == iter + 2]
+        training_dataset = test.x_input.loc[test.indexes <= iteration + 1]
+        new_samples = test.x_input.loc[test.indexes == iteration + 2]
 
         if hasattr(learner, 'active_criterion'):
             uncertainty = learner.active_criterion(domain.reshape(-1, 1))
-            ax.fill_between(domain.ravel(), prediction - uncertainty * 1.96,
-                            prediction + uncertainty * 1.96, color="b", alpha=0.2)
+            ax.fill_between(domain.ravel(), prediction - uncertainty,
+                            prediction + uncertainty, color=color, alpha=0.2)
 
             if hasattr(learner.active_criterion, "models"):
                 for m in learner.active_criterion.models:
@@ -154,7 +154,7 @@ def plot_iterations_1d(test):
         # ax.axis("off")
 
 
-def plot_active_function(test):
+def plot_active_function(test, color="b"):
     domain = np.linspace(test.bounds[0][0], test.bounds[0][1], 2000)
     iter_ = int(test.indexes.max())
     n_row = int(np.sqrt(iter_))
@@ -170,11 +170,11 @@ def plot_active_function(test):
         error = active_criterion(domain.reshape(-1, 1))
         prediction = learner.surface(domain.reshape(-1, 1))
 
-        ax.plot(domain, prediction, color="b", label="iter={}".format(iter), zorder=5)
+        ax.plot(domain, prediction, color=color, label="iter={}".format(iter), zorder=5)
         ax.plot(domain, test.f(domain), color="grey", linestyle="--", zorder=0)
 
         ax.fill_between(domain.ravel(), prediction - error,
-                        prediction + error, color="b", alpha=0.2)
+                        prediction + error, color=color, alpha=0.2)
         training_dataset = test.x_input.loc[range(iter + 1)]
         new_samples = test.x_input.loc[iter + 1]
 

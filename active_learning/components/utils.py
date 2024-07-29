@@ -17,7 +17,7 @@ import pandas as pd
 def get_variance_function(estimator_list):
     def meta_estimator(*args, **kwargs):
         predictions = np.array([est.predict(*args, **kwargs) for est in estimator_list])
-        return np.var(predictions, axis=0)
+        return np.std(predictions, axis=0, ddof=1)
 
     return meta_estimator
 

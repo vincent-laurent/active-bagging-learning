@@ -10,7 +10,6 @@
 # limitations under the License.
 import numpy as np
 
-from active_learning.benchmark import functions
 from active_learning.components import latin_square
 
 

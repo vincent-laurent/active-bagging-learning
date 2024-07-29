@@ -62,8 +62,8 @@ class ITestingClass(ABC):
     def add_labels(self, x: pd.DataFrame, y: pd.DataFrame):
         self.iter += 1
         self.indexes = np.concatenate((self.indexes, self.iter * np.ones(len(x))))
-        self.x_input = pd.concat((x, self.x_input), axis=0)
-        self.y_input = pd.concat((y, self.y_input), axis=0)
+        self.x_input = pd.concat((self.x_input, x), axis=0)
+        self.y_input = pd.concat((self.y_input, y), axis=0)
 
     @property
     def parameters(self):
