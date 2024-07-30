@@ -9,10 +9,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
-import matplotlib.pyplot as plt
 
 
 def plot_benchmark_whole_analysis(data: pd.DataFrame, n_functions) -> None:
@@ -122,7 +121,7 @@ def plot_iterations_1d(test, iteration_max=None, color="b"):
         iteration_max = int(test.indexes.max())
     n_row = int(np.sqrt(iteration_max))
     fig, axs = plt.subplots(iteration_max // n_row, n_row, sharey=True, sharex=True,
-                            figsize=(7, 7), dpi=200)
+                            figsize=(6, 6), dpi=200)
 
     for iteration, ax in enumerate(axs.ravel()):
 
@@ -130,9 +129,9 @@ def plot_iterations_1d(test, iteration_max=None, color="b"):
         learner = result_iter["learner"]
 
         prediction = learner.predict(domain.reshape(-1, 1))
-        ax.plot(domain, prediction, color=color, label="iter={}".format(iteration), zorder=5)
         ax.plot(domain, test.f(domain), color="grey", linestyle="--", zorder=0)
         training_dataset = test.x_input.loc[test.indexes <= iteration + 1]
+        ax.plot(domain, prediction, color=color, label=f"N = {len(training_dataset)}", zorder=5)
         new_samples = test.x_input.loc[test.indexes == iteration + 2]
 
         if hasattr(learner, 'active_criterion'):
@@ -150,8 +149,9 @@ def plot_iterations_1d(test, iteration_max=None, color="b"):
         ax.scatter(new_samples, test.f(new_samples), color="r", marker=".",
                    zorder=30)
         ax.set_ylim(-0.9, 0.7)
-        ax.legend()
-        # ax.axis("off")
+        ax.legend(loc=2)
+        ax.set_axis_off()
+        plt.tight_layout()
 
 
 def plot_active_function(test, color="b"):

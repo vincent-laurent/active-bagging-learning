@@ -17,7 +17,7 @@ import pandas as pd
 import sklearn.model_selection
 from modAL.models import ActiveLearner
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF, WhiteKernel, ConstantKernel
+from sklearn.gaussian_process.kernels import RBF
 
 from active_learning import ActiveSurfaceLearner
 from active_learning.benchmark import utils
@@ -59,7 +59,7 @@ steps = 15
 
 learner_bagging = ActiveSurfaceLearner(
     active_criterion=VarianceCriterion(
-        krg, splitter=sklearn.model_selection.ShuffleSplit(n_splits=3, train_size=0.9)),
+        krg, splitter=sklearn.model_selection.ShuffleSplit(n_splits=3, train_size=0.85)),
     query_strategy=ServiceQueryVariancePDF(bounds, num_eval=2000),
     bounds=bounds
 
@@ -120,9 +120,12 @@ def make_1d_example(save=False):
     testing_bootstrap.run()
 
     utils.plot_iterations_1d(testing_bootstrap, iteration_max=4, color="C0")
-    plt.tight_layout()
     if save:
-        plt.savefig(".public/example_krg_bootsrap", dpi=300)
+        plt.savefig(".public/example_krg_bootsrap")
+
+    utils.plot_iterations_1d(testing_bootstrap, iteration_max=6, color="C0")
+    if save:
+        plt.savefig(".public/example_krg")
 
     testing_gaussian.run()
     utils.plot_iterations_1d(testing_gaussian, iteration_max=4, color="C1")
@@ -133,7 +136,6 @@ def make_1d_example(save=False):
     testing_modal.run()
     utils.plot_iterations_1d(testing_modal, iteration_max=4, color="C2")
 
-    plt.tight_layout()
     if save:
         plt.savefig(".public/example_krg_modal")
 
@@ -167,7 +169,7 @@ if __name__ == '__main__':
 
     # experiment_1d()
     data = utils.read_benchmark("data/1D_gaussian_vector.csv")
-    plt.figure(dpi=300)
+    plt.figure(dpi=300, figsize=(5, 5))
     sns.lineplot(data=data, x="num_sample", hue="name", y="L2-norm", ax=plt.gca())
     plt.xlabel("Sample size")
     plt.ylabel("$L_2$ error")

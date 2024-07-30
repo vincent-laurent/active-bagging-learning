@@ -71,9 +71,8 @@ To use the approach, one has to dispose of
 
 ## Exemples
 
-* 1D example :  
 
-<img alt="benchmark" height="800" src=".public/example_krg.png"/>
+<img alt="benchmark" height="500" src=".public/example_krg.png"/>
 
 ## Benchmark
 
