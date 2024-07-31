@@ -20,7 +20,10 @@ from active_learning.benchmark import utils
 from active_learning.components import latin_square
 from active_learning.components.active_criterion import VarianceEnsembleMethod
 from active_learning.components.query_strategies import ServiceQueryVariancePDF, ServiceUniform
-
+try:
+    plt.style.use("./.matplotlibrc")
+except (ValueError, OSError):
+    pass
 functions_ = list(functions.bounds.keys())
 
 name = "grammacy_lee_2009_rand"
@@ -88,7 +91,7 @@ def run_2d_benchmark():
 
         return sampler
 
-    active_testing_classes = [test.TestingClass(
+    active_testing_classes = [base.ServiceTestingClassAL(
         budget_parameters[name]["budget"],
         budget_parameters[name]["n0"],
         budget_parameters[name]["fun"],
@@ -101,7 +104,7 @@ def run_2d_benchmark():
     ) for name in list(budget_parameters.keys())
     ]
     #
-    passive_testing_classes = [test.TestingClass(
+    passive_testing_classes = [base.ServiceTestingClassAL(
         budget_parameters[name]["budget"],
         budget_parameters[name]["n0"],
         budget_parameters[name]["fun"],
@@ -114,22 +117,22 @@ def run_2d_benchmark():
     ) for name in list(budget_parameters.keys())
 
     ]
-    experiment = test.ModuleExperiment([*active_testing_classes, *passive_testing_classes], n_experiment=50)
+    experiment = base.ModuleExperiment([*active_testing_classes, *passive_testing_classes], n_experiment=50)
     experiment.run()
     data = experiment.cv_result_
-    test.write_benchmark(data, path="data/benchmark_2d.csv")
+    base.write_benchmark(data, path="data/benchmark_2d.csv")
 
 
 def get_benchmark():
     identifier = ["budget", "budget_0", "n_steps", "active_criterion", "query_strategy", "name"]
-    data = test.read_benchmark(path="./examples/2d_benchmark/data/benchmark_2d.csv")
+    data = utils.read_benchmark(path="./examples/2d_benchmark/data/benchmark_2d.csv")
 
     df_property = data.groupby(identifier)["date"].last().reset_index()
     df_property = df_property.sort_values("date", ascending=False).drop_duplicates(
         "name")
     data_unique = pd.merge(data, df_property[identifier], on=identifier)
-    plot_benchmark_whole_analysis(data_unique)
-    plt.savefig(".public/active_vs_passive.png", dpi=150)
+    utils.plot_benchmark_whole_analysis(data=data_unique)
+    plt.savefig(".public/active_vs_passive.png")
 
 
 if __name__ == '__main__':

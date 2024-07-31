@@ -14,11 +14,14 @@ import numpy as np
 import pandas as pd
 
 
-def plot_benchmark_whole_analysis(data: pd.DataFrame, n_functions) -> None:
+def plot_benchmark_whole_analysis(data: pd.DataFrame, n_functions=None) -> None:
     import matplotlib
     import seaborn as sns
+
+    if n_functions is None:
+        n_functions = len(data["function_hash"].drop_duplicates())
     matplotlib.rcParams.update({'font.size': 6})
-    functions__ = data["function_hash"].astype(str).str.replace("_passive", "").drop_duplicates()
+    functions__ = data["name"].astype(str).str.replace("_passive", "").drop_duplicates()
     fig, ax = plt.subplots(ncols=len(functions__) // 2 + len(functions__) % 2,
                            nrows=2, figsize=(n_functions * 0.7, 3.5))
     if ax.shape.__len__() == 1:
@@ -36,13 +39,13 @@ def plot_benchmark_whole_analysis(data: pd.DataFrame, n_functions) -> None:
 
         for j, n in enumerate(names):
             data_ = data_plot[data_plot["name"] == n]
-            color = plt.get_cmap("crest")(j / (len(names)))
+            color = f"C{j}"
             if i > 0:
                 label = '_nolegend_'
             else:
                 label = n
             sns.lineplot(data=data_, x="num_sample", y="L2-norm", label=label, color=color)
-        ax_.annotate(f, xy=(1, 0.8), xycoords='axes fraction',
+        ax_.annotate(f, xy=(1, 0.9), xycoords='axes fraction',
                      xytext=(1, 20), textcoords='offset pixels',
                      horizontalalignment='right',
                      verticalalignment='bottom',
