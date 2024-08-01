@@ -20,10 +20,10 @@ from active_learning.benchmark import utils
 from active_learning.components import latin_square
 from active_learning.components.active_criterion import VarianceEnsembleMethod
 from active_learning.components.query_strategies import ServiceQueryVariancePDF, ServiceUniform
-try:
-    plt.style.use("./.matplotlibrc")
-except (ValueError, OSError):
-    pass
+# try:
+#     plt.style.use("./.matplotlibrc")
+# except (ValueError, OSError):
+#     pass
 functions_ = list(functions.bounds.keys())
 
 name = "grammacy_lee_2009_rand"
@@ -52,6 +52,9 @@ def add_to_benchmark(data: pd.DataFrame, path="benchmark/results.csv"):
 
 
 def plot_all_benchmark_function():
+    from matplotlib.colors import LinearSegmentedColormap, ListedColormap
+    cmap = LinearSegmentedColormap.from_list("mycmap", ['C2', "C0", "white", "C4",  'C1'])
+
     from active_learning.benchmark.functions import budget_parameters
     functions__ = list(budget_parameters.keys())
     fig, ax = plot.subplots(ncols=len(functions__) // 2 + len(functions__) % 2,
@@ -64,13 +67,13 @@ def plot_all_benchmark_function():
             xx, yy, x, z = utils.eval_surf_2d(f, bound, num=200)
 
             ax_.pcolormesh(xx, yy, z.reshape(len(xx), len(yy)),
-                           cmap="RdBu")
+                           cmap=cmap)
 
             ax_.axes.yaxis.set_ticklabels([])
             ax_.axes.xaxis.set_ticklabels([])
     if len(functions__) % 2 == 1:
         ax[(i + 1) % 2, (i + 1) // 2].axes.remove()
-    plot.savefig("benchmark/functions.png")
+    plot.savefig(".public/functions.png")
 
 
 def clear_benchmark_data(path="benchmark/results.csv", function=name):
@@ -136,4 +139,4 @@ def get_benchmark():
 
 
 if __name__ == '__main__':
-    pass
+    get_benchmark()

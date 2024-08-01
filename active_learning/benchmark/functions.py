@@ -11,6 +11,7 @@
 
 import typing
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 
@@ -176,6 +177,10 @@ def plot_benchamrk_functions():
     import seaborn as sns
     import matplotlib
 
+    from matplotlib.colors import LinearSegmentedColormap, ListedColormap
+    cmap = sns.color_palette("RdBu_r", as_cmap=True)
+    cmap = LinearSegmentedColormap.from_list("mycmap", ['C0', "C7", "C6", "white", "C4", "C5", 'C1'])
+
     matplotlib.rcParams.update({'font.size': 6})
     fig, ax = plot.subplots(
         figsize=(10, 4.2),
@@ -189,20 +194,23 @@ def plot_benchamrk_functions():
             x__, y__ = np.meshgrid(xxx, yyy)
             x__ = pd.DataFrame(dict(x0=x__.ravel(), x1=y__.ravel()))
             z = budget_parameters[fun]["fun"](x__.values)
+            z = z - np.median(z)
 
             im = ax[i % 2, i // 2].pcolormesh(xxx, yyy, z.reshape(len(xxx), len(yyy)),
-                                              cmap=sns.color_palette("RdBu_r", as_cmap=True))
+                                              cmap=cmap)
             ax_ = ax[i % 2, i // 2]
             ax_.set_xticklabels([])
             ax_.set_yticklabels([])
-            ax_.annotate(fun, xy=(1, 0.8), xycoords='axes fraction',
+            ax_.annotate(fun, xy=(1, 0.9), xycoords='axes fraction',
                          xytext=(1, 20), textcoords='offset pixels',
                          horizontalalignment='right',
                          verticalalignment='bottom',
                          bbox=dict(boxstyle="round", fc="white", lw=0.4))
 
+    # plt.tight_layout()
     fig.subplots_adjust(right=0.9)
     cbar_ax = fig.add_axes([0.91, 0.11, 0.01, 0.77])
     fig.colorbar(im, cax=cbar_ax, ticks=[-2, -0.32, 1.5])
-    cbar_ax.set_yticklabels(['low \nvalues', '0', 'high \nvalues'])  #
+    cbar_ax.set_yticklabels(['low \nvalues', 'medium \nvalue', 'high \nvalues'])  #
 
+    plt.savefig(".public/benchmark_functions")

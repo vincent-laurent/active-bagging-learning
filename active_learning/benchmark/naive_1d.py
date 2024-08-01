@@ -26,10 +26,6 @@ from active_learning.components.active_criterion import GaussianProcessVariance
 from active_learning.components.active_criterion import VarianceCriterion
 from active_learning.components.query_strategies import ServiceQueryVariancePDF, ServiceUniform
 
-try:
-    plt.style.use("./.matplotlibrc")
-except (ValueError, OSError):
-    pass
 bounds = [[0, 1]]
 
 
