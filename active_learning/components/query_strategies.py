@@ -76,7 +76,7 @@ class CompositeStrategy(IQueryStrategy):
     def __init__(self, bounds, strategy_list: list[IQueryStrategy], strategy_weights: list[float]):
         super().__init__(bounds)
         self.strategy_list = strategy_list
-        self.strategy_weights = strategy_weights
+        self.strategy_weights = np.array(strategy_weights) / np.sum(strategy_weights)
 
     def query(self, *args):
         if len(args) != 0 and isinstance(args[0], int):

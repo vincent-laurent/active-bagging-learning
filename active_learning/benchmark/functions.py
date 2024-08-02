@@ -179,7 +179,7 @@ def plot_benchamrk_functions():
 
     from matplotlib.colors import LinearSegmentedColormap, ListedColormap
     cmap = sns.color_palette("RdBu_r", as_cmap=True)
-    cmap = LinearSegmentedColormap.from_list("mycmap", ['C0', "C7", "C6", "white", "C4", "C5", 'C1'])
+    cmap = LinearSegmentedColormap.from_list("mycmap", ['C0', "C2", "C4", "C6", "white", "C7", "C5", "C3", "C1"])
 
     matplotlib.rcParams.update({'font.size': 6})
     fig, ax = plot.subplots(

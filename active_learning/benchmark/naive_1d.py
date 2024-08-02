@@ -45,7 +45,7 @@ def sampler(n):
 
 
 kernel = 1 * RBF(0.2, length_scale_bounds=(5e-2, 1e1))
-krg = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=5)
+krg = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=1)
 n0 = 10
 budget = 25
 steps = 15
@@ -70,6 +70,12 @@ learner_uniform = ActiveSurfaceLearner(
     query_strategy=ServiceUniform(bounds),
     bounds=bounds)
 
+learner_bagging_uniform = ActiveSurfaceLearner(
+    active_criterion=GaussianProcessVariance(kernel=kernel),
+    query_strategy=2*ServiceQueryVariancePDF(bounds) + ServiceUniform(bounds),
+    bounds=bounds)
+
+
 modal_learner = ActiveLearner(
     estimator=krg,
     query_strategy=gp_regression_std,
@@ -86,6 +92,16 @@ testing_bootstrap = ServiceTestingClassAL(
     x_sampler=sampler, n_steps=steps, bounds=bounds
 
 )
+
+testing_bootstrap_uniform = ServiceTestingClassAL(
+    function=unknown_function,
+    budget=budget,
+    name="bagging uncertainty + uniform",
+    budget_0=n0, learner=learner_bagging,
+    x_sampler=sampler, n_steps=steps, bounds=bounds
+
+)
+
 testing_gaussian = ServiceTestingClassAL(
     function=unknown_function,
     budget=budget,
@@ -119,7 +135,7 @@ def make_1d_example(save=False):
     if save:
         plt.savefig(".public/example_krg_bootsrap")
 
-    utils.plot_iterations_1d(testing_bootstrap, iteration_max=6, color="C0")
+    utils.plot_iterations_1d(testing_bootstrap, iteration_max=6, color="C3")
     if save:
         plt.savefig(".public/example_krg")
 
@@ -130,10 +146,17 @@ def make_1d_example(save=False):
         plt.savefig(".public/example_krg_gaussian")
 
     testing_modal.run()
-    utils.plot_iterations_1d(testing_modal, iteration_max=4, color="C2")
 
     if save:
         plt.savefig(".public/example_krg_modal")
+
+    utils.plot_iterations_1d(testing_modal, iteration_max=4, color="C5")
+
+    testing_bootstrap_uniform.run()
+    if save:
+        plt.savefig(".public/example_krg_boot_plus_uniform")
+
+    utils.plot_iterations_1d(testing_bootstrap_uniform, iteration_max=4, color="C2")
 
     err1 = pd.DataFrame(testing_bootstrap.result).T[["budget", "l2"]]
     err2 = pd.DataFrame(testing_gaussian.result).T[["budget", "l2"]]
@@ -153,7 +176,8 @@ def experiment_1d():
         deepcopy(testing_gaussian),
         deepcopy(testing_bootstrap),
         deepcopy(testing_modal),
-        deepcopy(testing_uniform)
+        deepcopy(testing_uniform),
+        deepcopy(testing_bootstrap_uniform)
 
     ], 100)
     experiment.run()
@@ -163,7 +187,7 @@ def experiment_1d():
 if __name__ == '__main__':
     import seaborn as sns
 
-    # experiment_1d()
+    experiment_1d()
     data = utils.read_benchmark("data/1D_gaussian_vector.csv")
     plt.figure(dpi=300, figsize=(5, 5))
     sns.lineplot(data=data, x="num_sample", hue="name", y="L2-norm", ax=plt.gca())
@@ -173,3 +197,6 @@ if __name__ == '__main__':
     plt.savefig(".public/example_1D.png")
 
     make_1d_example(True)
+
+
+    

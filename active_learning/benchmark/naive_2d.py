@@ -20,6 +20,7 @@ from active_learning.benchmark import utils
 from active_learning.components import latin_square
 from active_learning.components.active_criterion import VarianceEnsembleMethod
 from active_learning.components.query_strategies import ServiceQueryVariancePDF, ServiceUniform
+
 # try:
 #     plt.style.use("./.matplotlibrc")
 # except (ValueError, OSError):
@@ -52,8 +53,8 @@ def add_to_benchmark(data: pd.DataFrame, path="benchmark/results.csv"):
 
 
 def plot_all_benchmark_function():
-    from matplotlib.colors import LinearSegmentedColormap, ListedColormap
-    cmap = LinearSegmentedColormap.from_list("mycmap", ['C2', "C0", "white", "C4",  'C1'])
+    from matplotlib.colors import LinearSegmentedColormap
+    cmap = LinearSegmentedColormap.from_list("mycmap", ['C0', "C2", "C4", "C6", "white", "C7", "C5", "C3", "C1"])
 
     from active_learning.benchmark.functions import budget_parameters
     functions__ = list(budget_parameters.keys())
@@ -80,7 +81,6 @@ def clear_benchmark_data(path="benchmark/results.csv", function=name):
     df = pd.read_csv(path)
     df_select = df.query(f"function==@function")
     df.drop(df_select.index).to_csv(path)
-
 
 
 def run_2d_benchmark():
