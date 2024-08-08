@@ -27,8 +27,7 @@ class ITestingClass(ABC):
                  x_sampler: callable, learner: ActiveSurfaceLearner,
                  n_steps: int,
                  bounds, name=None,
-                 estimator=None,
-                 ):
+                 estimator=None):
         self.f = function
         self.budget = budget
         self.n_steps = n_steps
@@ -43,7 +42,8 @@ class ITestingClass(ABC):
         self.metric = []
         self.__check_args()
         self.result = {}
-        self.learner.set_bounds(bounds)
+        if hasattr(self.learner, "set_bounds"):
+            self.learner.set_bounds(bounds)
 
     def _start(self):
         self.x_input = self.x_sampler(self.budget_0)

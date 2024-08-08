@@ -73,19 +73,52 @@ learner_bagging_uniform_svc = ActiveSurfaceLearner(
 methods = {
     "marelli_2018":
         {"passive": learner_uniform_svc,
-         "SVC bootsrap": learner_svc,
+         "SVC bootstrap": learner_svc,
          "SVC bootstrap + uniform": learner_uniform_svc},
     "grammacy_lee_2009":
         {"passive": learner_uniform_svc,
-         "SVC bootsrap": learner_svc,
+         "SVC bootstrap": learner_svc,
          "SVC bootstrap + uniform": learner_uniform_svc,
          },
     "grammacy_lee_2009_rand":
         {"passive": learner_uniform_svc,
-         "SVC bootsrap": learner_svc,
+         "SVC bootstrap": learner_svc,
          "SVC bootstrap + uniform": learner_uniform_svc,
          "TREES bootstrap": learner_trees,
-         }
+         },
+    "branin":
+        {"passive": learner_uniform_svc,
+         "SVC bootstrap": learner_svc,
+         "SVC bootstrap + uniform": learner_uniform_svc,
+         "TREES bootstrap": learner_trees,
+         # "TREES bootstrap + uniform": learner_bagging_uniform_trees,
+         },
+    "himmelblau":
+        {"passive": learner_uniform_trees,
+         "TREES bootstrap": learner_trees,
+         # "TREES bootstrap + uniform": learner_bagging_uniform_trees,
+         },
+    "branin_rand":
+        {"passive": learner_uniform_trees,
+         "TREES bootstrap": learner_trees,
+         # "TREES bootstrap + uniform": learner_bagging_uniform_trees,
+         },
+    "himmelblau_rand":
+        {"passive": learner_uniform_trees,
+         "TREES bootstrap": learner_trees,
+         # "TREES bootstrap + uniform": learner_bagging_uniform_trees,
+         },
+    "golden_price":
+        {"passive": learner_uniform_trees,
+         "TREES bootstrap": learner_trees,
+         # "TREES bootstrap + uniform": learner_bagging_uniform_trees,
+         },
+    "synthetic_2d_1":
+        {"passive": learner_uniform_trees,
+         "TREES bootstrap": learner_trees,
+         # "TREES bootstrap + uniform": learner_bagging_uniform_trees,
+         },
+
 }
 
 
@@ -138,10 +171,10 @@ if __name__ == '__main__':
 
     t = create_benchmark_list()
 
-    me = ModuleExperiment(t, n_experiment=10)
+    me = ModuleExperiment(t, n_experiment=100)
     me.run()
 
     plt.figure()
     utils.plot_benchmark(data=me.cv_result_)
-
+    utils.write_benchmark(me.cv_result_, "data/benchmark_2024.csv")
     plt.savefig("test")

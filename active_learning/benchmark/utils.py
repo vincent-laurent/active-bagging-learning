@@ -73,8 +73,11 @@ def plot_benchmark(data: pd.DataFrame) -> None:
     n_functions = len(functions__)
     fig, ax = plt.subplots(
         ncols=n_functions // 2 + n_functions % 2,
-        nrows=min(n_functions, 2), figsize=(n_functions * 0.5 + 2, 3.5))
+        nrows=min(n_functions, 2), figsize=(n_functions // 2 * 2 + 4, 6), dpi=400)
+    all_handles = []
+    all_labels = []
 
+    all_methods = np.unique([__name.split("@")[1] for __name in data["name"].drop_duplicates().values])
     if isinstance(ax, plt.Axes):
         ax = np.array([ax])
     if ax.shape.__len__() == 1:
@@ -82,18 +85,17 @@ def plot_benchmark(data: pd.DataFrame) -> None:
     for i, f in enumerate(functions__):
         print(f)
         __ax: plt.Axes = ax[i % 2, i // 2]
-        names = [__name for __name in data["name"].drop_duplicates().values if f==__name.split("@")[0]]
-        plt.sca(__ax)
-        for j, n in enumerate(names):
-            data_ = data[data["name"] == n]
-            color = f"C{j}"
-            if i > 0:
-                label = '_nolegend_'
-            else:
-                label = str(n).split("@")[1]
 
-            sns.lineplot(data=data_, x="num_sample", y="L2-norm", label=label, color=color, ax=__ax)
+        plt.sca(__ax)
+        for j, label in enumerate(all_methods):
+            data_ = data[data["name"] == f"{f}@{label}"]
+            color = f"C{j}"
+
+            if len(data_) > 0:
+                sns.lineplot(data=data_, x="num_sample", y="L2-norm", label=label, color=color, ax=__ax)
             handles, labels = plt.gca().get_legend_handles_labels()
+            all_handles.extend(handles)
+            all_labels.extend(labels)
 
         __ax.annotate(f, xy=(1, 0.9), xycoords='axes fraction',
                       xytext=(1, 20), textcoords='offset pixels',
@@ -106,16 +108,22 @@ def plot_benchmark(data: pd.DataFrame) -> None:
         plt.xlabel("")
         # __ax.set_yticklabels([])
 
-
-
     if n_functions % 2 == 1:
         if n_functions > 1:
             ax[(i + 1) % 2, (i + 1) // 2].axes.remove()
 
+    all_labels = pd.Series(all_labels, index=all_handles).reset_index()
+    all_labels = all_labels.drop_duplicates(keep="first", subset=[0])
+
     fig.legend(
+        all_labels["index"].to_list(),
+        all_labels[0].to_list(),
         bbox_to_anchor=(0.6, 0.98),
         # loc='lower left',
         # mode="expand",
+
+        loc='upper center',
+
         ncol=2)
 
 

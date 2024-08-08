@@ -17,7 +17,8 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
 
 from active_learning import ActiveSurfaceLearner
-from active_learning.benchmark import functions, naive_1d
+from active_learning.benchmark import functions
+from active_learning.examples import example_1D
 from active_learning.benchmark.base import ServiceTestingClassAL
 from active_learning.components.active_criterion import VarianceCriterion
 from active_learning.components.query_strategies import ServiceQueryVariancePDF

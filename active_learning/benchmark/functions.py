@@ -91,7 +91,7 @@ def golden_price(x):
     return ((1 + (xx + yy + 1) ** 2 * (
             19 - 14 * xx + 3 * xx ** 2 - 14 * yy + 6 * xx * yy + 3 * yy ** 2)) * (
                     30 + (2 * xx - 3 * yy) ** 2 * (
-                    18 - 32 * xx + 12 * xx ** 2 + 48 * yy - 36 * xx * yy + 27 * yy ** 2))) / 500
+                    18 - 32 * xx + 12 * xx ** 2 + 48 * yy - 36 * xx * yy + 27 * yy ** 2))) / 1000 / 100
 
 
 def synthetic_2d_1(x):
@@ -146,20 +146,20 @@ function_parameters = {
         'n0': 60,
         "budget": 100,
         "n_step": 10,
-        "name": "Grammacy Lee randomized",
+        "name": "Grammacy Lee rand.",
     },
     "branin": {
         "fun": branin,
         'n0': 100,
         "budget": 900,
         "n_step": 10,
-        "name": "branin"},
+        "name": "Branin"},
     "branin_rand": {
         "fun": branin_rand,
         'n0': 100,
         "budget": 1000,
         "n_step": 10,
-        "name": "branin randomized"},
+        "name": "Branin rand."},
     "himmelblau": {
         "fun": himmelblau,
         'n0': 100,
@@ -168,7 +168,7 @@ function_parameters = {
         "name": "Himmelblau"},
     "himmelblau_rand": {
         "fun": himmelblau_rand, 'n0': 100, "budget": 1000, "n_step": 10,
-        "name": "Himmelblau randomized"},
+        "name": "Himmelblau rand."},
     "golden_price": {
         "fun": golden_price, 'n0': 50, "budget": 60, "n_step": 10, "name": "Golden price"},
     "marelli_2018": {

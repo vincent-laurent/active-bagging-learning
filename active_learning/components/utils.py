@@ -26,7 +26,9 @@ def scipy_lhs_sampler(size: int = 100,
                       x_limits: np.ndarray = None,
                       dim: int = None):
     from scipy.stats import qmc
-    dim = len(x_limits) if dim is None else dim
+    if x_limits is None:
+        raise ValueError("bounds must be specified for LHS sampler")
+    dim = len(np.array(x_limits)) if dim is None else dim
     l_bounds = x_limits[:, 0]
     u_bounds = x_limits[:, 1]
     sampler = qmc.LatinHypercube(d=dim)
