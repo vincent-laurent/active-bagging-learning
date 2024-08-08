@@ -45,8 +45,8 @@ if __name__ == '__main__':
     # )
     # crit = query_strategies.QueryVariancePDF(num_eval=500)
 
-    n0 = functions.budget_parameters[name]["n0"] * 5
-    budget = functions.budget_parameters[name]["budget"] * 10
+    n0 = functions.function_parameters[name]["n0"] * 5
+    budget = functions.function_parameters[name]["budget"] * 10
     steps = 30
     bounds = np.array(functions.bounds[fun])
 

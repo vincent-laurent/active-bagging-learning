@@ -10,8 +10,9 @@
 # limitations under the License.
 
 import pandas as pd
+from typing import Union
 
-from active_learning.components.active_criterion import IActiveCriterion
+from active_learning.components.active_criterion import IActiveCriterion, NoEstimation
 from active_learning.components.query_strategies import IQueryStrategy
 
 
@@ -19,11 +20,11 @@ class ActiveSurfaceLearner:
 
     def __init__(
             self,
-            active_criterion: IActiveCriterion,
+            active_criterion: Union[IActiveCriterion, None],
             query_strategy: IQueryStrategy,
             bounds=None,
     ):
-        self.__active_criterion = active_criterion
+        self.__active_criterion = active_criterion if active_criterion is not None else NoEstimation()
         self.__query_strategy = query_strategy
         self.__bounds = bounds
 
@@ -56,3 +57,6 @@ class ActiveSurfaceLearner:
     @property
     def bounds(self) -> iter:
         return self.__bounds
+
+    def set_bounds(self, bounds) -> bounds:
+        self.__bounds = bounds

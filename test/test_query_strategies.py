@@ -42,14 +42,21 @@ def test_uniform():
     sqm.set_active_function(fun)
     fun(x0)
     y = sqm.query(3000)
-    assert np.abs(y.mean() - 1 / 2) < 1e3
-    assert np.abs(y.var() - 1 / 12) < 1e3
+    assert np.abs(y.mean().mean() - 1 / 2) < 1e3
+    assert np.abs(y.var().mean() - 1 / 12) < 1e3
 
 
 def test_composition():
+
+    strategy = 0.5 * query_strategies.ServiceUniform(bounds=[[0, 1]]) + 0.5 * query_strategies.ServiceUniform(
+        bounds=[[0, 0.2]]) + 2*query_strategies.ServiceQueryVariancePDF()
+    assert len(strategy.strategy_weights) == 3
     strategy = 0.5 * query_strategies.ServiceUniform(bounds=[[0, 1]]) + 0.5 * query_strategies.ServiceUniform(
         bounds=[[0, 0.2]])
     ret = strategy.query(200)
     assert len(ret) == 200
     assert len(strategy.strategy_list) == 2
     assert len(strategy.strategy_weights) == 2
+
+    strategy.query(1)
+

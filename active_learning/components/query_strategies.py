@@ -12,6 +12,7 @@
 from abc import ABC, abstractmethod
 
 import numpy as np
+import pandas as pd
 from scipy import optimize
 from scipy.stats import rankdata
 from sklearn.base import BaseEstimator
@@ -48,12 +49,11 @@ class IQueryStrategy(ABC, BaseEstimator):
         l, r = isinstance(self, CompositeStrategy), isinstance(other, CompositeStrategy)
         if isinstance(self, CompositeStrategy) and isinstance(other, CompositeStrategy):
             if len(self.strategy_list) == 1:
-                return CompositeStrategy(self.bounds,
-                                         [*self.strategy_list, *other.strategy_list],
-                                         [*self.strategy_weights, *other.strategy_weights])
-            return CompositeStrategy(
-                self.bounds, self.strategy_list, self.strategy_weights) + CompositeStrategy(
-                self.bounds, other.strategy_list, other.strategy_weights)
+                return CompositeStrategy(
+                    self.bounds,
+                    [*self.strategy_list, *other.strategy_list],
+                    [*self.strategy_weights, *other.strategy_weights])
+            return other.__add__(self)
         elif isinstance(self, CompositeStrategy) and not r:
             return CompositeStrategy(self.bounds,
                                      [*self.strategy_list, other],
@@ -143,5 +143,4 @@ class ServiceUniform(IQueryStrategy):
 
     def query(self, size):
         candidates = utils.scipy_lhs_sampler(x_limits=np.array(self.bounds), size=size)
-        return candidates
-
+        return pd.DataFrame(candidates)

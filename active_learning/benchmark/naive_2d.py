@@ -56,12 +56,12 @@ def plot_all_benchmark_function():
     from matplotlib.colors import LinearSegmentedColormap
     cmap = LinearSegmentedColormap.from_list("mycmap", ['C0', "C2", "C4", "C6", "white", "C7", "C5", "C3", "C1"])
 
-    from active_learning.benchmark.functions import budget_parameters
-    functions__ = list(budget_parameters.keys())
+    from active_learning.benchmark.functions import function_parameters
+    functions__ = list(function_parameters.keys())
     fig, ax = plot.subplots(ncols=len(functions__) // 2 + len(functions__) % 2,
                             nrows=2, figsize=(len(functions_) * 0.7, 3), dpi=200)
     for i, fun in enumerate(functions__):
-        f = budget_parameters[fun]["fun"]
+        f = function_parameters[fun]["fun"]
         bound = np.array(functions.bounds[f])
         if len(bound) == 2:
             ax_ = ax[i % 2, i // 2]
@@ -84,7 +84,7 @@ def clear_benchmark_data(path="benchmark/results.csv", function=name):
 
 
 def run_2d_benchmark():
-    from active_learning.benchmark.functions import budget_parameters
+    from active_learning.benchmark.functions import function_parameters
 
     estimator = xtra_trees_b
 
@@ -95,35 +95,35 @@ def run_2d_benchmark():
         return sampler
 
     active_testing_classes = [base.ServiceTestingClassAL(
-        budget_parameters[name]["budget"],
-        budget_parameters[name]["n0"],
-        budget_parameters[name]["fun"],
+        function_parameters[name]["budget"],
+        function_parameters[name]["n0"],
+        function_parameters[name]["fun"],
         VarianceEnsembleMethod(estimator=estimator),
-        ServiceQueryVariancePDF(functions.bounds[budget_parameters[name]["fun"]], num_eval=200),
-        get_sampler(functions.bounds[budget_parameters[name]["fun"]]),
-        n_steps=budget_parameters[name]["n_step"],
-        bounds=functions.bounds[budget_parameters[name]["fun"]],
+        ServiceQueryVariancePDF(functions.bounds[function_parameters[name]["fun"]], num_eval=200),
+        get_sampler(functions.bounds[function_parameters[name]["fun"]]),
+        n_steps=function_parameters[name]["n_step"],
+        bounds=functions.bounds[function_parameters[name]["fun"]],
         name=name
-    ) for name in list(budget_parameters.keys())
+    ) for name in list(function_parameters.keys())
     ]
-    #
+
     passive_testing_classes = [base.ServiceTestingClassAL(
-        budget_parameters[name]["budget"],
-        budget_parameters[name]["n0"],
-        budget_parameters[name]["fun"],
+        function_parameters[name]["budget"],
+        function_parameters[name]["n0"],
+        function_parameters[name]["fun"],
         VarianceEnsembleMethod(estimator=estimator),
-        ServiceUniform(functions.bounds[budget_parameters[name]["fun"]]),
-        get_sampler(functions.bounds[budget_parameters[name]["fun"]]),
-        n_steps=budget_parameters[name]["n_step"],
-        bounds=functions.bounds[budget_parameters[name]["fun"]],
+        ServiceUniform(functions.bounds[function_parameters[name]["fun"]]),
+        get_sampler(functions.bounds[function_parameters[name]["fun"]]),
+        n_steps=function_parameters[name]["n_step"],
+        bounds=functions.bounds[function_parameters[name]["fun"]],
         name=name + "_passive"
-    ) for name in list(budget_parameters.keys())
+    ) for name in list(function_parameters.keys())
 
     ]
     experiment = base.ModuleExperiment([*active_testing_classes, *passive_testing_classes], n_experiment=50)
     experiment.run()
     data = experiment.cv_result_
-    base.write_benchmark(data, path="data/benchmark_2d.csv")
+    base.write_benchmark(data, path="data/benchmark_2d_2024.csv")
 
 
 def get_benchmark():

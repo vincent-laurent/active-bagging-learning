@@ -12,6 +12,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 
 
 def plot_benchmark_whole_analysis(data: pd.DataFrame, n_functions=None) -> None:
@@ -22,14 +23,15 @@ def plot_benchmark_whole_analysis(data: pd.DataFrame, n_functions=None) -> None:
         n_functions = len(data["function_hash"].drop_duplicates())
     matplotlib.rcParams.update({'font.size': 6})
     functions__ = data["name"].astype(str).str.replace("_passive", "").drop_duplicates()
-    fig, ax = plt.subplots(ncols=len(functions__) // 2 + len(functions__) % 2,
-                           nrows=2, figsize=(n_functions * 0.7, 3.5))
+    fig, ax = plt.subplots(
+        ncols=len(functions__) // 2 + len(functions__) % 2,
+        nrows=2, figsize=(n_functions * 0.7, 3.5))
+
     if ax.shape.__len__() == 1:
         ax = ax.reshape(-1, 1)
     for i, f in enumerate(functions__):
+        ax_ = ax[i % 2 + i // 2, i // 2]
         print(f)
-        ax_ = ax[i % 2, i // 2]
-        plt.sca(ax_)
         data_temp = data[data["name"] == f].copy()
         data_temp_p = data[data["name"] == f + "_passive"].copy()
         data_temp["name"] = "active"
@@ -44,7 +46,7 @@ def plot_benchmark_whole_analysis(data: pd.DataFrame, n_functions=None) -> None:
                 label = '_nolegend_'
             else:
                 label = n
-            sns.lineplot(data=data_, x="num_sample", y="L2-norm", label=label, color=color)
+            sns.lineplot(data=data_, x="num_sample", y="L2-norm", label=label, color=color, ax=ax_)
         ax_.annotate(f, xy=(1, 0.9), xycoords='axes fraction',
                      xytext=(1, 20), textcoords='offset pixels',
                      horizontalalignment='right',
@@ -57,6 +59,57 @@ def plot_benchmark_whole_analysis(data: pd.DataFrame, n_functions=None) -> None:
         ax_.axes.yaxis.set_ticklabels([])
         ax_.grid()
         if len(functions__) % 2 == 1:
+            ax[(i + 1) % 2, (i + 1) // 2].axes.remove()
+
+    fig.legend(
+        bbox_to_anchor=(0.6, 0.98),
+        # loc='lower left',
+        # mode="expand",
+        ncol=2)
+
+
+def plot_benchmark(data: pd.DataFrame) -> None:
+    functions__ = data["name"].astype(str).str.split("@", expand=True)[0].drop_duplicates()
+    n_functions = len(functions__)
+    fig, ax = plt.subplots(
+        ncols=n_functions // 2 + n_functions % 2,
+        nrows=min(n_functions, 2), figsize=(n_functions * 0.5 + 2, 3.5))
+
+    if isinstance(ax, plt.Axes):
+        ax = np.array([ax])
+    if ax.shape.__len__() == 1:
+        ax = ax.reshape(-1, 1)
+    for i, f in enumerate(functions__):
+        print(f)
+        __ax: plt.Axes = ax[i % 2, i // 2]
+        names = [__name for __name in data["name"].drop_duplicates().values if f==__name.split("@")[0]]
+        plt.sca(__ax)
+        for j, n in enumerate(names):
+            data_ = data[data["name"] == n]
+            color = f"C{j}"
+            if i > 0:
+                label = '_nolegend_'
+            else:
+                label = str(n).split("@")[1]
+
+            sns.lineplot(data=data_, x="num_sample", y="L2-norm", label=label, color=color, ax=__ax)
+            handles, labels = plt.gca().get_legend_handles_labels()
+
+        __ax.annotate(f, xy=(1, 0.9), xycoords='axes fraction',
+                      xytext=(1, 20), textcoords='offset pixels',
+                      horizontalalignment='right',
+                      verticalalignment='bottom',
+                      bbox=dict(boxstyle="round", fc="white", lw=0.4))
+        __ax.legend().set_visible(False)
+        __ax.set_ylabel("$L_2$ error") if i // 2 == 0 else __ax.set_ylabel("")
+        # plt.yticks(c="w")
+        plt.xlabel("")
+        # __ax.set_yticklabels([])
+
+
+
+    if n_functions % 2 == 1:
+        if n_functions > 1:
             ax[(i + 1) % 2, (i + 1) // 2].axes.remove()
 
     fig.legend(
@@ -215,14 +268,13 @@ def write_benchmark(
 def read_benchmark(path="data/benchmark.csv"):
     return pd.read_csv(path)
 
-
-def plot_benchmark(data: pd.DataFrame, cmap="rainbow_r"):
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-
-    names = data["name"].drop_duplicates().values
-    for i, n in enumerate(names):
-        data_ = data[data["name"] == n]
-        color = plt.get_cmap(cmap)(i / (len(names)))
-        sns.lineplot(data=data_, x="num_sample", y="L2-norm", label=n,
-                     color=color)
+# def plot_benchmark(data: pd.DataFrame, cmap="rainbow_r"):
+#     import matplotlib.pyplot as plt
+#     import seaborn as sns
+#
+#     names = data["name"].drop_duplicates().values
+#     for i, n in enumerate(names):
+#         data_ = data[data["name"] == n]
+#         color = plt.get_cmap(cmap)(i / (len(names)))
+#         sns.lineplot(data=data_, x="num_sample", y="L2-norm", label=n,
+#                      color=color)

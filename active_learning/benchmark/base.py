@@ -11,17 +11,20 @@
 
 import typing
 from abc import ABC, abstractmethod
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from copy import deepcopy
+from datetime import datetime
 
 import numpy as np
 import pandas as pd
 
+from active_learning import ActiveSurfaceLearner
 from active_learning.benchmark.utils import evaluate
 
 
 class ITestingClass(ABC):
     def __init__(self, budget: int, budget_0: int, function: callable,
-                 x_sampler: callable, learner,
+                 x_sampler: callable, learner: ActiveSurfaceLearner,
                  n_steps: int,
                  bounds, name=None,
                  estimator=None,
@@ -32,7 +35,7 @@ class ITestingClass(ABC):
         self.budget_0 = budget_0
         self.x_sampler = x_sampler
         self.bounds = bounds
-        self.learner = learner
+        self.learner: ActiveSurfaceLearner = learner
         self.iter = 0
         self.estimator = estimator
         self.name = name
@@ -40,10 +43,11 @@ class ITestingClass(ABC):
         self.metric = []
         self.__check_args()
         self.result = {}
+        self.learner.set_bounds(bounds)
 
     def _start(self):
         self.x_input = self.x_sampler(self.budget_0)
-        self.y_input = self.f(self.x_input)
+        self.y_input = pd.DataFrame(self.f(self.x_input))
 
         self.indexes = np.ones(len(self.x_input))
         self._samples = np.linspace(self.budget_0, self.budget,
@@ -64,6 +68,8 @@ class ITestingClass(ABC):
         self.indexes = np.concatenate((self.indexes, self.iter * np.ones(len(x))))
         self.x_input = pd.concat((self.x_input, x), axis=0)
         self.y_input = pd.concat((self.y_input, y), axis=0)
+        self.x_new = x
+        self.y_new = y
 
     @property
     def parameters(self):
@@ -121,7 +127,6 @@ class ServiceTestingClassModAL(ITestingClass):
 
         self.save()
         for n_points in self._samples[1:]:
-
             x_new = pd.DataFrame(
                 np.array([self.learner.query(self.x_sampler(200).values)[1] for _ in range(n_points)]))
             y_new = pd.DataFrame(self.f(x_new))
@@ -132,35 +137,38 @@ class ServiceTestingClassModAL(ITestingClass):
 
 
 class ModuleExperiment:
-    def __init__(self, test_list: typing.List[ITestingClass], n_experiment=10,
-                 save=False):
+    def __init__(self, test_list: typing.List["ITestingClass"], n_experiment=10, save=False):
         self.test_list = test_list
         self.results = {}
         self.n_experiment = n_experiment
         columns = [*test_list[0].parameters.keys(), "L2-norm", "date"]
 
-        self._cv_result = pd.DataFrame(
-            columns=columns,
-        )
+        self._cv_result = pd.DataFrame(columns=columns)
         self.save = save
         if self.save:
             self.saving_class = {}
 
-    def run(self):
-        from datetime import datetime
+    def _run_single_experiment(self, test, i):
+        """Helper function to run a single experiment."""
+        test_ = deepcopy(test)
+        test_.run()
+        res = pd.DataFrame(columns=self._cv_result.columns)
+        res["L2-norm"] = pd.DataFrame(test_.result).loc["l2"].astype(float).values
+        res["num_sample"] = pd.DataFrame(test_.result).loc["budget"].astype(float).values
+        res["date"] = datetime.today()
+        for c in test.parameters.keys():
+            res[c] = test.parameters[c]
+        return res
 
-        for test in self.test_list:
-            for i in range(self.n_experiment):
-                test_ = deepcopy(test)
-                test_.run()
-                res = pd.DataFrame(columns=self._cv_result.columns)
-                res["L2-norm"] = pd.DataFrame(test_.result).loc[
-                    "l2"].astype(float).values
-                res["num_sample"] = pd.DataFrame(test_.result).loc[
-                    "budget"].astype(float).values
-                res["date"] = datetime.today()
-                for c in test.parameters.keys():
-                    res[c] = test.parameters[c]
+    def run(self):
+        with ProcessPoolExecutor() as executor:
+            futures = []
+            for test in self.test_list:
+                for i in range(self.n_experiment):
+                    futures.append(executor.submit(self._run_single_experiment, test, i))
+
+            for future in as_completed(futures):
+                res = future.result()
                 self._cv_result = pd.concat((self._cv_result, res), axis=0)
 
         self.cv_result_ = self._cv_result

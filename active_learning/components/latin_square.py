@@ -87,4 +87,3 @@ def scipy_lhs_sampler(size: int = 100,
     sample = sampler.random(size)
     sample = qmc.scale(sample, l_bounds, u_bounds)
     return sample
-

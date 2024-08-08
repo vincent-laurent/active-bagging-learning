@@ -106,17 +106,18 @@ def synthetic_2d_2(x):
     return synthetic_2d_1(x_) * annie_sauer_2021(x_[:, 1] / 10)
 
 
-def perturbate(function):
-    def function_(x):
-        return function(x) + np.random.random(size=len(np.array(x)[:, 0]))
+class Randomize:
+    def __init__(self, f):
+        self.__f = f
 
-    return function_
+    def __call__(self, x, **kwargs):
+        return self.__f(x) + 0.5 * np.random.randn(len(np.array(x)[:, 0]))
 
 
-branin_rand = perturbate(branin)
-golden_price_rand = perturbate(golden_price)
-himmelblau_rand = perturbate(himmelblau)
-grammacy_lee_2009_rand = perturbate(grammacy_lee_2009)
+branin_rand = Randomize(branin)
+golden_price_rand = Randomize(golden_price)
+himmelblau_rand = Randomize(himmelblau)
+grammacy_lee_2009_rand = Randomize(grammacy_lee_2009)
 
 bounds = {
     annie_sauer_2021: [[0, 1]],
@@ -133,29 +134,49 @@ bounds = {
     marelli_2018: [[-6, 6], [-6, 6]]
 }
 
-budget_parameters = {
+function_parameters = {
     "grammacy_lee_2009": {
-        "fun": grammacy_lee_2009, 'n0': 20, "budget": 60, "n_step": 10},
+        "fun": grammacy_lee_2009,
+        'n0': 20,
+        "budget": 200,
+        "n_step": 10,
+        "name": "Grammacy Lee"},
     "grammacy_lee_2009_rand": {
-        "fun": grammacy_lee_2009_rand, 'n0': 60, "budget": 100, "n_step": 10},
-    # "golden_price_rand": {
-    #     "fun": golden_price_rand, 'n0': 50, "budget": 60, "n_step": 10},
+        "fun": grammacy_lee_2009_rand,
+        'n0': 60,
+        "budget": 100,
+        "n_step": 10,
+        "name": "Grammacy Lee randomized",
+    },
     "branin": {
-        "fun": branin, 'n0': 100, "budget": 900, "n_step": 10},
+        "fun": branin,
+        'n0': 100,
+        "budget": 900,
+        "n_step": 10,
+        "name": "branin"},
     "branin_rand": {
-        "fun": branin_rand, 'n0': 100, "budget": 1000, "n_step": 10},
+        "fun": branin_rand,
+        'n0': 100,
+        "budget": 1000,
+        "n_step": 10,
+        "name": "branin randomized"},
     "himmelblau": {
-        "fun": himmelblau, 'n0': 100, "budget": 900, "n_step": 10},
+        "fun": himmelblau,
+        'n0': 100,
+        "budget": 900,
+        "n_step": 10,
+        "name": "Himmelblau"},
     "himmelblau_rand": {
-        "fun": himmelblau_rand, 'n0': 100, "budget": 1000, "n_step": 10},
+        "fun": himmelblau_rand, 'n0': 100, "budget": 1000, "n_step": 10,
+        "name": "Himmelblau randomized"},
     "golden_price": {
-        "fun": golden_price, 'n0': 50, "budget": 60, "n_step": 10},
+        "fun": golden_price, 'n0': 50, "budget": 60, "n_step": 10, "name": "Golden price"},
     "marelli_2018": {
-        "fun": marelli_2018, 'n0': 150, "budget": 600, "n_step": 30},
+        "fun": marelli_2018, 'n0': 150, "budget": 600, "n_step": 30, "name": "Warts 2000"},
     "synthetic_2d_1": {
-        "fun": synthetic_2d_1, 'n0': 100, "budget": 900, "n_step": 10},
+        "fun": synthetic_2d_1, 'n0': 100, "budget": 900, "n_step": 10, "name": "Periodic 1"},
     "synthetic_2d_2": {
-        "fun": synthetic_2d_2, 'n0': 100, "budget": 1000, "n_step": 10},
+        "fun": synthetic_2d_2, 'n0': 100, "budget": 1000, "n_step": 10, "name": "Periodic 2"},
 }
 
 __all__ = [
@@ -163,37 +184,42 @@ __all__ = [
 ]
 
 __all2D__ = [
-    "grammacy_lee_2009", "grammacy_lee_2009_rand",
+    "grammacy_lee_2009",
+    "grammacy_lee_2009_rand",
     "branin", "branin_rand",
-    "himmelblau", "himmelblau_rand", "golden_price",
+    "himmelblau",
+    "himmelblau_rand",
+    "golden_price",
     "marelli_2018",
-    "synthetic_2d_1", "synthetic_2d_2"
+    "synthetic_2d_1",
+    "synthetic_2d_2",
 ]
 
 
 def plot_benchamrk_functions():
     import matplotlib.pyplot as plot
     import pandas as pd
-    import seaborn as sns
     import matplotlib
 
-    from matplotlib.colors import LinearSegmentedColormap, ListedColormap
-    cmap = sns.color_palette("RdBu_r", as_cmap=True)
-    cmap = LinearSegmentedColormap.from_list("mycmap", ['C0', "C2", "C4", "C6", "white", "C7", "C5", "C3", "C1"])
+    from matplotlib.colors import LinearSegmentedColormap
+    cmap = LinearSegmentedColormap.from_list(
+        "mycmap", ['C0', "C2", "C4", "C6", "white", "C7", "C5", "C3", "C1"])
 
     matplotlib.rcParams.update({'font.size': 6})
     fig, ax = plot.subplots(
         figsize=(10, 4.2),
         ncols=len(__all2D__) // 2 + len(__all2D__) % 2,
-        nrows=2, dpi=250)
+        nrows=2, dpi=400)
     for i, fun in enumerate(__all2D__):
-        bounds_ = np.array(bounds[budget_parameters[fun]["fun"]])
+        if not fun in function_parameters.keys():
+            continue
+        bounds_ = np.array(bounds[function_parameters[fun]["fun"]])
         if len(bounds_) == 2:
             xxx = np.linspace(bounds_[0, 0], bounds_[0, 1], num=200)
             yyy = np.linspace(bounds_[1, 0], bounds_[1, 1], num=200)
             x__, y__ = np.meshgrid(xxx, yyy)
             x__ = pd.DataFrame(dict(x0=x__.ravel(), x1=y__.ravel()))
-            z = budget_parameters[fun]["fun"](x__.values)
+            z = function_parameters[fun]["fun"](x__.values)
             z = z - np.median(z)
 
             im = ax[i % 2, i // 2].pcolormesh(xxx, yyy, z.reshape(len(xxx), len(yyy)),
@@ -201,7 +227,7 @@ def plot_benchamrk_functions():
             ax_ = ax[i % 2, i // 2]
             ax_.set_xticklabels([])
             ax_.set_yticklabels([])
-            ax_.annotate(fun, xy=(1, 0.9), xycoords='axes fraction',
+            ax_.annotate(function_parameters[fun]["name"], xy=(1, 0.9), xycoords='axes fraction',
                          xytext=(1, 20), textcoords='offset pixels',
                          horizontalalignment='right',
                          verticalalignment='bottom',
@@ -214,3 +240,7 @@ def plot_benchamrk_functions():
     cbar_ax.set_yticklabels(['low \nvalues', 'medium \nvalue', 'high \nvalues'])  #
 
     plt.savefig(".public/benchmark_functions")
+
+
+if __name__ == '__main__':
+    plot_benchamrk_functions()

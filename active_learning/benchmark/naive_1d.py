@@ -56,17 +56,17 @@ steps = 15
 learner_bagging = ActiveSurfaceLearner(
     active_criterion=VarianceCriterion(
         krg, splitter=sklearn.model_selection.ShuffleSplit(n_splits=3, train_size=0.85)),
-    query_strategy=ServiceQueryVariancePDF(bounds, num_eval=2000),
+    query_strategy=ServiceQueryVariancePDF(bounds, num_eval=300),
     bounds=bounds
 
 )
 learner_gaussian = ActiveSurfaceLearner(
     active_criterion=GaussianProcessVariance(kernel=kernel),
-    query_strategy=ServiceQueryVariancePDF(bounds, num_eval=2000),
+    query_strategy=ServiceQueryVariancePDF(bounds, num_eval=300),
     bounds=bounds)
 
 learner_uniform = ActiveSurfaceLearner(
-    active_criterion=GaussianProcessVariance(kernel=kernel),
+    active_criterion=None,
     query_strategy=ServiceUniform(bounds),
     bounds=bounds)
 

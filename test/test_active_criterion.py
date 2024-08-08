@@ -15,7 +15,7 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
 from sklearn.model_selection import ShuffleSplit
 from active_learning.benchmark import functions
-from active_learning.components.active_criterion import VarianceCriterion
+from active_learning.components.active_criterion import VarianceCriterion, NoEstimation
 
 fun = functions.grammacy_lee_2009  # The function we want to learn
 bounds = np.array(functions.bounds[fun])  # [x1 bounds, x2 bounds]
@@ -55,3 +55,10 @@ def test_active_criterion():
     assert np.sum((pred - y_train)**2) < 1
     assert all(svc(X_train) > 0)
     assert not all(pred > 0)
+
+
+def test_no_estimation():
+    no = NoEstimation()
+    no.fit(None, None)
+    no([1], None)
+    assert all(no.function([1, 2, 3]) == [0, 0, 0])

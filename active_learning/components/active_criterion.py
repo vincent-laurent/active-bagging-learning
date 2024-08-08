@@ -31,9 +31,6 @@ class IActiveCriterion(ABC, RegressorMixin):
     def __call__(self, X: pd.DataFrame, *args, **kwargs):
         ...
 
-    def criterion(self, X: pd.DataFrame, *args, **kwargs):
-        return self(X, *args, **kwargs)
-
     @abstractmethod
     def fit(self, X, y):
         ...
@@ -42,14 +39,22 @@ class IActiveCriterion(ABC, RegressorMixin):
     def function(self, X):
         ...
 
-    def __add__(self, other):
-        # TODO
-        ...
-
     def reshape_x(self, X):
         if len(X.shape) == 1:
             X = X.reshape(1, -1)
         return X
+
+
+class NoEstimation(IActiveCriterion):
+
+    def function(self, X):
+        return np.zeros(shape=len(X))
+
+    def __call__(self, X, *args, **kwargs):
+        return np.zeros(shape=len(X))
+
+    def fit(self, X, y):
+        return None
 
 
 class VarianceCriterion(IActiveCriterion):
