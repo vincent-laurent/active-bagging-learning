@@ -9,10 +9,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import pandas as pd
 from typing import Union
 
-from active_learning.components.active_criterion import IActiveCriterion, NoEstimation
+import pandas as pd
+
+from active_learning.components.active_criterion import IActiveCriterion, \
+    NoEstimation
 from active_learning.components.query_strategies import IQueryStrategy
 
 
@@ -24,7 +26,9 @@ class ActiveSurfaceLearner:
             query_strategy: IQueryStrategy,
             bounds=None,
     ):
-        self.__active_criterion = active_criterion if active_criterion is not None else NoEstimation()
+        if active_criterion is None:
+            active_criterion = NoEstimation()
+        self.__active_criterion = active_criterion
         self.__query_strategy = query_strategy
         self.__bounds = bounds
 
@@ -35,7 +39,8 @@ class ActiveSurfaceLearner:
     def query(self, *args) -> pd.DataFrame:
         self.query_strategy.set_bounds(self.__bounds)
         self.query_strategy.set_active_function(self.active_criterion.__call__)
-        x_new = pd.DataFrame(self.query_strategy.query(*args), columns=self.__columns)
+        x_new = pd.DataFrame(self.query_strategy.query(*args),
+                             columns=self.__columns)
         return x_new
 
     @property

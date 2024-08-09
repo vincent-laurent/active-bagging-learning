@@ -185,7 +185,10 @@ function_parameters = {
         "n_step": 10,
         "name": "Himmelblau"},
     "himmelblau_rand": {
-        "fun": himmelblau_rand, 'n0': 100, "budget": 1000, "n_step": 10,
+        "fun": himmelblau_rand,
+        'n0': 100,
+        "budget": 1000,
+        "n_step": 10,
         "name": "Himmelblau rand."},
     "golden_price": {
         "fun": golden_price, 'n0': 50, "budget": 60, "n_step": 10,
@@ -197,10 +200,16 @@ function_parameters = {
         "fun": synthetic_2d_1, 'n0': 100, "budget": 900, "n_step": 10,
         "name": "Periodic 1"},
     "synthetic_2d_2": {
-        "fun": synthetic_2d_2, 'n0': 100, "budget": 1000, "n_step": 10,
+        "fun": synthetic_2d_2,
+        'n0': 100,
+        "budget": 1000,
+        "n_step": 10,
         "name": "Periodic 2"},
     "sum_sine_5pi": {
-        "fun": sum_sine_5pi, 'n0': 100, "budget": 1000, "n_step": 10,
+        "fun": sum_sine_5pi,
+        'n0': 100,
+        "budget": 1000,
+        "n_step": 10,
         "name": "Periodic 2"},
 }
 

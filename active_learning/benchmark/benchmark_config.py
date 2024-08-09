@@ -181,9 +181,11 @@ def create_benchmark_list():
 if __name__ == '__main__':
     from active_learning.benchmark import utils
 
+    test = make_testing_classes("sum_sine_5pi")
+
     t = create_benchmark_list()
 
-    me = ModuleExperiment(t, n_experiment=10)
+    me = ModuleExperiment(t, n_experiment=1)
     me.run()
 
     plt.figure()

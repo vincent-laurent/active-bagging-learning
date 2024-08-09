@@ -10,6 +10,7 @@
 # limitations under the License.
 
 import typing
+from copy import deepcopy
 from abc import ABC, abstractmethod
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from copy import deepcopy
@@ -34,7 +35,7 @@ class ITestingClass(ABC):
         self.budget_0 = budget_0
         self.x_sampler = x_sampler
         self.bounds = bounds
-        self.learner: ActiveSurfaceLearner = learner
+        self.learner: ActiveSurfaceLearner = deepcopy(learner)
         self.iter = 0
         self.estimator = estimator
         self.name = name
