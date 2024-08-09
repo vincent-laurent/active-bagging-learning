@@ -13,6 +13,7 @@ import typing
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 
 # TODO : add time series https://link.springer.com/content/pdf/10.1023/A:1012474916001.pdf
@@ -91,7 +92,7 @@ def golden_price(x):
     return ((1 + (xx + yy + 1) ** 2 * (
             19 - 14 * xx + 3 * xx ** 2 - 14 * yy + 6 * xx * yy + 3 * yy ** 2)) * (
                     30 + (2 * xx - 3 * yy) ** 2 * (
-                    18 - 32 * xx + 12 * xx ** 2 + 48 * yy - 36 * xx * yy + 27 * yy ** 2))) / 1000 / 100
+                    18 - 32 * xx + 12 * xx ** 2 + 48 * yy - 36 * xx * yy + 27 * yy ** 2))) / 100000 - 1
 
 
 def synthetic_2d_1(x):
@@ -104,6 +105,22 @@ def synthetic_2d_2(x):
     x_ = np.array(x)
     check_2d(x)
     return synthetic_2d_1(x_) * annie_sauer_2021(x_[:, 1] / 10)
+
+
+def sum_sine_5pi(x):
+    """
+    Calculates the function 1/5 * sum(sin(5 * pi * x_i)) for i=1 to 5.
+
+    Parameters:
+    x (list or np.ndarray): A 5-dimensional vector with each component in the range [-5, 5].
+
+    Returns:
+    float: The calculated value of the function.
+    """
+    x = np.asarray(x)
+
+    result = (1 / 5) * np.sum(x*np.sin(np.pi * x / 4)**6, axis=1)
+    return result
 
 
 class Randomize:
@@ -131,7 +148,8 @@ bounds = {
     himmelblau_rand: [[-5, 5], [-5, 5]],
     synthetic_2d_1: [[0, 10], [0, 10]],
     synthetic_2d_2: [[0, 10], [0, 10]],
-    marelli_2018: [[-6, 6], [-6, 6]]
+    marelli_2018: [[-6, 6], [-6, 6]],
+    sum_sine_5pi: [[-5, 5]] * 5
 }
 
 function_parameters = {
@@ -170,13 +188,20 @@ function_parameters = {
         "fun": himmelblau_rand, 'n0': 100, "budget": 1000, "n_step": 10,
         "name": "Himmelblau rand."},
     "golden_price": {
-        "fun": golden_price, 'n0': 50, "budget": 60, "n_step": 10, "name": "Golden price"},
+        "fun": golden_price, 'n0': 50, "budget": 60, "n_step": 10,
+        "name": "Golden price"},
     "marelli_2018": {
-        "fun": marelli_2018, 'n0': 150, "budget": 600, "n_step": 30, "name": "Warts 2000"},
+        "fun": marelli_2018, 'n0': 150, "budget": 600, "n_step": 30,
+        "name": "Warts 2000"},
     "synthetic_2d_1": {
-        "fun": synthetic_2d_1, 'n0': 100, "budget": 900, "n_step": 10, "name": "Periodic 1"},
+        "fun": synthetic_2d_1, 'n0': 100, "budget": 900, "n_step": 10,
+        "name": "Periodic 1"},
     "synthetic_2d_2": {
-        "fun": synthetic_2d_2, 'n0': 100, "budget": 1000, "n_step": 10, "name": "Periodic 2"},
+        "fun": synthetic_2d_2, 'n0': 100, "budget": 1000, "n_step": 10,
+        "name": "Periodic 2"},
+    "sum_sine_5pi": {
+        "fun": sum_sine_5pi, 'n0': 100, "budget": 1000, "n_step": 10,
+        "name": "Periodic 2"},
 }
 
 __all__ = [
@@ -192,18 +217,18 @@ __all2D__ = [
     "golden_price",
     "marelli_2018",
     "synthetic_2d_1",
-    "synthetic_2d_2",
+    "sum_sine_5pi",
 ]
 
 
-def plot_benchamrk_functions():
+def plot_benchmark_functions():
     import matplotlib.pyplot as plot
     import pandas as pd
     import matplotlib
 
     from matplotlib.colors import LinearSegmentedColormap
     cmap = LinearSegmentedColormap.from_list(
-        "mycmap", ['C0', "C2", "C4", "C6", "white", "C7", "C5", "C3", "C1"])
+        "mycmap", ['C0', "C2", "C4", "C6", "white", "C7", "C5", "C3", "C1"][::-1])
 
     matplotlib.rcParams.update({'font.size': 6})
     fig, ax = plot.subplots(
@@ -214,33 +239,43 @@ def plot_benchamrk_functions():
         if not fun in function_parameters.keys():
             continue
         bounds_ = np.array(bounds[function_parameters[fun]["fun"]])
+        xxx = np.linspace(bounds_[0, 0], bounds_[0, 1], num=200)
+        yyy = np.linspace(bounds_[1, 0], bounds_[1, 1], num=200)
+        x__, y__ = np.meshgrid(xxx, yyy)
+        x__ = pd.DataFrame(dict(x0=x__.ravel(), x1=y__.ravel()))
         if len(bounds_) == 2:
-            xxx = np.linspace(bounds_[0, 0], bounds_[0, 1], num=200)
-            yyy = np.linspace(bounds_[1, 0], bounds_[1, 1], num=200)
-            x__, y__ = np.meshgrid(xxx, yyy)
-            x__ = pd.DataFrame(dict(x0=x__.ravel(), x1=y__.ravel()))
             z = function_parameters[fun]["fun"](x__.values)
-            z = z - np.median(z)
+        if len(bounds_) > 2:
+            for k, b in enumerate(bounds_[2:]):
+                x__[f"x{k+2}"] = (b[1] + b[0]) / 2
+            z = function_parameters[fun]["fun"](x__.values)
+        z = z - np.median(z)
 
-            im = ax[i % 2, i // 2].pcolormesh(xxx, yyy, z.reshape(len(xxx), len(yyy)),
-                                              cmap=cmap)
-            ax_ = ax[i % 2, i // 2]
-            ax_.set_xticklabels([])
-            ax_.set_yticklabels([])
-            ax_.annotate(function_parameters[fun]["name"], xy=(1, 0.9), xycoords='axes fraction',
-                         xytext=(1, 20), textcoords='offset pixels',
-                         horizontalalignment='right',
-                         verticalalignment='bottom',
-                         bbox=dict(boxstyle="round", fc="white", lw=0.4))
+        im = ax[i % 2, i // 2].pcolormesh(xxx, yyy,
+                                          z.reshape(len(xxx), len(yyy)),
+                                          cmap=cmap, vmin=-1, vmax=1)
+        ax_ = ax[i % 2, i // 2]
+        ax_.set_xticklabels([])
+        ax_.set_yticklabels([])
+        ax_.annotate(function_parameters[fun]["name"], xy=(1, 0.9),
+                     xycoords='axes fraction',
+                     xytext=(1, 20), textcoords='offset pixels',
+                     horizontalalignment='right',
+                     verticalalignment='bottom',
+                     bbox=dict(boxstyle="round", fc="white", lw=0.4))
 
     # plt.tight_layout()
     fig.subplots_adjust(right=0.9)
     cbar_ax = fig.add_axes([0.91, 0.11, 0.01, 0.77])
-    fig.colorbar(im, cax=cbar_ax, ticks=[-2, -0.32, 1.5])
-    cbar_ax.set_yticklabels(['low \nvalues', 'medium \nvalue', 'high \nvalues'])  #
+    fig.colorbar(im, cax=cbar_ax, ticks=[-1, 0, 1])
+    cbar_ax.set_yticklabels(
+        ['low \nvalues', 'medium \nvalue', 'high \nvalues'])  #
 
     plt.savefig(".public/benchmark_functions")
 
 
 if __name__ == '__main__':
-    plot_benchamrk_functions()
+    from active_learning.benchmark.benchmark_config import Sampler
+
+    pd.Series(golden_price(Sampler(np.array(bounds[golden_price]))(1000))).describe()
+    plot_benchmark_functions()

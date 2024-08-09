@@ -96,7 +96,7 @@ methods = {
         {"passive": learner_uniform_svc,
          "SVC bootstrap": learner_svc,
          "SVC bootstrap + uniform": learner_uniform_svc,
-         "TREES bootstrap": learner_trees,
+         # "TREES bootstrap": learner_trees,
          # "TREES bootstrap + uniform": learner_bagging_uniform_trees,
          },
     "himmelblau":
@@ -122,6 +122,11 @@ methods = {
     "synthetic_2d_1":
         {"passive": learner_uniform_trees,
          "TREES bootstrap": learner_trees,
+         # "TREES bootstrap + uniform": learner_bagging_uniform_trees,
+         },
+    "sum_sine_5pi":
+        {"passive": learner_uniform_svc,
+         "TREES bootstrap": learner_svc,
          # "TREES bootstrap + uniform": learner_bagging_uniform_trees,
          },
 
