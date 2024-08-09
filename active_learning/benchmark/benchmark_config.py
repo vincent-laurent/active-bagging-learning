@@ -12,18 +12,22 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVR
 
 from active_learning import ActiveSurfaceLearner
+from active_learning import query_strategies as qs
 from active_learning.benchmark import functions
-from active_learning.benchmark.base import ServiceTestingClassAL, ServiceTestingClassModAL, ModuleExperiment
+from active_learning.benchmark.base import ServiceTestingClassAL, \
+    ServiceTestingClassModAL, ModuleExperiment
 from active_learning.components import active_criterion
 from active_learning.components import latin_square
-from active_learning.components import query_strategies as qs
 from active_learning.components.active_criterion import VarianceCriterion
 
-est_trees = ensemble.ExtraTreesRegressor(bootstrap=True, max_samples=0.9, n_estimators=10)
+est_trees = ensemble.ExtraTreesRegressor(bootstrap=True, max_samples=0.9,
+                                         n_estimators=10)
 alc_trees = active_criterion.VarianceEnsembleMethod(estimator=est_trees)
 
-est_svc = Pipeline([("scale", StandardScaler()), ("est", SVR(degree=2, C=10, gamma=10))])
-alc_svc = VarianceCriterion(estimator=est_svc, splitter=ShuffleSplit(n_splits=3, train_size=0.8))
+est_svc = Pipeline(
+    [("scale", StandardScaler()), ("est", SVR(degree=2, C=10, gamma=10))])
+alc_svc = VarianceCriterion(estimator=est_svc,
+                            splitter=ShuffleSplit(n_splits=3, train_size=0.8))
 
 kernel = Matern(length_scale=1.0)
 regressor = GaussianProcessRegressor(kernel=kernel)
@@ -48,7 +52,8 @@ learner_uniform_trees = ActiveSurfaceLearner(
 
 learner_bagging_uniform_trees = ActiveSurfaceLearner(
     active_criterion=alc_trees,
-    query_strategy=2 * qs.ServiceQueryVariancePDF(bounds=None) + qs.ServiceUniform(bounds=None),
+    query_strategy=2 * qs.ServiceQueryVariancePDF(
+        bounds=None) + qs.ServiceUniform(bounds=None),
     bounds=None)
 
 # SVC
@@ -64,7 +69,8 @@ learner_uniform_svc = ActiveSurfaceLearner(
 
 learner_bagging_uniform_svc = ActiveSurfaceLearner(
     active_criterion=alc_svc,
-    query_strategy=20 * qs.ServiceQueryVariancePDF(bounds=None) + qs.ServiceUniform(bounds=None),
+    query_strategy=20 * qs.ServiceQueryVariancePDF(
+        bounds=None) + qs.ServiceUniform(bounds=None),
     bounds=None)
 
 # ======================================================================================================================
@@ -127,7 +133,8 @@ class Sampler:
         self.__bounds = bounds
 
     def __call__(self, size):
-        return pd.DataFrame(latin_square.scipy_lhs_sampler(size=size, x_limits=self.__bounds))
+        return pd.DataFrame(
+            latin_square.scipy_lhs_sampler(size=size, x_limits=self.__bounds))
 
 
 def make_testing_classes(name):
@@ -171,7 +178,7 @@ if __name__ == '__main__':
 
     t = create_benchmark_list()
 
-    me = ModuleExperiment(t, n_experiment=100)
+    me = ModuleExperiment(t, n_experiment=10)
     me.run()
 
     plt.figure()

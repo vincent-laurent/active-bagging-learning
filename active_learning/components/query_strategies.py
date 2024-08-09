@@ -46,24 +46,24 @@ class IQueryStrategy(ABC, BaseEstimator):
         return self.__active_function
 
     def __add__(self, other):
-        l, r = isinstance(self, CompositeStrategy), isinstance(other, CompositeStrategy)
-        if isinstance(self, CompositeStrategy) and isinstance(other, CompositeStrategy):
+        cs = CompositeStrategy
+        l, r = isinstance(self, cs), isinstance(other, cs)
+        if isinstance(self, cs) and isinstance(other, cs):
             if len(self.strategy_list) == 1:
-                return CompositeStrategy(
-                    self.bounds,
-                    [*self.strategy_list, *other.strategy_list],
-                    [*self.strategy_weights, *other.strategy_weights])
+                return cs(self.bounds,
+                          [*self.strategy_list, *other.strategy_list],
+                          [*self.strategy_weights, *other.strategy_weights])
             return other.__add__(self)
-        elif isinstance(self, CompositeStrategy) and not r:
-            return CompositeStrategy(self.bounds,
-                                     [*self.strategy_list, other],
-                                     [*self.strategy_weights, 1])
-        elif isinstance(other, CompositeStrategy) and not l:
-            return CompositeStrategy(self.bounds,
-                                     [self, *other.strategy_list],
-                                     [1, *other.strategy_weights])
+        elif isinstance(self, cs) and not r:
+            return cs(self.bounds,
+                      [*self.strategy_list, other],
+                      [*self.strategy_weights, 1])
+        elif isinstance(other, cs) and not l:
+            return cs(self.bounds,
+                      [self, *other.strategy_list],
+                      [1, *other.strategy_weights])
         else:
-            return CompositeStrategy(self.bounds, [self, other], [1, 1])
+            return cs(self.bounds, [self, other], [1, 1])
 
     def __mul__(self, other):
         return CompositeStrategy(self.bounds, [self], [other])
@@ -73,18 +73,27 @@ class IQueryStrategy(ABC, BaseEstimator):
 
 
 class CompositeStrategy(IQueryStrategy):
-    def __init__(self, bounds, strategy_list: list[IQueryStrategy], strategy_weights: list[float]):
+    def __init__(self, bounds, strategy_list: list[IQueryStrategy],
+                 strategy_weights: list[float]):
         super().__init__(bounds)
         self.strategy_list = strategy_list
-        self.strategy_weights = np.array(strategy_weights) / np.sum(strategy_weights)
+        self.strategy_weights = np.array(strategy_weights) / np.sum(
+            strategy_weights)
 
     def query(self, *args):
+        choices = range(len(self.strategy_list))
         if len(args) != 0 and isinstance(args[0], int):
-            x = np.array([np.random.choice(self.strategy_list, p=np.array(self.strategy_weights)).query(1)
-                          for _ in range(args[0])])[:, :, 0]
+            x_all = [strategy.query(*args) for strategy in self.strategy_list]
+
+            x = np.array([
+                np.array(x_all[np.random.choice(choices, p=np.array(
+                    self.strategy_weights))])[j, :]
+                for j in range(args[0])])
         else:
-            select = np.random.choice(self.strategy_list, p=np.array(self.strategy_weights))
-            x = select.query(*args)
+            select = np.random.choice(
+                choices, p=np.array(self.strategy_weights))
+
+            x = self.strategy_list[select].query(*args)
         return x
 
 
@@ -102,7 +111,8 @@ class ServiceQueryMax(IQueryStrategy):
 
         res = optimize.minimize(
             fun, x0=self.__x0.flatten(),
-            bounds=self.bounds, options={'gtol': self.__xtol, 'disp': self.__disp}).x
+            bounds=self.bounds,
+            options={'gtol': self.__xtol, 'disp': self.__disp}).x
         return res.reshape(self.__x0.shape)
 
 
@@ -115,11 +125,13 @@ class ServiceQueryVariancePDF(IQueryStrategy):
 
     def query(self, size):
         assert size > 0
-        candidates = utils.scipy_lhs_sampler(x_limits=np.array(self.bounds), size=self.num_eval)
+        candidates = utils.scipy_lhs_sampler(x_limits=np.array(self.bounds),
+                                             size=self.num_eval)
         probability = self.active_function(candidates)
         probability = probability + 1e-5
         probability /= np.sum(probability)
-        return self.__rng.choice(candidates, size=size, replace=False, p=probability, axis=0)
+        return self.__rng.choice(candidates, size=size, replace=False,
+                                 p=probability, axis=0)
 
 
 class ServiceReject(IQueryStrategy):
@@ -130,7 +142,8 @@ class ServiceReject(IQueryStrategy):
         self.__rng = np.random.default_rng()
 
     def query(self, size):
-        candidates = utils.scipy_lhs_sampler(x_limits=np.array(self.bounds), size=self.num_eval)
+        candidates = utils.scipy_lhs_sampler(x_limits=np.array(self.bounds),
+                                             size=self.num_eval)
         af = self.active_function(candidates)
         order = rankdata(-af, method="ordinal")
         selector = order <= size
@@ -142,5 +155,6 @@ class ServiceUniform(IQueryStrategy):
         super().__init__(bounds)
 
     def query(self, size):
-        candidates = utils.scipy_lhs_sampler(x_limits=np.array(self.bounds), size=size)
+        candidates = utils.scipy_lhs_sampler(x_limits=np.array(self.bounds),
+                                             size=size)
         return pd.DataFrame(candidates)
