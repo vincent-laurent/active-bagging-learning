@@ -77,21 +77,22 @@ class CompositeStrategy(IQueryStrategy):
                  strategy_weights: list[float]):
         super().__init__(bounds)
         self.strategy_list = strategy_list
-        self.strategy_weights = np.array(strategy_weights) / np.sum(
-            strategy_weights)
+        self.strategy_weights = np.array(strategy_weights)
 
     def query(self, *args):
+
         choices = range(len(self.strategy_list))
+        weights = self.strategy_weights / np.sum(self.strategy_weights)
         if len(args) != 0 and isinstance(args[0], int):
             x_all = [strategy.query(*args) for strategy in self.strategy_list]
+            __choices = np.random.choice(choices, size=args[0], p=weights)
+            x = np.array(x_all)
+            x = x[:, :, :].T
 
-            x = np.array([
-                np.array(x_all[np.random.choice(choices, p=np.array(
-                    self.strategy_weights))])[j, :]
-                for j in range(args[0])])
+            x = np.array([x[:, i, c] for i, c in enumerate(__choices)])
         else:
             select = np.random.choice(
-                choices, p=np.array(self.strategy_weights))
+                choices, p=weights)
 
             x = self.strategy_list[select].query(*args)
         return x

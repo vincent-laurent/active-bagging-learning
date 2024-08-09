@@ -11,7 +11,7 @@
 
 import numpy as np
 
-from active_learning.components import query_strategies
+from active_learning.components import query_strategies as qs
 
 bounds = [[0, 1]]
 x0 = np.array([0]).reshape(1, -1)
@@ -22,7 +22,7 @@ def fun(x):
 
 
 def test_query_max():
-    sqm = query_strategies.ServiceQueryMax(x0.flatten(), bounds)
+    sqm = qs.ServiceQueryMax(x0.flatten(), bounds)
     sqm.set_active_function(fun)
     fun(x0)
     y = sqm.query()
@@ -30,7 +30,7 @@ def test_query_max():
 
 
 def test_reject():
-    sqm = query_strategies.ServiceReject(bounds)
+    sqm = qs.ServiceReject(bounds)
     sqm.set_active_function(fun)
     fun(x0)
     y = sqm.query(3)
@@ -38,7 +38,7 @@ def test_reject():
 
 
 def test_uniform():
-    sqm = query_strategies.ServiceUniform(bounds)
+    sqm = qs.ServiceUniform(bounds)
     sqm.set_active_function(fun)
     fun(x0)
     y = sqm.query(3000)
@@ -47,16 +47,24 @@ def test_uniform():
 
 
 def test_composition():
-
-    strategy = 0.5 * query_strategies.ServiceUniform(bounds=[[0, 1]]) + 0.5 * query_strategies.ServiceUniform(
-        bounds=[[0, 0.2]]) + 2*query_strategies.ServiceQueryVariancePDF()
+    strategy = qs.ServiceUniform(bounds=[[0, 1]]) + qs.ServiceUniform(
+        bounds=[[0, 0.2]]) + 2 * qs.ServiceQueryVariancePDF()
     assert len(strategy.strategy_weights) == 3
-    strategy = 0.5 * query_strategies.ServiceUniform(bounds=[[0, 1]]) + 0.5 * query_strategies.ServiceUniform(
-        bounds=[[0, 0.2]])
-    ret = strategy.query(200)
-    assert len(ret) == 200
+
     assert len(strategy.strategy_list) == 2
     assert len(strategy.strategy_weights) == 2
 
     strategy.query(1)
 
+
+def test_composition_and_proportion():
+    strategy = 20 * qs.ServiceUniform(bounds=[[0.2, 1]]) + qs.ServiceUniform(
+        bounds=[[0, 0.2]])
+    x = strategy.query(200)
+    n1 = len(x[x < 0.2])
+    n2 = len(x[x > 0.2])
+
+    assert n2 > 150
+    assert n1 < 80
+
+    assert len(x) == 200

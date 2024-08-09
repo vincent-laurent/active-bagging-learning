@@ -90,7 +90,6 @@ methods = {
         {"passive": learner_uniform_svc,
          "SVC bootstrap": learner_svc,
          "SVC bootstrap + uniform": learner_uniform_svc,
-         "TREES bootstrap": learner_trees,
          },
     "branin":
         {"passive": learner_uniform_svc,
@@ -112,7 +111,7 @@ methods = {
     "himmelblau_rand":
         {"passive": learner_uniform_trees,
          "TREES bootstrap": learner_trees,
-         # "TREES bootstrap + uniform": learner_bagging_uniform_trees,
+         "TREES bootstrap + uniform": learner_bagging_uniform_trees,
          },
     "golden_price":
         {"passive": learner_uniform_trees,
