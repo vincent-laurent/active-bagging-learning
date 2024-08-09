@@ -161,7 +161,7 @@ class ModuleExperiment:
         return res
 
     def run(self):
-        with ProcessPoolExecutor() as executor:
+        with ProcessPoolExecutor(max_workers=20) as executor:
             futures = []
             for test in self.test_list:
                 for i in range(self.n_experiment):
