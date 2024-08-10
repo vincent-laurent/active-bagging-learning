@@ -21,7 +21,7 @@ from active_learning.components import latin_square
 from active_learning.components.active_criterion import VarianceCriterion
 
 est_trees = ensemble.ExtraTreesRegressor(bootstrap=True, max_samples=0.9,
-                                         n_estimators=10)
+                                         n_estimators=100)
 alc_trees = active_criterion.VarianceEnsembleMethod(estimator=est_trees)
 
 est_svc = Pipeline(
@@ -184,7 +184,7 @@ if __name__ == '__main__':
 
     t = create_benchmark_list()
 
-    me = ModuleExperiment(test, n_experiment=5)
+    me = ModuleExperiment(r, n_experiment=100)
     me.run()
 
     plt.figure()

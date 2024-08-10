@@ -211,9 +211,9 @@ function_parameters = {
         "name": "Periodic 2"},
     "sum_sine_5pi": {
         "fun": sum_sine_5pi,
-        'n0': 100,
-        "budget": 1000,
-        "n_step": 10,
+        'n0': 200,
+        "budget": 5000,
+        "n_step": 20,
         "name": "Periodic 2"},
 }
 
