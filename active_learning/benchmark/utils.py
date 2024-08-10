@@ -22,7 +22,8 @@ def plot_benchmark_whole_analysis(data: pd.DataFrame, n_functions=None) -> None:
     if n_functions is None:
         n_functions = len(data["function_hash"].drop_duplicates())
     matplotlib.rcParams.update({'font.size': 6})
-    functions__ = data["name"].astype(str).str.replace("_passive", "").drop_duplicates()
+    functions__ = data["name"].astype(str).str.replace("_passive",
+                                                       "").drop_duplicates()
     fig, ax = plt.subplots(
         ncols=len(functions__) // 2 + len(functions__) % 2,
         nrows=2, figsize=(n_functions * 0.7, 3.5))
@@ -46,7 +47,8 @@ def plot_benchmark_whole_analysis(data: pd.DataFrame, n_functions=None) -> None:
                 label = '_nolegend_'
             else:
                 label = n
-            sns.lineplot(data=data_, x="num_sample", y="L2-norm", label=label, color=color, ax=ax_)
+            sns.lineplot(data=data_, x="num_sample", y="L2-norm", label=label,
+                         color=color, ax=ax_)
         ax_.annotate(f, xy=(1, 0.9), xycoords='axes fraction',
                      xytext=(1, 20), textcoords='offset pixels',
                      horizontalalignment='right',
@@ -69,20 +71,27 @@ def plot_benchmark_whole_analysis(data: pd.DataFrame, n_functions=None) -> None:
 
 
 def plot_benchmark(data: pd.DataFrame) -> None:
-    functions__ = data["name"].astype(str).str.split("@", expand=True)[0].drop_duplicates()
-    n_functions = len(functions__)
+    from active_learning.benchmark import functions
+    function_list = data["name"].astype(str).str.split("@", expand=True)[
+        0].drop_duplicates()
+    function_list = [f for f in functions.function_parameters.keys() if
+                     f in function_list]
+
+    n_functions = len(function_list)
     fig, ax = plt.subplots(
         ncols=n_functions // 2 + n_functions % 2,
-        nrows=min(n_functions, 2), figsize=(n_functions // 2 * 2 + 4, 6), dpi=400)
+        nrows=min(n_functions, 2), figsize=(n_functions // 2 * 2 + 4, 6),
+        dpi=400)
     all_handles = []
     all_labels = []
 
-    all_methods = np.unique([__name.split("@")[1] for __name in data["name"].drop_duplicates().values])
+    all_methods = np.unique([__name.split("@")[1] for __name in
+                             data["name"].drop_duplicates().values])
     if isinstance(ax, plt.Axes):
         ax = np.array([ax])
     if ax.shape.__len__() == 1:
         ax = ax.reshape(-1, 1)
-    for i, f in enumerate(functions__):
+    for i, f in enumerate(function_list):
         print(f)
         __ax: plt.Axes = ax[i % 2, i // 2]
 
@@ -92,7 +101,8 @@ def plot_benchmark(data: pd.DataFrame) -> None:
             color = f"C{j}"
 
             if len(data_) > 0:
-                sns.lineplot(data=data_, x="num_sample", y="L2-norm", label=label, color=color, ax=__ax)
+                sns.lineplot(data=data_, x="num_sample", y="L2-norm",
+                             label=label, color=color, ax=__ax)
             handles, labels = plt.gca().get_legend_handles_labels()
             all_handles.extend(handles)
             all_labels.extend(labels)
@@ -121,10 +131,8 @@ def plot_benchmark(data: pd.DataFrame) -> None:
         bbox_to_anchor=(0.6, 0.98),
         # loc='lower left',
         # mode="expand",
-
         loc='upper center',
-
-        ncol=2)
+        ncol=3)
 
 
 def integrate(f: callable, bounds: iter, num_mc=int(1E6)):
@@ -140,7 +148,8 @@ def integrate(f: callable, bounds: iter, num_mc=int(1E6)):
 
 def evaluate(true_function, learned_surface, bounds, num_mc=int(1E6), l=2):
     def f(x):
-        return np.abs(np.ravel(true_function(x)) - np.ravel(learned_surface(x))) ** l
+        return np.abs(
+            np.ravel(true_function(x)) - np.ravel(learned_surface(x))) ** l
 
     return integrate(f, bounds, num_mc) ** (1 / l)
 
@@ -184,7 +193,8 @@ def plot_iterations_1d(test, iteration_max=None, color="b"):
     if iteration_max is None:
         iteration_max = int(test.indexes.max())
     n_row = int(np.sqrt(iteration_max))
-    fig, axs = plt.subplots(iteration_max // n_row, n_row, sharey=True, sharex=True,
+    fig, axs = plt.subplots(iteration_max // n_row, n_row, sharey=True,
+                            sharex=True,
                             figsize=(6, 6), dpi=200)
 
     for iteration, ax in enumerate(axs.ravel()):
@@ -195,7 +205,8 @@ def plot_iterations_1d(test, iteration_max=None, color="b"):
         prediction = learner.predict(domain.reshape(-1, 1))
         ax.plot(domain, test.f(domain), color="grey", linestyle="--", zorder=0)
         training_dataset = test.x_input.loc[test.indexes <= iteration + 1]
-        ax.plot(domain, prediction, color=color, label=f"N = {len(training_dataset)}", zorder=5)
+        ax.plot(domain, prediction, color=color,
+                label=f"N = {len(training_dataset)}", zorder=5)
         new_samples = test.x_input.loc[test.indexes == iteration + 2]
 
         if hasattr(learner, 'active_criterion'):
@@ -234,7 +245,8 @@ def plot_active_function(test, color="b"):
         error = active_criterion(domain.reshape(-1, 1))
         prediction = learner.surface(domain.reshape(-1, 1))
 
-        ax.plot(domain, prediction, color=color, label="iter={}".format(iter), zorder=5)
+        ax.plot(domain, prediction, color=color, label="iter={}".format(iter),
+                zorder=5)
         ax.plot(domain, test.f(domain), color="grey", linestyle="--", zorder=0)
 
         ax.fill_between(domain.ravel(), prediction - error,
@@ -276,13 +288,3 @@ def write_benchmark(
 def read_benchmark(path="data/benchmark.csv"):
     return pd.read_csv(path)
 
-# def plot_benchmark(data: pd.DataFrame, cmap="rainbow_r"):
-#     import matplotlib.pyplot as plt
-#     import seaborn as sns
-#
-#     names = data["name"].drop_duplicates().values
-#     for i, n in enumerate(names):
-#         data_ = data[data["name"] == n]
-#         color = plt.get_cmap(cmap)(i / (len(names)))
-#         sns.lineplot(data=data_, x="num_sample", y="L2-norm", label=n,
-#                      color=color)

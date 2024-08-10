@@ -248,7 +248,10 @@ def plot_benchmark_functions():
         figsize=(10, 4.2),
         ncols=len(__all2D__) // 2 + len(__all2D__) % 2,
         nrows=2, dpi=400)
-    for i, fun in enumerate(__all2D__):
+
+    function_list = list(np.sort(__all2D__))
+    function_list = [f for f in function_parameters.keys() if f in function_list]
+    for i, fun in enumerate(function_list):
         if not fun in function_parameters.keys():
             continue
         bounds_ = np.array(bounds[function_parameters[fun]["fun"]])
