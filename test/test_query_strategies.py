@@ -48,10 +48,7 @@ def test_uniform():
 
 def test_composition():
     strategy = qs.ServiceUniform(bounds=[[0, 1]]) + qs.ServiceUniform(
-        bounds=[[0, 0.2]]) + 2 * qs.ServiceQueryVariancePDF()
-    assert len(strategy.strategy_weights) == 3
-
-    assert len(strategy.strategy_list) == 2
+        bounds=[[0, 0.2]])
     assert len(strategy.strategy_weights) == 2
 
     strategy.query(1)
@@ -68,3 +65,11 @@ def test_composition_and_proportion():
     assert n1 < 80
 
     assert len(x) == 200
+
+
+def test_composition_one_point():
+    strat = qs.ServiceQueryMax(np.array([0]))
+    strat.set_active_function(lambda x: 1)
+    strategy = 20 * strat
+    x = strategy.query()
+    assert len(x) == 1

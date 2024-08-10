@@ -12,11 +12,13 @@
 import numpy as np
 
 import pandas as pd
+from scipy.stats import qmc
 
 
 def get_variance_function(estimator_list):
     def meta_estimator(*args, **kwargs):
-        predictions = np.array([est.predict(*args, **kwargs) for est in estimator_list])
+        predictions = np.array(
+            [est.predict(*args, **kwargs) for est in estimator_list])
         return np.std(predictions, axis=0, ddof=1)
 
     return meta_estimator
@@ -25,8 +27,7 @@ def get_variance_function(estimator_list):
 def scipy_lhs_sampler(size: int = 100,
                       x_limits: np.ndarray = None,
                       dim: int = None):
-    from scipy.stats import qmc
-    if x_limits is None:
+    if (x_limits is None) or x_limits.shape == ():
         raise ValueError("bounds must be specified for LHS sampler")
     dim = len(np.array(x_limits)) if dim is None else dim
     l_bounds = x_limits[:, 0]
@@ -40,29 +41,39 @@ def scipy_lhs_sampler(size: int = 100,
 DEFAULT_RNG = np.random.default_rng()
 
 
-def indices_of_random_sampling_in_finite_set(pdf, candidates, nb_samples, *, rng=DEFAULT_RNG):
-    """Pick `nb_samples` items among the candidates according to the probability density function `pdf`."""
+def indices_of_random_sampling_in_finite_set(pdf, candidates, nb_samples, *,
+                                             rng=DEFAULT_RNG):
+    """Pick `nb_samples` items among the candidates according
+    to the probability density function `pdf`."""
     probability = pdf(candidates)
     probability /= np.sum(probability)
     indices = pd.DataFrame(candidates).index
     return rng.choice(indices, size=nb_samples, replace=False, p=probability)
 
 
-def random_sampling_in_finite_set(pdf, candidates, nb_samples, *, rng=DEFAULT_RNG):
-    """Pick `nb_samples` items among the candidates according to the probability density function `pdf`."""
+def random_sampling_in_finite_set(pdf, candidates, nb_samples, *,
+                                  rng=DEFAULT_RNG):
+    """Pick `nb_samples` items among the candidates according to
+     the probability density function `pdf`."""
     probability = pdf(candidates)
     probability /= np.sum(probability)
-    return rng.choice(candidates, size=nb_samples, replace=False, p=probability, axis=0)
+    return rng.choice(candidates, size=nb_samples, replace=False, p=probability,
+                      axis=0)
 
 
-def random_sampling_in_domain(pdf, bounds, nb_samples, *, candidates_per_sample=50, rng=DEFAULT_RNG):
+def random_sampling_in_domain(pdf, bounds, nb_samples, *,
+                              candidates_per_sample=50, rng=DEFAULT_RNG):
     """ Pick `nb_samples` items in the domain delimited by `bounds` according to
     the probability density function `pdf`."""
     dimension = len(bounds[0])
-    candidates = (bounds[1] - bounds[0]) * rng.random((candidates_per_sample * nb_samples, dimension)) + bounds[0]
+    candidates = (bounds[1] - bounds[0]) * rng.random(
+        (candidates_per_sample * nb_samples, dimension)) + bounds[0]
     return random_sampling_in_finite_set(pdf, candidates, nb_samples, rng=rng)
 
 
-def random_query(X, y, active_function, size=10, batch_size=10, bounds=None, **args):
-    """ Wrap the above function with the same API as the other query strategies."""
-    return random_sampling_in_domain(active_function, bounds, size, candidates_per_sample=batch_size // size)
+def random_query(X, y, active_function, size=10, batch_size=10, bounds=None,
+                 **args):
+    """ Wrap the above function with the same API as
+    the other query strategies."""
+    return random_sampling_in_domain(active_function, bounds, size,
+                                     candidates_per_sample=batch_size // size)

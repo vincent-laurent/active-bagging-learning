@@ -113,7 +113,9 @@ class ServiceTestingClassAL(ITestingClass):
             x_new = self.learner.query(n_points)
             y_new = pd.DataFrame(self.f(x_new))
 
-            self.learner = deepcopy(self.learner)
+            self.learner: ActiveSurfaceLearner = deepcopy(self.learner)
+            if hasattr(self.learner, "set_bounds"):
+                self.learner.set_bounds(self.bounds)
             self.add_labels(x_new, y_new)
             self.learner.fit(self.x_input, self.y_input)
             self.save()

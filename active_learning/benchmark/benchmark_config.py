@@ -125,7 +125,7 @@ methods = {
          },
     "sum_sine_5pi":
         {"passive": learner_uniform_svc,
-         "TREES bootstrap": learner_svc,
+         "SVC bootstrap": learner_svc,
          # "TREES bootstrap + uniform": learner_bagging_uniform_trees,
          },
 
@@ -184,7 +184,7 @@ if __name__ == '__main__':
 
     t = create_benchmark_list()
 
-    me = ModuleExperiment(t, n_experiment=1)
+    me = ModuleExperiment(t, n_experiment=100)
     me.run()
 
     plt.figure()

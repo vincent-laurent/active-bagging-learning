@@ -42,11 +42,11 @@ def test_call_benchmark_function():
 
 
 def test_plot_benchmark():
-    functions.plot_benchamrk_functions()
+    functions.plot_benchmark_functions()
 
 
 def test_benchmark_1d():
-    naive_1d.make_1d_example()
+    example_1D.make_1d_example()
 
     bounds = [[0, 1]]
 

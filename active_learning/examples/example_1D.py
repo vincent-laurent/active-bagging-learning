@@ -21,10 +21,12 @@ from sklearn.gaussian_process.kernels import RBF
 
 from active_learning import ActiveSurfaceLearner
 from active_learning.benchmark import utils
-from active_learning.benchmark.base import ServiceTestingClassAL, ModuleExperiment, ServiceTestingClassModAL
+from active_learning.benchmark.base import ServiceTestingClassAL, \
+    ModuleExperiment, ServiceTestingClassModAL
 from active_learning.components.active_criterion import GaussianProcessVariance
 from active_learning.components.active_criterion import VarianceCriterion
-from active_learning.components.query_strategies import ServiceQueryVariancePDF, ServiceUniform
+from active_learning.components.query_strategies import ServiceQueryVariancePDF, \
+    ServiceUniform
 
 bounds = [[0, 1]]
 
@@ -55,7 +57,8 @@ steps = 15
 
 learner_bagging = ActiveSurfaceLearner(
     active_criterion=VarianceCriterion(
-        krg, splitter=sklearn.model_selection.ShuffleSplit(n_splits=3, train_size=0.85)),
+        krg, splitter=sklearn.model_selection.ShuffleSplit(n_splits=3,
+                                                           train_size=0.85)),
     query_strategy=ServiceQueryVariancePDF(bounds, num_eval=300),
     bounds=bounds
 
@@ -72,9 +75,8 @@ learner_uniform = ActiveSurfaceLearner(
 
 learner_bagging_uniform = ActiveSurfaceLearner(
     active_criterion=GaussianProcessVariance(kernel=kernel),
-    query_strategy=2*ServiceQueryVariancePDF(bounds) + ServiceUniform(bounds),
+    query_strategy=2 * ServiceQueryVariancePDF(bounds) + ServiceUniform(bounds),
     bounds=bounds)
-
 
 modal_learner = ActiveLearner(
     estimator=krg,
@@ -156,7 +158,8 @@ def make_1d_example(save=False):
     if save:
         plt.savefig(".public/example_krg_boot_plus_uniform")
 
-    utils.plot_iterations_1d(testing_bootstrap_uniform, iteration_max=4, color="C2")
+    utils.plot_iterations_1d(testing_bootstrap_uniform, iteration_max=4,
+                             color="C2")
 
     err1 = pd.DataFrame(testing_bootstrap.result).T[["budget", "l2"]]
     err2 = pd.DataFrame(testing_gaussian.result).T[["budget", "l2"]]
@@ -181,7 +184,8 @@ def experiment_1d():
 
     ], 100)
     experiment.run()
-    utils.write_benchmark(data=experiment.cv_result_, path="data/1D_gaussian_vector.csv", update=False)
+    utils.write_benchmark(data=experiment.cv_result_,
+                          path="data/1D_gaussian_vector.csv", update=False)
 
 
 if __name__ == '__main__':
@@ -190,13 +194,11 @@ if __name__ == '__main__':
     experiment_1d()
     data = utils.read_benchmark("data/1D_gaussian_vector.csv")
     plt.figure(dpi=300, figsize=(5, 5))
-    sns.lineplot(data=data, x="num_sample", hue="name", y="L2-norm", ax=plt.gca())
+    sns.lineplot(data=data, x="num_sample", hue="name", y="L2-norm",
+                 ax=plt.gca())
     plt.xlabel("Sample size")
     plt.ylabel("$L_2$ error")
     plt.tight_layout()
     plt.savefig(".public/example_1D.png")
 
     make_1d_example(True)
-
-
-    
