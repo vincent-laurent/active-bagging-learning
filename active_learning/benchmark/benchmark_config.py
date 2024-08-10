@@ -106,7 +106,7 @@ methods = {
     "branin_rand":
         {"passive": learner_uniform_trees,
          "TREES bootstrap": learner_trees,
-         # "TREES bootstrap + uniform": learner_bagging_uniform_trees,
+         "TREES bootstrap + uniform": learner_bagging_uniform_trees,
          },
     "himmelblau_rand":
         {"passive": learner_uniform_trees,
@@ -184,7 +184,7 @@ if __name__ == '__main__':
 
     t = create_benchmark_list()
 
-    me = ModuleExperiment(r, n_experiment=100)
+    me = ModuleExperiment(t, n_experiment=5)
     me.run()
 
     plt.figure()
