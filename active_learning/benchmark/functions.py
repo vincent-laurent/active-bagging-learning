@@ -130,6 +130,10 @@ class Randomize:
     def __call__(self, x, **kwargs):
         return self.__f(x) + 0.5 * np.random.randn(len(np.array(x)[:, 0]))
 
+    @property 
+    def __name__(self):
+        return f"{self.__f.__name__}_rand"
+
 
 branin_rand = Randomize(branin)
 golden_price_rand = Randomize(golden_price)

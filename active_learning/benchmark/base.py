@@ -167,6 +167,7 @@ class ModuleExperiment:
         with ProcessPoolExecutor(max_workers=20) as executor:
             futures = []
             for test in self.test_list:
+                print(test.f.__name__)
                 for i in range(self.n_experiment):
                     futures.append(executor.submit(self._run_single_experiment, test, i))
 
