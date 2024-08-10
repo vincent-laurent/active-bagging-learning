@@ -73,3 +73,11 @@ def test_composition_one_point():
     strategy = 20 * strat
     x = strategy.query()
     assert len(x) == 1
+
+
+def test_composition_setting_bounds():
+    strat = qs.ServiceUniform(None)
+    strategy = 20 * strat
+    strategy.set_bounds([[0, 1]])
+    x = strategy.query(10)
+    assert len(x) == 10

@@ -79,7 +79,10 @@ To use the approach, one has to dispose of
 
 ## Benchmark
 
+<img alt="benchmark" src=".public/benchmark_functions.png" />
 
 ![benchmark](.public/active_vs_passive.png)
+
+
 
 
