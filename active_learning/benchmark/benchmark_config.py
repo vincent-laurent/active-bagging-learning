@@ -184,7 +184,6 @@ if __name__ == '__main__':
 
     t = create_benchmark_list()
 
-
     me = ModuleExperiment(test, n_experiment=5)
     me.run()
 

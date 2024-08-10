@@ -85,6 +85,9 @@ class CompositeStrategy(IQueryStrategy):
         for s in self.strategy_list:
             if s.bounds is None:
                 s.set_bounds(self.bounds)
+            if self.active_function is not None:
+                s.set_active_function(self.active_function)
+
         weights = self.strategy_weights / np.sum(self.strategy_weights)
         if len(args) != 0 and isinstance(args[0], int):
             x_all = [strategy.query(*args) for strategy in self.strategy_list]

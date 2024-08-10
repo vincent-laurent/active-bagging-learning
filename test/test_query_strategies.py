@@ -69,8 +69,8 @@ def test_composition_and_proportion():
 
 def test_composition_one_point():
     strat = qs.ServiceQueryMax(np.array([0]))
-    strat.set_active_function(lambda x: 1)
     strategy = 20 * strat
+    strategy.set_active_function(lambda x: 1)
     x = strategy.query()
     assert len(x) == 1
 
