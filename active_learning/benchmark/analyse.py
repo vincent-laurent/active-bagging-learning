@@ -22,7 +22,7 @@ from sklearn import ensemble
 from sklearn.model_selection import ShuffleSplit
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.svm import SVC, SVR
+from sklearn.svm import SVC
 
 from active_learning import ActiveSurfaceLearner
 from active_learning.benchmark import functions
@@ -93,11 +93,9 @@ if __name__ == '__main__':
 
     bounds = np.array(functions.bounds[fun])
 
-
     def sampler(size):
         return pd.DataFrame(
             latin_square.scipy_lhs_sampler(size=size, x_limits=bounds))
-
 
     active_criterion_ = get_estimator_for_benchmark(name)
     a = ServiceTestingClassAL(

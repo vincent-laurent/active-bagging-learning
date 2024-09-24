@@ -15,7 +15,9 @@ import pandas as pd
 import seaborn as sns
 
 
-def plot_benchmark_whole_analysis(data: pd.DataFrame, n_functions=None) -> None:
+def plot_benchmark_whole_analysis(
+        data: pd.DataFrame,
+        n_functions=None) -> None:
     import matplotlib
     import seaborn as sns
 
@@ -74,8 +76,11 @@ def plot_benchmark(data: pd.DataFrame) -> None:
     from active_learning.benchmark import functions
     function_list = data["name"].astype(str).str.split("@", expand=True)[
         0].drop_duplicates()
-    function_list = [f for f in functions.function_parameters.keys() if
-                     f in function_list]
+    functions_default = functions.function_parameters.keys()
+    functions_default = [functions.function_parameters[f]["name"]
+                         for f in functions_default]
+    function_list = [f for f in functions_default if
+                     f in function_list.values]
 
     n_functions = len(function_list)
     fig, ax = plt.subplots(
@@ -84,6 +89,10 @@ def plot_benchmark(data: pd.DataFrame) -> None:
         dpi=400)
     all_handles = []
     all_labels = []
+
+    colors = ["C0", "C1", 
+            "C2",  "C5", '#00B945', 
+              '#845B97', '#474747', '#9e9e9e']
 
     all_methods = np.unique([__name.split("@")[1] for __name in
                              data["name"].drop_duplicates().values])
@@ -98,7 +107,7 @@ def plot_benchmark(data: pd.DataFrame) -> None:
         plt.sca(__ax)
         for j, label in enumerate(all_methods):
             data_ = data[data["name"] == f"{f}@{label}"]
-            color = f"C{j}"
+            color = colors[j]
 
             if len(data_) > 0:
                 sns.lineplot(data=data_, x="num_sample", y="L2-norm",
@@ -128,11 +137,11 @@ def plot_benchmark(data: pd.DataFrame) -> None:
     fig.legend(
         all_labels["index"].to_list(),
         all_labels[0].to_list(),
-        bbox_to_anchor=(0.6, 0.98),
+        bbox_to_anchor=(0.5, 0.98),
         # loc='lower left',
         # mode="expand",
         loc='upper center',
-        ncol=3)
+        ncol=5)
 
 
 def integrate(f: callable, bounds: iter, num_mc=int(1E6)):
@@ -146,12 +155,12 @@ def integrate(f: callable, bounds: iter, num_mc=int(1E6)):
     return np.sum(f(sampling)) / len(sampling) * vol
 
 
-def evaluate(true_function, learned_surface, bounds, num_mc=int(1E6), l=2):
+def evaluate(true_function, learned_surface, bounds, num_mc=int(1E6), p=2):
     def f(x):
         return np.abs(
-            np.ravel(true_function(x)) - np.ravel(learned_surface(x))) ** l
+            np.ravel(true_function(x)) - np.ravel(learned_surface(x))) ** p
 
-    return integrate(f, bounds, num_mc) ** (1 / l)
+    return integrate(f, bounds, num_mc) ** (1 / p)
 
 
 def eval_surf_2d(fun, bounds, num=200):
@@ -287,4 +296,3 @@ def write_benchmark(
 
 def read_benchmark(path="data/benchmark.csv"):
     return pd.read_csv(path)
-

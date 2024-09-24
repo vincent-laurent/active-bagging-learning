@@ -164,9 +164,10 @@ def make_testing_classes(name):
         else:
             list_of_classes.append(ServiceTestingClassModAL(
                 budget=budget, budget_0=n0, function=functions.__dict__[name],
-                learner=l,
+                learner=__learner,
                 x_sampler=sampler,
-                bounds=bounds, n_steps=steps) for l in __methods.values())
+                bounds=bounds, n_steps=steps
+                    ) for __learner in __methods.values())
     return list_of_classes
 
 
@@ -184,10 +185,12 @@ if __name__ == '__main__':
 
     t = create_benchmark_list()
 
-    me = ModuleExperiment(t, n_experiment=5)
-    me.run()
+    me = ModuleExperiment(t, n_experiment=100)
+    # me.run()
+    # utils.write_benchmark(me.cv_result_, "data/benchmark_2024.csv")
 
     plt.figure()
-    utils.plot_benchmark(data=me.cv_result_)
-    utils.write_benchmark(me.cv_result_, "data/benchmark_2024.csv")
-    plt.savefig("test")
+    data = utils.read_benchmark("data/benchmark_2024.csv")
+    data = data[data["date"] > "2024-08-10 13"]
+    utils.plot_benchmark(data=data)
+    plt.savefig(".public/benchmark_result_2024")
