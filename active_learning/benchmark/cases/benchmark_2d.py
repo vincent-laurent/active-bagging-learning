@@ -79,7 +79,7 @@ def plot_all_benchmark_function():
 
 def clear_benchmark_data(path="benchmark/results.csv", function=name):
     df = pd.read_csv(path)
-    df_select = df.query(f"function==@function")
+    df_select = df.query("function==@function")
     df.drop(df_select.index).to_csv(path)
 
 

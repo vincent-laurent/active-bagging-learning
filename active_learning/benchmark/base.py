@@ -13,7 +13,6 @@ import typing
 from copy import deepcopy
 from abc import ABC, abstractmethod
 from concurrent.futures import ProcessPoolExecutor, as_completed
-from copy import deepcopy
 from datetime import datetime
 
 import numpy as np
@@ -131,7 +130,8 @@ class ServiceTestingClassModAL(ITestingClass):
         self.save()
         for n_points in self._samples[1:]:
             x_new = pd.DataFrame(
-                np.array([self.learner.query(self.x_sampler(200).values)[1] for _ in range(n_points)]))
+                np.array([self.learner.query(self.x_sampler(200).values)[1][0] for _ in range(n_points)])
+                )
             y_new = pd.DataFrame(self.f(x_new))
             self.learner = deepcopy(self.learner)
             self.add_labels(x_new, y_new)

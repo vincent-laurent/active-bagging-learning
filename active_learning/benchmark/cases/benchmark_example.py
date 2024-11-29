@@ -100,10 +100,12 @@ if __name__ == '__main__':
     active_criterion_ = get_estimator_for_benchmark(name)
     a = ServiceTestingClassAL(
         budget=budget, budget_0=n0, function=fun,
-        learner=ActiveSurfaceLearner(active_criterion_,
-                                     query_strategy=query_strategies.ServiceQueryVariancePDF(num_eval=2000,
-                                                                                             bounds=bounds),
-                                     bounds=bounds),
+        learner=ActiveSurfaceLearner(
+            active_criterion_,
+            query_strategy=query_strategies.ServiceQueryVariancePDF(
+                num_eval=2000,                                   
+                bounds=bounds),
+            bounds=bounds),
         x_sampler=sampler,
         bounds=bounds, n_steps=steps)
     p = ServiceTestingClassAL(

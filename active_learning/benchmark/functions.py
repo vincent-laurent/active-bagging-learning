@@ -107,7 +107,7 @@ def synthetic_2d_2(x):
     return synthetic_2d_1(x_) * annie_sauer_2021(x_[:, 1] / 10)
 
 
-def sum_sine_5pi(x):
+def sum_sine_5pi(x, d=5):
     """
     Calculates the function 1/5 * sum(sin(5 * pi * x_i)) for i=1 to 5.
 
@@ -119,7 +119,7 @@ def sum_sine_5pi(x):
     """
     x = np.asarray(x)
 
-    result = (1 / 5) * np.sum(x*np.sin(np.pi * x / 4)**6, axis=1)
+    result = (1 / d) * np.sum(x*np.sin(np.pi * x / 5)**6, axis=1)
     return result
 
 
@@ -195,8 +195,11 @@ function_parameters = {
         "n_step": 10,
         "name": "Himmelblau rand."},
     "golden_price": {
-        "fun": golden_price, 'n0': 50, "budget": 60, "n_step": 10,
-        "name": "Golden price"},
+        "fun": golden_price, 
+        'n0': 50, 
+        "budget": 60, 
+        "n_step": 10,
+        "name": "Goldenstein price"},
     "marelli_2018": {
         "fun": marelli_2018, 'n0': 150, "budget": 600, "n_step": 30,
         "name": "Warts 2000"},
@@ -211,8 +214,8 @@ function_parameters = {
         "name": "Periodic 3"},
     "sum_sine_5pi": {
         "fun": sum_sine_5pi,
-        'n0': 5000,
-        "budget": 6000,
+        'n0': 1000,
+        "budget": 2000,
         "n_step": 20,
         "name": "Periodic 2"},
 }
@@ -224,7 +227,7 @@ __all__ = [
 __all2D__ = [
     "grammacy_lee_2009",
     "grammacy_lee_2009_rand",
-    "branin", "branin_rand",
+    "branin", "branin_rand", 
     "himmelblau",
     "himmelblau_rand",
     "golden_price",
@@ -251,6 +254,7 @@ def plot_benchmark_functions():
 
     function_list = list(np.sort(__all2D__))
     function_list = [f for f in function_parameters.keys() if f in function_list]
+    
     for i, fun in enumerate(function_list):
         if not fun in function_parameters.keys():
             continue
@@ -291,7 +295,7 @@ def plot_benchmark_functions():
 
 
 if __name__ == '__main__':
-    from active_learning.benchmark.benchmark_config import Sampler
+    from active_learning.benchmark.utils import Sampler
 
     pd.Series(golden_price(Sampler(np.array(bounds[golden_price]))(1000))).describe()
     plot_benchmark_functions()

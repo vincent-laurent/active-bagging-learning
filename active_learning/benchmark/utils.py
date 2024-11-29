@@ -13,22 +13,32 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from active_learning.components import latin_square
 
 
-def plot_benchmark_whole_analysis(
-        data: pd.DataFrame,
-        n_functions=None) -> None:
+class Sampler:
+    def __init__(self, bounds):
+        self.__bounds = bounds
+
+    def __call__(self, size):
+        return pd.DataFrame(
+            latin_square.scipy_lhs_sampler(size=size, x_limits=self.__bounds)
+        )
+
+
+def plot_benchmark_whole_analysis(data: pd.DataFrame, n_functions=None) -> None:
     import matplotlib
     import seaborn as sns
 
     if n_functions is None:
         n_functions = len(data["function_hash"].drop_duplicates())
-    matplotlib.rcParams.update({'font.size': 6})
-    functions__ = data["name"].astype(str).str.replace("_passive",
-                                                       "").drop_duplicates()
+    matplotlib.rcParams.update({"font.size": 6})
+    functions__ = data["name"].astype(str).str.replace("_passive", "").drop_duplicates()
     fig, ax = plt.subplots(
         ncols=len(functions__) // 2 + len(functions__) % 2,
-        nrows=2, figsize=(n_functions * 0.7, 3.5))
+        nrows=2,
+        figsize=(n_functions * 0.7, 3.5),
+    )
 
     if ax.shape.__len__() == 1:
         ax = ax.reshape(-1, 1)
@@ -46,16 +56,27 @@ def plot_benchmark_whole_analysis(
             data_ = data_plot[data_plot["name"] == n]
             color = f"C{j}"
             if i > 0:
-                label = '_nolegend_'
+                label = "_nolegend_"
             else:
                 label = n
-            sns.lineplot(data=data_, x="num_sample", y="L2-norm", label=label,
-                         color=color, ax=ax_)
-        ax_.annotate(f, xy=(1, 0.9), xycoords='axes fraction',
-                     xytext=(1, 20), textcoords='offset pixels',
-                     horizontalalignment='right',
-                     verticalalignment='bottom',
-                     bbox=dict(boxstyle="round", fc="white", lw=0.4))
+            sns.lineplot(
+                data=data_,
+                x="num_sample",
+                y="L2-norm",
+                label=label,
+                color=color,
+                ax=ax_,
+            )
+        ax_.annotate(
+            f,
+            xy=(1, 0.9),
+            xycoords="axes fraction",
+            xytext=(1, 20),
+            textcoords="offset pixels",
+            horizontalalignment="right",
+            verticalalignment="bottom",
+            bbox=dict(boxstyle="round", fc="white", lw=0.4),
+        )
         ax_.legend().set_visible(False)
         ax_.set_ylabel("$L_2$ error") if i // 2 == 0 else ax_.set_ylabel("")
         plt.yticks(c="w")
@@ -69,33 +90,39 @@ def plot_benchmark_whole_analysis(
         bbox_to_anchor=(0.6, 0.98),
         # loc='lower left',
         # mode="expand",
-        ncol=2)
+        ncol=2,
+    )
 
 
 def plot_benchmark(data: pd.DataFrame) -> None:
     from active_learning.benchmark import functions
-    function_list = data["name"].astype(str).str.split("@", expand=True)[
-        0].drop_duplicates()
+    data["name"] = data["name"].str.replace("Golden price", "Goldenstein price")
+    function_list = (
+        data["name"].astype(str).str.split("@", expand=True)[0].drop_duplicates()
+    )
     functions_default = functions.function_parameters.keys()
-    functions_default = [functions.function_parameters[f]["name"]
-                         for f in functions_default]
-    function_list = [f for f in functions_default if
-                     f in function_list.values]
+    functions_default = [
+        functions.function_parameters[f]["name"] for f in functions_default
+    ]
+    function_list = [f for f in function_list]
+
+    function_list = [f for f in functions_default if f in function_list]
 
     n_functions = len(function_list)
     fig, ax = plt.subplots(
         ncols=n_functions // 2 + n_functions % 2,
-        nrows=min(n_functions, 2), figsize=(n_functions // 2 * 2 + 4, 6),
-        dpi=400)
+        nrows=min(n_functions, 2),
+        figsize=(n_functions // 2 * 2 + 4, 6),
+        dpi=400,
+    )
     all_handles = []
     all_labels = []
 
-    colors = ["C0", "C1", 
-            "C2",  "C5", '#00B945', 
-              '#845B97', '#474747', '#9e9e9e']
+    colors = ["C0", "C3", "C2", "C5", "black", "#845B97", "#474747", "#9e9e9e"]
 
-    all_methods = np.unique([__name.split("@")[1] for __name in
-                             data["name"].drop_duplicates().values])
+    all_methods = np.unique(
+        [__name.split("@")[1] for __name in data["name"].drop_duplicates().values]
+    )
     if isinstance(ax, plt.Axes):
         ax = np.array([ax])
     if ax.shape.__len__() == 1:
@@ -110,17 +137,28 @@ def plot_benchmark(data: pd.DataFrame) -> None:
             color = colors[j]
 
             if len(data_) > 0:
-                sns.lineplot(data=data_, x="num_sample", y="L2-norm",
-                             label=label, color=color, ax=__ax)
+                sns.lineplot(
+                    data=data_,
+                    x="num_sample",
+                    y="L2-norm",
+                    label=label,
+                    color=color,
+                    ax=__ax,
+                )
             handles, labels = plt.gca().get_legend_handles_labels()
             all_handles.extend(handles)
             all_labels.extend(labels)
 
-        __ax.annotate(f, xy=(1, 0.9), xycoords='axes fraction',
-                      xytext=(1, 20), textcoords='offset pixels',
-                      horizontalalignment='right',
-                      verticalalignment='bottom',
-                      bbox=dict(boxstyle="round", fc="white", lw=0.4))
+        __ax.annotate(
+            f,
+            xy=(1, 0.9),
+            xycoords="axes fraction",
+            xytext=(1, 20),
+            textcoords="offset pixels",
+            horizontalalignment="right",
+            verticalalignment="bottom",
+            bbox=dict(boxstyle="round", fc="white", lw=0.4),
+        )
         __ax.legend().set_visible(False)
         __ax.set_ylabel("$L_2$ error") if i // 2 == 0 else __ax.set_ylabel("")
         # plt.yticks(c="w")
@@ -140,25 +178,23 @@ def plot_benchmark(data: pd.DataFrame) -> None:
         bbox_to_anchor=(0.5, 0.98),
         # loc='lower left',
         # mode="expand",
-        loc='upper center',
-        ncol=5)
-
-
-def integrate(f: callable, bounds: iter, num_mc=int(1E6)):
-    sampling = np.random.uniform(size=num_mc * len(bounds)).reshape(
-        -1, len(bounds)
+        loc="upper center",
+        ncol=5,
     )
+
+
+def integrate(f: callable, bounds: iter, num_mc=int(1e6)):
+    sampling = np.random.uniform(size=num_mc * len(bounds)).reshape(-1, len(bounds))
     vol = 1
     for i, (min_, max_) in enumerate(bounds):
         sampling[:, i] = sampling[:, i] * (max_ - min_) + min_
-        vol *= (max_ - min_)
+        vol *= max_ - min_
     return np.sum(f(sampling)) / len(sampling) * vol
 
 
-def evaluate(true_function, learned_surface, bounds, num_mc=int(1E6), p=2):
+def evaluate(true_function, learned_surface, bounds, num_mc=int(1e6), p=2):
     def f(x):
-        return np.abs(
-            np.ravel(true_function(x)) - np.ravel(learned_surface(x))) ** p
+        return np.abs(np.ravel(true_function(x)) - np.ravel(learned_surface(x))) ** p
 
     return integrate(f, bounds, num_mc) ** (1 / p)
 
@@ -190,8 +226,13 @@ def analyse_1d(test):
     import seaborn as sns
 
     plt.figure()
-    plt.scatter(test.learner.x_input, test.f(test.learner.x_input),
-                c=test.learner.x_input.index, cmap="coolwarm", alpha=0.2)
+    plt.scatter(
+        test.learner.x_input,
+        test.f(test.learner.x_input),
+        c=test.learner.x_input.index,
+        cmap="coolwarm",
+        alpha=0.2,
+    )
 
     plt.figure()
     sns.histplot(test.learner.x_input, bins=50)
@@ -202,36 +243,45 @@ def plot_iterations_1d(test, iteration_max=None, color="b"):
     if iteration_max is None:
         iteration_max = int(test.indexes.max())
     n_row = int(np.sqrt(iteration_max))
-    fig, axs = plt.subplots(iteration_max // n_row, n_row, sharey=True,
-                            sharex=True,
-                            figsize=(6, 6), dpi=200)
+    fig, axs = plt.subplots(
+        iteration_max // n_row, n_row, sharey=True, sharex=True, figsize=(6, 6), dpi=200
+    )
 
     for iteration, ax in enumerate(axs.ravel()):
-
         result_iter = test.result[iteration + 1]
         learner = result_iter["learner"]
 
         prediction = learner.predict(domain.reshape(-1, 1))
         ax.plot(domain, test.f(domain), color="grey", linestyle="--", zorder=0)
         training_dataset = test.x_input.loc[test.indexes <= iteration + 1]
-        ax.plot(domain, prediction, color=color,
-                label=f"N = {len(training_dataset)}", zorder=5)
+        ax.plot(
+            domain,
+            prediction,
+            color=color,
+            label=f"N = {len(training_dataset)}",
+            zorder=5,
+        )
         new_samples = test.x_input.loc[test.indexes == iteration + 2]
 
-        if hasattr(learner, 'active_criterion'):
+        if hasattr(learner, "active_criterion"):
             uncertainty = learner.active_criterion(domain.reshape(-1, 1))
-            ax.fill_between(domain.ravel(), prediction - uncertainty,
-                            prediction + uncertainty, color=color, alpha=0.2)
+            ax.fill_between(
+                domain.ravel(),
+                prediction - uncertainty,
+                prediction + uncertainty,
+                color=color,
+                alpha=0.2,
+            )
 
             if hasattr(learner.active_criterion, "models"):
                 for m in learner.active_criterion.models:
                     y = m.predict(domain.reshape(-1, 1))
                     ax.plot(domain, y, color="gray", lw=0.5)
-        ax.scatter(training_dataset, test.f(training_dataset), color="k",
-                   marker=".", zorder=10)
+        ax.scatter(
+            training_dataset, test.f(training_dataset), color="k", marker=".", zorder=10
+        )
 
-        ax.scatter(new_samples, test.f(new_samples), color="r", marker=".",
-                   zorder=30)
+        ax.scatter(new_samples, test.f(new_samples), color="r", marker=".", zorder=30)
         ax.set_ylim(-0.9, 0.7)
         ax.legend(loc=2)
         ax.set_axis_off()
@@ -242,11 +292,11 @@ def plot_active_function(test, color="b"):
     domain = np.linspace(test.bounds[0][0], test.bounds[0][1], 2000)
     iter_ = int(test.indexes.max())
     n_row = int(np.sqrt(iter_))
-    fig, axs = plt.subplots(iter_ // n_row, n_row, sharey=True, sharex=True,
-                            figsize=(8, 8), dpi=200)
+    fig, axs = plt.subplots(
+        iter_ // n_row, n_row, sharey=True, sharex=True, figsize=(8, 8), dpi=200
+    )
 
     for iter, ax in enumerate(axs.ravel()):
-
         result_iter = test.result[iter]
         learner = result_iter["learner"]
         active_criterion = learner.active_criterion
@@ -254,12 +304,16 @@ def plot_active_function(test, color="b"):
         error = active_criterion(domain.reshape(-1, 1))
         prediction = learner.surface(domain.reshape(-1, 1))
 
-        ax.plot(domain, prediction, color=color, label="iter={}".format(iter),
-                zorder=5)
+        ax.plot(domain, prediction, color=color, label="iter={}".format(iter), zorder=5)
         ax.plot(domain, test.f(domain), color="grey", linestyle="--", zorder=0)
 
-        ax.fill_between(domain.ravel(), prediction - error,
-                        prediction + error, color=color, alpha=0.2)
+        ax.fill_between(
+            domain.ravel(),
+            prediction - error,
+            prediction + error,
+            color=color,
+            alpha=0.2,
+        )
         training_dataset = test.x_input.loc[range(iter + 1)]
         new_samples = test.x_input.loc[iter + 1]
 
@@ -267,32 +321,34 @@ def plot_active_function(test, color="b"):
             for m in active_criterion.models:
                 y = m.predict(domain.reshape(-1, 1))
                 ax.plot(domain, y, color="gray", lw=0.5)
-        ax.scatter(training_dataset, test.f(training_dataset), color="k",
-                   marker=".", zorder=10)
+        ax.scatter(
+            training_dataset, test.f(training_dataset), color="k", marker=".", zorder=10
+        )
 
-        ax.scatter(new_samples, test.f(new_samples), color="r", marker=".",
-                   zorder=30)
+        ax.scatter(new_samples, test.f(new_samples), color="r", marker=".", zorder=30)
         ax.set_ylim(-0.9, 0.7)
         ax.legend()
         # ax.axis("off")
 
 
 def write_benchmark(
-        data: pd.DataFrame,
-        path="examples/data/benchmark.csv", update=True):
+    data: pd.DataFrame, path="examples/data/benchmark.csv", update=True
+):
     import os
+
     path_dir = "/".join(path.split("/")[:-1])
     if not os.path.exists(path_dir):
         os.makedirs(path_dir)
 
     if update:
         if not os.path.exists(path):
-            data.to_csv(path, mode='a', index=False)
+            data.to_csv(path, mode="a", index=False)
         else:
-            data.to_csv(path, mode='a', header=False, index=False)
+            data.to_csv(path, mode="a", header=False, index=False)
     else:
         data.to_csv(path, index=False)
 
 
 def read_benchmark(path="data/benchmark.csv"):
-    return pd.read_csv(path)
+    data = pd.read_csv(path)
+    return data
