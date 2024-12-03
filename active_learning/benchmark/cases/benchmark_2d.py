@@ -21,10 +21,6 @@ from active_learning.components import latin_square
 from active_learning.components.active_criterion import VarianceEnsembleMethod
 from active_learning.components.query_strategies import ServiceQueryVariancePDF, ServiceUniform
 
-# try:
-#     plt.style.use("./.matplotlibrc")
-# except (ValueError, OSError):
-#     pass
 functions_ = list(functions.bounds.keys())
 
 name = "grammacy_lee_2009_rand"

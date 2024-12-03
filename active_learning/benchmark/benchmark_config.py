@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from modAL.acquisition import max_EI, max_UCB
-from modAL.models import BayesianOptimizer, ActiveLearner
 from modAL.disagreement import max_std_sampling
+from modAL.models import BayesianOptimizer, ActiveLearner
 from sklearn import ensemble
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import Matern
@@ -11,17 +11,16 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVR
 
-from active_learning.benchmark import utils
 from active_learning import ActiveSurfaceLearner
 from active_learning import query_strategies as qs
 from active_learning.benchmark import functions
+from active_learning.benchmark import utils
 from active_learning.benchmark.base import (
     ServiceTestingClassAL,
     ServiceTestingClassModAL,
     ModuleExperiment,
 )
 from active_learning.components import active_criterion
-
 from active_learning.components.active_criterion import VarianceCriterion
 
 
@@ -32,7 +31,7 @@ def max_ucb(opt, x, ):
 def max_ei(opt, x):
     return max_EI(opt, x, beta=1000)
 
-    
+
 est_trees = ensemble.ExtraTreesRegressor(
     bootstrap=True, max_samples=0.9, n_estimators=100
 )
@@ -50,7 +49,6 @@ regressor = GaussianProcessRegressor(kernel=kernel)
 gp_ei_optimizer = BayesianOptimizer(estimator=regressor, query_strategy=max_EI)
 gp_ucb_optimizer = BayesianOptimizer(estimator=regressor, query_strategy=max_ucb)
 modal_al = ActiveLearner(regressor, max_std_sampling)
-
 
 regressor_svc = est_svc
 gp_ei_optimizer_svc = BayesianOptimizer(estimator=regressor_svc, query_strategy=max_EI)
@@ -111,26 +109,25 @@ learner_bagging_uniform_gp = ActiveSurfaceLearner(
     bounds=None,
 )
 
-
 # ======================================================================================================================
 
 trees = {
-        "passive": learner_uniform_trees,
-        "bootstrap": learner_trees,
-        "bootstrap + uniform": learner_bagging_uniform_trees,
-    }
-gp = { "modal EI": gp_ei_optimizer,
-        "modal UCB": gp_ucb_optimizer,
-        "modal uncertainty": modal_al,
-        "passive": learner_uniform_gp,
-        "bootstrap": learner_gp,
-        "bootstrap + uniform": learner_uniform_gp,}
+    "passive": learner_uniform_trees,
+    "bootstrap": learner_trees,
+    "bootstrap + uniform": learner_bagging_uniform_trees,
+}
+gp = {"modal EI": gp_ei_optimizer,
+      "modal UCB": gp_ucb_optimizer,
+      "modal uncertainty": modal_al,
+      "passive": learner_uniform_gp,
+      "bootstrap": learner_gp,
+      "bootstrap + uniform": learner_uniform_gp, }
 
 methods = {
     "marelli_2018": trees,
     "grammacy_lee_2009": gp,
     "grammacy_lee_2009_rand": trees,
-    "branin":  gp,
+    "branin": gp,
     "himmelblau": trees,
     "branin_rand": trees,
     "himmelblau_rand": trees,
@@ -187,6 +184,7 @@ def create_benchmark_list():
         ret += make_testing_classes(k)
     return ret
 
+
 def test_in_sum_sine_5pi():
     test = make_testing_classes("sum_sine_5pi")
     me = ModuleExperiment(test, n_experiment=10)
@@ -194,22 +192,22 @@ def test_in_sum_sine_5pi():
     utils.write_benchmark(me.cv_result_, "data/2024_high_dimension.csv")
     utils.plot_benchmark(data=me.cv_result_)
     plt.savefig(".public/2024_high_dimension")
-    
-    
+
+
 def test_function():
-    name="grammacy_lee_2009"
-    name="branin"
+    name = "grammacy_lee_2009"
+    name = "branin"
     test = make_testing_classes(name)
     me = ModuleExperiment(test, n_experiment=10)
     me.run()
     utils.write_benchmark(me.cv_result_, f"data/2024_{name}_gaussian_process.csv")
-    
+
     data = utils.read_benchmark(f"data/2024_{name}_gaussian_process.csv")
     utils.plot_benchmark(data=data)
     plt.gcf().set_size_inches(5, 5)
     plt.savefig(f".public/2024_{name}_gaussian_process")
-    
-   
+
+
 if __name__ == "__main__":
     t = create_benchmark_list()
 
