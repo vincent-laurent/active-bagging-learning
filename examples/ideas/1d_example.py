@@ -16,8 +16,6 @@ from active_learning.components.utils import get_variance_function
 from active_learning.components.query_strategies import random_sampling_in_domain
 
 
-matplotlib.use("Qt5Agg")
-
 
 def unknown_function(x):
     return x ** 5 * np.sin(10 * np.pi * x)

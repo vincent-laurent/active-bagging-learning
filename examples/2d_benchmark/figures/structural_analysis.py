@@ -1,9 +1,5 @@
 import matplotlib
 
-try:
-    matplotlib.use("qt5agg")
-except:
-    pass
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plot

@@ -13,7 +13,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from scipy import interpolate
+from matplotlib.colors import LinearSegmentedColormap
+
+from active_learning.benchmark.base import ServiceTestingClassAL
 from active_learning.components import latin_square
+
+cmap = LinearSegmentedColormap.from_list(
+    "mycmap", ["#1C284E", "#174D7C", "#4C7D8E", "#819898", "white", "#FFC28B",
+               "#FF9463", "#FE6D4E", "#FF5342"][::-1])
 
 
 class Sampler:
@@ -94,7 +102,7 @@ def plot_benchmark_whole_analysis(data: pd.DataFrame, n_functions=None) -> None:
     )
 
 
-def plot_benchmark(data: pd.DataFrame) -> None:
+def plot_benchmark(data: pd.DataFrame, standardise=False) -> None:
     from active_learning.benchmark import functions
     data["name"] = data["name"].str.replace("Golden price", "Goldenstein price")
     function_list = (
@@ -109,20 +117,29 @@ def plot_benchmark(data: pd.DataFrame) -> None:
     function_list = [f for f in functions_default if f in function_list]
 
     n_functions = len(function_list)
+    colors = {
+        "c0": '#FF9500',
+        "c4": '#1C284E',
+        "c2": "#174D7C",
+        "c3": '#00B945',
+        "c5": '#FF5344',
+        "c1": "#FE6D4E",
+        "c6": '#9e9e9e',
+        "c7": "#845B97"}
     fig, ax = plt.subplots(
         ncols=n_functions // 2 + n_functions % 2,
         nrows=min(n_functions, 2),
-        figsize=(n_functions // 2 * 2 + 4, 6),
-        dpi=400,
+        figsize=(n_functions // 2 * 2 + 1, 4),
+        dpi=600,
     )
     all_handles = []
     all_labels = []
+    all_methods = np.sort(np.unique(
+        [__name.split("@")[1] for __name in data["name"].drop_duplicates().values])
+    )[::-1]
 
-    colors = ["C0", "C3", "C2", "C5", "black", "#845B97", "#474747", "#9e9e9e"]
+    y_label = "$L_2$ error" if not standardise else "$L_2/L_2^\\text{passive}$"
 
-    all_methods = np.unique(
-        [__name.split("@")[1] for __name in data["name"].drop_duplicates().values]
-    )
     if isinstance(ax, plt.Axes):
         ax = np.array([ax])
     if ax.shape.__len__() == 1:
@@ -130,11 +147,16 @@ def plot_benchmark(data: pd.DataFrame) -> None:
     for i, f in enumerate(function_list):
         print(f)
         __ax: plt.Axes = ax[i % 2, i // 2]
+        ref = data[data["name"] == f"{f}@passive"].groupby("num_sample")["L2-norm"].mean()
+        interp = interpolate.interp1d(ref.index, ref.values)
 
         plt.sca(__ax)
         for j, label in enumerate(all_methods):
             data_ = data[data["name"] == f"{f}@{label}"]
-            color = colors[j]
+            if standardise:
+                data_["L2-norm"] = data_["L2-norm"] / interp(data_["num_sample"])
+
+            color = colors[f"c{j}"]
 
             if len(data_) > 0:
                 sns.lineplot(
@@ -143,7 +165,7 @@ def plot_benchmark(data: pd.DataFrame) -> None:
                     y="L2-norm",
                     label=label,
                     color=color,
-                    ax=__ax,
+                    ax=__ax, zorder=100 - i
                 )
             handles, labels = plt.gca().get_legend_handles_labels()
             all_handles.extend(handles)
@@ -151,35 +173,37 @@ def plot_benchmark(data: pd.DataFrame) -> None:
 
         __ax.annotate(
             f,
-            xy=(1, 0.9),
+            xy=(0.95, 0.95),
             xycoords="axes fraction",
             xytext=(1, 20),
             textcoords="offset pixels",
             horizontalalignment="right",
             verticalalignment="bottom",
-            bbox=dict(boxstyle="round", fc="white", lw=0.4),
+            bbox=dict(fc="white", lw=0.7, ec="#bcbcbc", boxstyle="square"), zorder=10000
         )
         __ax.legend().set_visible(False)
-        __ax.set_ylabel("$L_2$ error") if i // 2 == 0 else __ax.set_ylabel("")
-        # plt.yticks(c="w")
+
+        __ax.set_ylabel(y_label) if i // 2 == 0 else __ax.set_ylabel("")
         plt.xlabel("")
-        # __ax.set_yticklabels([])
+        if standardise:
+            limits = __ax.get_ylim()
+            __ax.set_ylim((max(limits[0], 0), min(limits[1], 2.5)))
 
     if n_functions % 2 == 1:
         if n_functions > 1:
             ax[(i + 1) % 2, (i + 1) // 2].axes.remove()
 
-    all_labels = pd.Series(all_labels, index=all_handles).reset_index()
+    all_labels = pd.Series(all_labels, index=all_handles).sort_values().reset_index()
     all_labels = all_labels.drop_duplicates(keep="first", subset=[0])
 
     fig.legend(
         all_labels["index"].to_list(),
         all_labels[0].to_list(),
-        bbox_to_anchor=(0.5, 0.98),
+        bbox_to_anchor=(0.5, 0.965),
         # loc='lower left',
         # mode="expand",
         loc="upper center",
-        ncol=5,
+        ncol=len(all_methods),
     )
 
 
@@ -204,8 +228,19 @@ def eval_surf_2d(fun, bounds, num=200):
     yy = np.linspace(bounds[1, 0], bounds[1, 1], num=num)
     x, y = np.meshgrid(xx, yy)
     x = pd.DataFrame(dict(x0=x.ravel(), x1=y.ravel()))
-    z = fun(x.values)
+    z = fun(x=x.values)
     return xx, yy, x, z
+
+
+def as_2d(fun, d: int):
+    def function(x):
+        """
+        x : 2d input vector
+        """
+        xx = np.concatenate((x, np.zeros((len(x), d - x.shape[1]))), axis=1)
+        return fun(xx)
+
+    return function
 
 
 def test_evaluate():
@@ -222,20 +257,17 @@ def test_evaluate():
 
 
 def analyse_1d(test):
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-
     plt.figure()
     plt.scatter(
-        test.learner.x_input,
-        test.f(test.learner.x_input),
-        c=test.learner.x_input.index,
+        test.x_input,
+        test.f(test.x_input),
+        c=test.x_input.index,
         cmap="coolwarm",
         alpha=0.2,
     )
 
     plt.figure()
-    sns.histplot(test.learner.x_input, bins=50)
+    sns.histplot(test.x_input, bins=50)
 
 
 def plot_iterations_1d(test, iteration_max=None, color="b"):
@@ -332,7 +364,7 @@ def plot_active_function(test, color="b"):
 
 
 def write_benchmark(
-    data: pd.DataFrame, path="examples/data/benchmark.csv", update=True
+        data: pd.DataFrame, path="examples/data/benchmark.csv", update=True
 ):
     import os
 
@@ -349,6 +381,27 @@ def write_benchmark(
         data.to_csv(path, index=False)
 
 
-def read_benchmark(path="data/benchmark.csv"):
+def plot_iterations_2d(test: ServiceTestingClassAL):
+    test.x_input
+    test.indexes
+
+    for i in np.unique(test.indexes):
+        sel = test.indexes == i
+        x = test.x_input[sel].iloc[:, :2]
+
+        plt.scatter(x[0], x[1])
+
+
+def read_benchmark(path="data/benchmark"):
     data = pd.read_csv(path)
-    return data
+    data = data.loc[~data["name"].str.contains("UCB")]
+    data = data.loc[~data["name"].str.contains("EI")]
+    data = data.sort_values("date")
+    data["__date__"] = data["date"].astype(str).str[:10]
+    sel = data[["budget", "budget_0", "n_steps", "name", '__date__']].drop_duplicates(
+        keep="last", subset=["budget", "budget_0", "n_steps", "name"]).drop_duplicates(
+        keep="last", subset= ["name"]
+    )
+    ret = pd.merge(sel, data, how="inner", on=["budget", "budget_0", "n_steps", "name", "__date__"])
+    ret = ret.drop(columns='__date__')
+    return ret

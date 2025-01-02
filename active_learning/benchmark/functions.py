@@ -107,7 +107,10 @@ def synthetic_2d_2(x):
     return synthetic_2d_1(x_) * annie_sauer_2021(x_[:, 1] / 10)
 
 
-def sum_sine_5pi(x, d=5):
+d_periodic_2 = 5
+
+
+def sum_sine_5pi(x, d=d_periodic_2):
     """
     Calculates the function 1/5 * sum(sin(5 * pi * x_i)) for i=1 to 5.
 
@@ -118,8 +121,9 @@ def sum_sine_5pi(x, d=5):
     float: The calculated value of the function.
     """
     x = np.asarray(x)
-
-    result = (1 / d) * np.sum(x*np.sin(np.pi * x / 5)**6, axis=1)
+    if x.shape[1] != d:
+        raise ValueError
+    result = (1 / d) * np.sum(x * np.sin(np.pi * x / 5) ** 6, axis=1)
     return result
 
 
@@ -130,7 +134,7 @@ class Randomize:
     def __call__(self, x, **kwargs):
         return self.__f(x) + 0.5 * np.random.randn(len(np.array(x)[:, 0]))
 
-    @property 
+    @property
     def __name__(self):
         return f"{self.__f.__name__}_rand"
 
@@ -153,21 +157,21 @@ bounds = {
     synthetic_2d_1: [[0, 10], [0, 10]],
     synthetic_2d_2: [[0, 10], [0, 10]],
     marelli_2018: [[-6, 6], [-6, 6]],
-    sum_sine_5pi: [[-5, 5]] * 5
+    sum_sine_5pi: [[-2, 2]] * d_periodic_2
 }
 
 function_parameters = {
     "grammacy_lee_2009": {
         "fun": grammacy_lee_2009,
-        'n0': 20,
+        'n0': 60,
         "budget": 200,
         "n_step": 10,
         "name": "Grammacy Lee"},
     "grammacy_lee_2009_rand": {
         "fun": grammacy_lee_2009_rand,
         'n0': 60,
-        "budget": 100,
-        "n_step": 10,
+        "budget": 400,
+        "n_step": 20,
         "name": "Grammacy Lee rand.",
     },
     "branin": {
@@ -179,13 +183,13 @@ function_parameters = {
     "branin_rand": {
         "fun": branin_rand,
         'n0': 100,
-        "budget": 1000,
+        "budget": 900,
         "n_step": 10,
         "name": "Branin rand."},
     "himmelblau": {
         "fun": himmelblau,
         'n0': 100,
-        "budget": 900,
+        "budget": 500,
         "n_step": 10,
         "name": "Himmelblau"},
     "himmelblau_rand": {
@@ -195,9 +199,9 @@ function_parameters = {
         "n_step": 10,
         "name": "Himmelblau rand."},
     "golden_price": {
-        "fun": golden_price, 
-        'n0': 50, 
-        "budget": 60, 
+        "fun": golden_price,
+        'n0': 50,
+        "budget": 60,
         "n_step": 10,
         "name": "Goldenstein price"},
     "marelli_2018": {
@@ -214,8 +218,8 @@ function_parameters = {
         "name": "Periodic 3"},
     "sum_sine_5pi": {
         "fun": sum_sine_5pi,
-        'n0': 1000,
-        "budget": 2000,
+        'n0': 500,
+        "budget": 5000,
         "n_step": 20,
         "name": "Periodic 2"},
 }
@@ -227,7 +231,7 @@ __all__ = [
 __all2D__ = [
     "grammacy_lee_2009",
     "grammacy_lee_2009_rand",
-    "branin", "branin_rand", 
+    "branin", "branin_rand",
     "himmelblau",
     "himmelblau_rand",
     "golden_price",
@@ -244,7 +248,8 @@ def plot_benchmark_functions():
 
     from matplotlib.colors import LinearSegmentedColormap
     cmap = LinearSegmentedColormap.from_list(
-        "mycmap", ['C0', "C2", "C4", "C6", "white", "C7", "C5", "C3", "C1"][::-1])
+        "mycmap", ["#1C284E", "#174D7C", "#4C7D8E", "#819898", "white", "#FFC28B",
+                   "#FF9463", "#FE6D4E","#FF5342"][::-1])
 
     matplotlib.rcParams.update({'font.size': 6})
     fig, ax = plot.subplots(
@@ -254,7 +259,7 @@ def plot_benchmark_functions():
 
     function_list = list(np.sort(__all2D__))
     function_list = [f for f in function_parameters.keys() if f in function_list]
-    
+
     for i, fun in enumerate(function_list):
         if not fun in function_parameters.keys():
             continue
@@ -267,9 +272,10 @@ def plot_benchmark_functions():
             z = function_parameters[fun]["fun"](x__.values)
         if len(bounds_) > 2:
             for k, b in enumerate(bounds_[2:]):
-                x__[f"x{k+2}"] = (b[1] + b[0]) / 2
+                x__[f"x{k + 2}"] = (b[1] + b[0]) / 2
             z = function_parameters[fun]["fun"](x__.values)
         z = z - np.median(z)
+        z = z / z.std()
 
         im = ax[i % 2, i // 2].pcolormesh(xxx, yyy,
                                           z.reshape(len(xxx), len(yyy)),
@@ -277,12 +283,14 @@ def plot_benchmark_functions():
         ax_ = ax[i % 2, i // 2]
         ax_.set_xticklabels([])
         ax_.set_yticklabels([])
-        ax_.annotate(function_parameters[fun]["name"], xy=(1, 0.9),
-                     xycoords='axes fraction',
-                     xytext=(1, 20), textcoords='offset pixels',
-                     horizontalalignment='right',
-                     verticalalignment='bottom',
-                     bbox=dict(boxstyle="round", fc="white", lw=0.4))
+        ax_.annotate(function_parameters[fun]["name"],
+            xy=(0.95, 0.95),
+            xycoords="axes fraction",
+            xytext=(1, 20),
+            textcoords="offset pixels",
+            horizontalalignment="right",
+            verticalalignment="bottom",
+            bbox=dict(fc="white", lw=0.7, ec="#bcbcbc", boxstyle="square"))
 
     # plt.tight_layout()
     fig.subplots_adjust(right=0.9)

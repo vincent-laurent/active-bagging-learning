@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 
 from active_learning import ActiveSurfaceLearner
-from active_learning.benchmark.utils import evaluate
+
 
 
 class ITestingClass(ABC):
@@ -86,10 +86,11 @@ class ITestingClass(ABC):
         return ret
 
     def save(self):
+        from active_learning.benchmark.utils import evaluate
         m = evaluate(
             self.f,
             self.learner.predict,
-            self.bounds, num_mc=100000)
+            self.bounds, num_mc=50_000)
         self.metric.append(m)
         self.result[self.iter] = dict(
             learner=deepcopy(self.learner),
@@ -164,7 +165,7 @@ class ModuleExperiment:
         return res
 
     def run(self):
-        with ProcessPoolExecutor(max_workers=20) as executor:
+        with ProcessPoolExecutor(max_workers=7) as executor:
             futures = []
             for test in self.test_list:
                 print(test.f.__name__)
@@ -174,7 +175,6 @@ class ModuleExperiment:
             for future in as_completed(futures):
                 res = future.result()
                 self._cv_result = pd.concat((self._cv_result, res), axis=0)
-
         self.cv_result_ = self._cv_result
         self.cv_result_["date"] = pd.to_datetime(self.cv_result_["date"])
 
